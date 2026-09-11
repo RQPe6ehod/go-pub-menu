@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>GO pub — Меню</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #142720;
+    --bg-deep: #0E1D17;
+    --panel: #1C3628;
+    --line: #2C4A3A;
+    --gold: #C79A46;
+    --gold-soft: #8E7538;
+    --cream: #F3EEDF;
+    --cream-dim: #C9CFC1;
+    --muted: #8FA08D;
+    --shadow: rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--bg);
+    background-image: radial-gradient(circle at 15% 0%, rgba(199,154,70,0.07), transparent 45%),
+                       radial-gradient(circle at 100% 30%, rgba(199,154,70,0.05), transparent 40%);
+    color: var(--cream);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 48px;
+  }
+  ::selection{ background: var(--gold); color: var(--bg-deep); }
+
+  /* ---------- Header ---------- */
+  header.top{
+    position: sticky; top:0; z-index: 30;
+    background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg) 100%);
+    border-bottom: 1px solid var(--line);
+    padding: 18px 20px 0;
+  }
+  .brand-row{
+    display:flex; align-items:center; justify-content:space-between; gap: 12px;
+    margin-bottom: 14px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+  }
+  .brand-mark{
+    width:40px; height:40px; border-radius:50%;
+    border: 1.5px solid var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces', serif; font-weight:700; font-size:15px; color: var(--gold);
+    letter-spacing: 0.5px;
+  }
+  .brand-text{ line-height:1.05; }
+  .brand-text .name{ font-family:'Fraunces', serif; font-weight:600; font-size: 20px; color: var(--cream); }
+  .brand-text .sub{ font-size: 11px; color: var(--muted); letter-spacing: .06em; }
+  .svc-note{ font-size: 10.5px; color: var(--muted); text-align:right; line-height:1.3; max-width: 110px; }
+
+  .mode-switch{
+    display:flex; background: var(--bg-deep); border: 1px solid var(--line);
+    border-radius: 999px; padding: 3px; gap:3px; margin-bottom: 14px;
+  }
+  .mode-switch button{
+    flex:1; border:none; background:transparent; color: var(--muted);
+    font-family:'Fraunces', serif; font-size: 15px; font-weight: 600;
+    padding: 9px 0; border-radius: 999px; cursor:pointer;
+    transition: background .25s ease, color .25s ease;
+  }
+  .mode-switch button.active{ background: var(--gold); color: var(--bg-deep); }
+
+  .search-wrap{ position:relative; margin-bottom: 12px; }
+  .search-wrap input{
+    width:100%; background: var(--bg-deep); border: 1px solid var(--line);
+    color: var(--cream); padding: 10px 14px 10px 34px; border-radius: 10px;
+    font-family:'Inter',sans-serif; font-size: 14px; outline: none;
+  }
+  .search-wrap input::placeholder{ color: var(--muted); }
+  .search-wrap input:focus{ border-color: var(--gold-soft); }
+  .search-wrap svg{ position:absolute; left:11px; top:50%; transform:translateY(-50%); opacity:.55; }
+
+  nav.chips{
+    display:flex; gap:8px; overflow-x:auto; padding-bottom: 12px;
+    scrollbar-width:none;
+  }
+  nav.chips::-webkit-scrollbar{ display:none; }
+  nav.chips button{
+    flex: 0 0 auto; white-space:nowrap;
+    background: var(--panel); border: 1px solid var(--line); color: var(--cream-dim);
+    font-family:'Inter',sans-serif; font-size: 12.5px; font-weight:500;
+    padding: 7px 13px; border-radius: 999px; cursor:pointer;
+  }
+  nav.chips button.active{ background: var(--gold); border-color: var(--gold); color: var(--bg-deep); font-weight:600; }
+
+  /* ---------- Content ---------- */
+  main{ padding: 22px 20px 0; max-width: 640px; margin: 0 auto; }
+
+  section.category{ margin-bottom: 34px; scroll-margin-top: 168px; }
+  .cat-head{ display:flex; align-items:baseline; gap:10px; margin-bottom: 4px; }
+  .cat-head h2{
+    font-family:'Fraunces', serif; font-weight:600; font-size: 23px; margin:0;
+    color: var(--gold);
+  }
+  .cat-head .rule{ flex:1; height:1px; background: var(--line); }
+  .cat-note{ font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+
+  .item{ padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .item:last-child{ border-bottom:none; }
+  .item-row{ display:flex; align-items:baseline; gap:8px; }
+  .item-num{ color: var(--gold-soft); font-size: 12px; font-weight:600; min-width: 15px; flex-shrink:0; }
+  .item-name{ font-size: 15.5px; font-weight:500; color: var(--cream); }
+  .dots{ flex:1; border-bottom: 1.5px dotted var(--line); transform: translateY(-3px); min-width: 14px; }
+  .item-price{ font-family:'Fraunces', serif; font-weight:600; font-size: 15px; color: var(--cream); white-space:nowrap; flex-shrink:0; }
+  .item-price small{ font-size:11px; font-weight:400; color: var(--muted); }
+  .item-desc{ font-size: 12.5px; color: var(--muted); margin-top: 3px; padding-left: 23px; line-height:1.4; }
+
+  .empty-state{ text-align:center; color: var(--muted); font-size: 14px; padding: 60px 20px; }
+
+  footer.foot{
+    text-align:center; color: var(--muted); font-size: 12px; margin-top: 30px; padding: 0 20px;
+    line-height: 1.6;
+  }
+  footer.foot .gold{ color: var(--gold); font-family:'Fraunces', serif; font-size:15px; }
+
+  @media (min-width: 720px){
+    header.top{ padding-left: calc(50% - 320px); padding-right: calc(50% - 320px); }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand-row">
+    <div class="brand">
+      <div class="brand-mark">GO</div>
+      <div class="brand-text">
+        <div class="name">GO pub</div>
+        <div class="sub">ЦИФРОВОЕ МЕНЮ</div>
+      </div>
+    </div>
+    <div class="svc-note">Обслуживание 10%. Цены указаны в тенге.</div>
+  </div>
+
+  <div class="mode-switch">
+    <button id="btn-food" class="active" onclick="setMode('food')">Кухня</button>
+    <button id="btn-bar" onclick="setMode('bar')">Бар</button>
+  </div>
+
+  <div class="search-wrap">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8FA08D" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="search" type="text" placeholder="Найти блюдо или напиток…" oninput="onSearch()">
+  </div>
+
+  <nav class="chips" id="chips"></nav>
+</header>
+
+<main id="main"></main>
+
+<footer class="foot">
+  <div class="gold">GO pub</div>
+  Приятного аппетита!<br>
+  Отсканируйте QR‑код у столика, чтобы вернуться к меню в любой момент.
+</footer>
+
+<script>
+const MENU = {
+  food: [
+    { title: "Салаты", items: [
+      {n:1, name:"Пекинский", desc:"мясо, огурцы, болгарский перец, соус, лист салата", price:"3 690"},
+      {n:2, name:"Греческий", desc:"овощи, сыр фетакса, сливки", price:"3 590"},
+      {n:3, name:"Хрустящие баклажаны", desc:"баклажан, помидор, соус", price:"3 890"},
+      {n:4, name:"Теплый из требухи с овощами", price:"3 890"},
+      {n:5, name:"Салат GO", desc:"курица с апельсином, грибы, помидоры", price:"3 890"},
+    ]},
+    { title: "Холодные закуски", items: [
+      {n:1, name:"Ассорти под водочку", desc:"скумбрия, сельдь, долма, соленые огурчики", price:"3 990"},
+      {n:2, name:"Соленья", desc:"квашеная капуста, корнишоны, маринованные черри, оливки", price:"3 790"},
+      {n:3, name:"Кавказская нарезка", desc:"огурцы, помидоры, болгарский перец, сыр Фета, зелень", price:"3 890"},
+      {n:4, name:"Мясная нарезка", desc:"шужук, казы, мясо", price:"6 590"},
+      {n:5, name:"Холодец по-домашнему", price:"3 650"},
+      {n:6, name:"Мужская закуска", desc:"квашеная капуста, огурчики маринованные, курдючок баранины, холодец, горчица, черный хлеб", price:"6 590"},
+      {n:7, name:"Баклажаны в панировке", price:"3 790"},
+    ]},
+    { title: "Горячие закуски", items: [
+      {n:1, name:"Крылья BBQ", price:"3 590"},
+      {n:2, name:"Сырные палочки", price:"3 190"},
+      {n:3, name:"Нагетсы", price:"2 890"},
+      {n:4, name:"Луковые кольца", price:"2 690"},
+      {n:5, name:"Гренки", price:"1 990"},
+      {n:6, name:"Бараньи семечки", price:"3 950"},
+      {n:7, name:"Жареные пельмени", price:"3 290"},
+      {n:8, name:"Мини чебуречки", price:"2 690"},
+      {n:9, name:"Печень с курдючком", price:"3 790"},
+    ]},
+    { title: "Супы", items: [
+      {n:1, name:"Пельмени домашние", price:"2 790"},
+      {n:2, name:"Лапша домашняя", price:"2 290"},
+      {n:3, name:"Солянка", price:"2 690"},
+      {n:4, name:"Том-Ям", price:"3 590"},
+      {n:5, name:"Рамён", price:"2 990"},
+    ]},
+    { title: "Море Go", items: [
+      {n:1, name:"Креветки пивные", price:"4 290"},
+      {n:2, name:"Жаренные карасики с картофелем", price:"3 590"},
+      {n:3, name:"Мойва", price:"3 690"},
+      {n:4, name:"Сазан на компанию с салатом по-домашнему", price:"16 590"},
+    ]},
+    { title: "Пивной пир", note: "сеты для компании, с пивом", items: [
+      {n:1, name:"Рыбный сет + Пражское", desc:"сазан, мойва, караси, креветки, луковые кольца, картофельные дольки", price:"29 990"},
+      {n:2, name:"Куриный сет + Пражское", desc:"BBQ, наггетсы, kfc, луковые кольца, сырные палочки, фри", price:"24 990"},
+      {n:3, name:"Мясная доска + Баварское нефильтрованное", desc:"рибай, тибон, стейк куриный, утка, колбасы, цыпленок табака, овощи гриль", price:"31 990"},
+      {n:4, name:"Улов рыбака + Баварское нефильтрованное", desc:"копченая, вяленая, сушеная рыбка", price:"21 990"},
+      {n:5, name:"Шашлычный сет GO + Пражское или Баварское нефильтрованное", desc:"2 баранины, 2 утки, 2 филе, 2 крыла, грибы, овощи, картофельные дольки", price:"35 990"},
+    ]},
+    { title: "Street food", items: [
+      {n:1, name:"Beef Burger", price:"3 890"},
+      {n:2, name:"Chicken Burger", price:"3 690"},
+      {n:3, name:"Шаурма с курицей", price:"3 590"},
+      {n:4, name:"Куриный пирог GO", price:"5 390"},
+      {n:5, name:"Баскет с фри", price:"9 290"},
+    ]},
+    { title: "Пицца", items: [
+      {n:1, name:"Курица с грибами", desc:"моцарелла, филе курицы, соус, шампиньоны", price:"3 890"},
+      {n:2, name:"Мексикано", desc:"моцарелла, мясо говядины, болгарский перец, халапеньо", price:"3 990"},
+      {n:3, name:"Пицца 4 сезона", desc:"моцарелла, салями, грибы, мясо говядины, помидоры", price:"3 890"},
+      {n:4, name:"Маргарита", desc:"моцарелла, помидоры, соус", price:"3 190"},
+      {n:5, name:"Пепперони", desc:"моцарелла, копченая колбаса", price:"3 890"},
+      {n:6, name:"Сырная", price:"3 990"},
+    ]},
+    { title: "Паста", items: [
+      {n:1, name:"Альфредо с фетучини", price:"3 790"},
+      {n:2, name:"Болоньезе", price:"3 790"},
+    ]},
+    { title: "Шашлык", items: [
+      {n:1, name:"Баранина", price:"5 000"},
+      {n:2, name:"Телятина", price:"5 000"},
+      {n:3, name:"Утка", price:"4 590"},
+      {n:4, name:"Крылышки", price:"3 990"},
+      {n:5, name:"Куриное филе", price:"3 750"},
+      {n:6, name:"Грибы", price:"3 750"},
+      {n:7, name:"Картофельный", price:"2 450"},
+      {n:8, name:"Овощи гриль", price:"2 890"},
+    ]},
+    { title: "Горячие блюда", items: [
+      {n:1, name:"Стейк Рибай", price:"7 390"},
+      {n:2, name:"Стейк Ти-бон", price:"7 390"},
+      {n:3, name:"Микс на жаровне", price:"4 490"},
+      {n:4, name:"Мясо по-мексикански", price:"4 890"},
+      {n:5, name:"Медальоны в сливочно-грибном соусе", price:"5 290"},
+      {n:6, name:"Куырдак", price:"5 290"},
+      {n:7, name:"Курица с грибами в сливочном соусе с пюре", price:"4 190"},
+      {n:8, name:"Говядина с шампиньонами и рисом", price:"4 790"},
+    ]},
+    { title: "Сеты на компанию", items: [
+      {n:1, name:"Пивная доска №1", desc:"чебуреки, гренки, редис, соусы", price:"4 990"},
+      {n:2, name:"Пивная доска №2", desc:"пельмени жареные, сырные палочки, луковые кольца, гренки, соусы", price:"11 590"},
+      {n:3, name:"Пивная доска №3", desc:"крылья BBQ, бараньи семечки, сырные палочки, наггетсы, соусы, орешки", price:"14 490"},
+      {n:4, name:"Ассорти колбасок, дольки, соусы", price:"12 690"},
+      {n:5, name:"Пивной микс", desc:"чечил, фисташки, орешки, чипсы, сухарики, курт", price:"7 690"},
+      {n:6, name:"Ведро креветок", price:"14 990"},
+      {n:7, name:"Стейки 2+1", price:"16 990"},
+    ]},
+    { title: "Гарнир", items: [
+      {n:1, name:"Рис", price:"1 450"},
+      {n:2, name:"Картофельный фри", price:"1 500"},
+      {n:3, name:"Картофельные дольки", price:"1 550"},
+      {n:4, name:"Картошка по-домашнему", price:"2 790"},
+      {n:5, name:"Соусы", price:"800"},
+    ]},
+    { title: "Дессерт", items: [
+      {n:1, name:"Фруктовая нарезка", price:"7 990"},
+      {n:2, name:"Сладкий десерт", price:"2 190"},
+      {n:3, name:"Мороженое", price:"1 990"},
+      {n:4, name:"Лимон", price:"890"},
+      {n:5, name:"Хлебная корзина", price:"800"},
+      {n:6, name:"Хлебная корзина 1/2", price:"400"},
+    ]},
+  ],
+
+  bar: [
+    { title: "Бутылочное пиво", items: [
+      {name:"Heineken 0.5", price:"2 250"},
+      {name:"Heineken безалкогольное 0.5", price:"2 450"},
+      {name:"Kronenbourg 1664 0.5L", price:"2 350"},
+      {name:"Corona Extra 0.35L", price:"3 550"},
+      {name:"Krusovice Svetle 0.45L", price:"1 590"},
+      {name:"Krusovice Cerne 0.45L", price:"1 590"},
+      {name:"Жигули Барное безалкогольное 0.45L", price:"1 450"},
+    ]},
+    { title: "Разливное пиво", note: "цена за 0.5 л / за 3 л", items: [
+      {name:"Пражское", price:"1 450", price2:"7 990"},
+      {name:"Баварское нефильтрованное", price:"1 750", price2:"9 990"},
+      {name:"Budweiser Budvar", price:"3 590", price2:"20 590"},
+      {name:"Guinness", price:"3 990"},
+    ]},
+    { title: "Закуски к пиву", items: [
+      {name:"Арахис соленый", price:"1 690"},
+      {name:"Чечил", price:"1 990"},
+      {name:"Чипсы", price:"2 190"},
+      {name:"Фисташки соленые", price:"2 390"},
+      {name:"Курт", price:"1 990"},
+    ]},
+    { title: "Водка", note: "цена за 0.5 л / за 50 мл", items: [
+      {name:"Хортица", price:"9 500", price2:"950"},
+      {name:"Бульбашъ особая", price:"9 800", price2:"980"},
+      {name:"Kyzyl Zhar Legend", price:"9 900", price2:"990"},
+      {name:"Romanov", price:"11 500", price2:"1 150"},
+      {name:"Tchaikovsky", price:"12 900", price2:"1 290"},
+      {name:"Smirnoff №21 RED", price:"13 900", price2:"1 390"},
+      {name:"Absolut Blue", price:"19 500", price2:"1 950"},
+      {name:"Tito's", price:"27 900", price2:"2 790"},
+      {name:"Reyka", price:"32 000", price2:"3 200"},
+      {name:"Grey Goose", price:"37 000", price2:"3 700"},
+      {name:"Belvedere", price:"41 000", price2:"4 100"},
+    ]},
+    { title: "Виски", note: "цена за 0.5 л / за 50 мл", items: [
+      {name:"Ballantine's", price:"23 500", price2:"2 350"},
+      {name:"Red Label", price:"24 500", price2:"2 450"},
+      {name:"Jameson", price:"26 000", price2:"2 600"},
+      {name:"Tullamore D.E.W.", price:"28 000", price2:"2 800"},
+      {name:"Jack Daniels", price:"33 500", price2:"3 500"},
+      {name:"Monkey Shoulder", price:"39 500", price2:"3 900"},
+      {name:"Chivas 12 y.o.", price:"41 000", price2:"4 100"},
+    ]},
+    { title: "Коньяк", note: "цена за 0.5 л / за 50 мл", items: [
+      {name:"Казахстан 3 звезды", price:"12 500", price2:"1 250"},
+      {name:"Казахстан 5 звезд", price:"15 500", price2:"1 500"},
+      {name:"Арарат 3 звезды", price:"17 500", price2:"1 750"},
+      {name:"Арарат 5 звезд", price:"20 000", price2:"2 000"},
+      {name:"Hennessy V.S.", price:"45 000", price2:"4 500"},
+    ]},
+    { title: "Ром", note: "цена за 0.5 л / за 50 мл", items: [
+      {name:"Oakheart", price:"20 000", price2:"2 000"},
+    ]},
+    { title: "Текила", note: "цена за 0.5 л / за 50 мл", items: [
+      {name:"Olmeca", price:"21 500", price2:"2 150"},
+    ]},
+    { title: "Джин", note: "цена за 0.5 л / за 50 мл", items: [
+      {name:"Gordon's", price:"18 500", price2:"1 850"},
+      {name:"Beefeater", price:"19 500", price2:"1 950"},
+      {name:"Bickens", price:"20 500", price2:"2 050"},
+    ]},
+    { title: "Ликеры", note: "цена за 0.5 л / за 50 мл", items: [
+      {name:"Becherovka", price:"18 500", price2:"1 850"},
+      {name:"Baileys", price:"19 500", price2:"1 950"},
+      {name:"Jägermeister", price:"21 000", price2:"2 100"},
+    ]},
+    { title: "Аперитивы и вино", items: [
+      {name:"Martini", desc:"1 л / 100 мл", price:"18 500", price2:"1 850"},
+      {name:"Вино в ассортименте", desc:"0.7 л / 100 мл", price:"14 000", price2:"2 200"},
+    ]},
+    { title: "Коктейли алкогольные", items: [
+      {name:"Aperol Spritz", price:"3 190"},
+      {name:"Gin Tonic", price:"2 790"},
+      {name:"Long Island", price:"3 290"},
+      {name:"Cuba Libre", price:"2 590"},
+      {name:"Mimosa", price:"2 490"},
+      {name:"Mojito", price:"2 690"},
+    ]},
+    { title: "Безалкогольные напитки", items: [
+      {name:"Coca-Cola", desc:"1 л / 0.5 л / 0.25 л", price:"1 990", price2:"1 490", price3:"1 690"},
+      {name:"Минеральная вода", desc:"1 л / 0.5 л", price:"1 150", price2:"890"},
+      {name:"Сок", price:"2 390"},
+      {name:"Red Bull", price:"2 450"},
+      {name:"Borjomi", price:"2 550"},
+      {name:"Тоник Schweppes", price:"2 300"},
+      {name:"Лимонады", price:"2 790"},
+      {name:"Морс клюквенный", price:"2 590"},
+    ]},
+    { title: "Чай", items: [
+      {name:"Чай в ассортименте (чашка)", price:"800"},
+      {name:"Чай черный (чайник)", price:"1 450"},
+      {name:"Чай зеленый (чайник)", price:"1 650"},
+      {name:"Чай ташкентский (чайник)", price:"2 190"},
+      {name:"Чай имбирный (чайник)", price:"2 590"},
+      {name:"Чай облепиховый (чайник)", price:"2 690"},
+      {name:"Чай ягодный (чайник)", price:"2 790"},
+      {name:"Чай мараканский (чайник)", price:"2 990"},
+    ]},
+    { title: "Кофе", items: [
+      {name:"Jacobs (чашка)", price:"1 300"},
+    ]},
+  ]
+};
+
+let currentMode = 'food';
+
+function fmtPrice(item){
+  let parts = [item.price];
+  if(item.price2) parts.push(item.price2);
+  if(item.price3) parts.push(item.price3);
+  return parts.join(' / ') + ' тг.';
+}
+
+function renderChips(){
+  const chips = document.getElementById('chips');
+  chips.innerHTML = '';
+  MENU[currentMode].forEach((cat, i) => {
+    const b = document.createElement('button');
+    b.textContent = cat.title;
+    b.dataset.idx = i;
+    b.onclick = () => {
+      document.getElementById('cat-' + i).scrollIntoView({behavior:'smooth', block:'start'});
+    };
+    chips.appendChild(b);
+  });
+}
+
+function renderMain(){
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+  const cats = MENU[currentMode];
+  cats.forEach((cat, i) => {
+    const sec = document.createElement('section');
+    sec.className = 'category';
+    sec.id = 'cat-' + i;
+
+    let html = `<div class="cat-head"><h2>${cat.title}</h2><div class="rule"></div></div>`;
+    if(cat.note) html += `<p class="cat-note">${cat.note}</p>`;
+    cat.items.forEach(it => {
+      html += `<div class="item" data-search="${(it.name + ' ' + (it.desc||'')).toLowerCase()}">
+        <div class="item-row">
+          ${it.n ? `<span class="item-num">${it.n}</span>` : ''}
+          <span class="item-name">${it.name}</span>
+          <span class="dots"></span>
+          <span class="item-price">${fmtPrice(it)}</span>
+        </div>
+        ${it.desc ? `<div class="item-desc">${it.desc}</div>` : ''}
+      </div>`;
+    });
+    sec.innerHTML = html;
+    main.appendChild(sec);
+  });
+}
+
+function setMode(mode){
+  currentMode = mode;
+  document.getElementById('btn-food').classList.toggle('active', mode==='food');
+  document.getElementById('btn-bar').classList.toggle('active', mode==='bar');
+  document.getElementById('search').value = '';
+  renderChips();
+  renderMain();
+  window.scrollTo({top:0, behavior:'instant'});
+  setupObserver();
+}
+
+function onSearch(){
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  document.querySelectorAll('section.category').forEach(sec => {
+    let visibleCount = 0;
+    sec.querySelectorAll('.item').forEach(item => {
+      const match = !q || item.dataset.search.includes(q);
+      item.style.display = match ? '' : 'none';
+      if(match) visibleCount++;
+    });
+    sec.style.display = visibleCount ? '' : 'none';
+  });
+}
+
+let observer;
+function setupObserver(){
+  if(observer) observer.disconnect();
+  const chips = document.getElementById('chips').children;
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        const idx = entry.target.id.split('-')[1];
+        Array.from(chips).forEach(c => c.classList.remove('active'));
+        if(chips[idx]){
+          chips[idx].classList.add('active');
+          chips[idx].scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+        }
+      }
+    });
+  }, { rootMargin: '-160px 0px -70% 0px' });
+  document.querySelectorAll('section.category').forEach(sec => observer.observe(sec));
+}
+
+renderChips();
+renderMain();
+setupObserver();
+</script>
+</body>
+</html>
