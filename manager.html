@@ -50,19 +50,31 @@
   .settings-row .stepper{ display:flex; align-items:center; gap:10px; }
   .settings-row .stepper button{ width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:16px; }
   .settings-row .stepper span{ min-width:26px; text-align:center; font-weight:700; font-family:'Fraunces',serif; font-size:16px; }
+  .confirm-check{
+    width:30px; height:30px; border-radius:8px; border:1px solid var(--line);
+    background:var(--bg-deep); color:var(--muted); display:flex; align-items:center; justify-content:center;
+    margin-left:4px; transition:background .2s ease, color .2s ease, border-color .2s ease, opacity .2s ease;
+  }
+  .confirm-check:disabled{ opacity:.4; cursor:not-allowed; }
+  .confirm-check:not(:disabled){ background:var(--gold); border-color:var(--gold); color:var(--bg-deep); opacity:1; }
 
   .role-buttons{ display:flex; gap:8px; margin-bottom:16px; }
   .role-buttons button{ flex:1; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; }
   .role-buttons button:active{ background:var(--gold); color:var(--bg-deep); }
 
-  .staff-row{ display:flex; align-items:center; justify-content:space-between; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .staff-row{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
   .staff-row .info{ display:flex; flex-direction:column; }
   .staff-row .name{ font-weight:600; font-size:14.5px; }
   .staff-row .name.pending{ color:var(--muted); font-weight:400; font-style:italic; }
   .staff-row .role-tag{ font-size:11px; color:var(--muted); }
-  .staff-row .actions{ display:flex; gap:6px; }
+  .staff-row .actions{ display:flex; gap:6px; align-items:center; }
   .staff-row .actions button{ padding:7px 12px; border-radius:8px; font-size:12px; font-weight:600; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); }
   .staff-row .actions button.danger{ border-color:var(--red); color:var(--red); }
+  .icon-btn{
+    width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep);
+    display:flex; align-items:center; justify-content:center; color:var(--cream); flex-shrink:0; padding:0 !important;
+  }
+  .icon-btn.copied{ border-color:var(--green); color:var(--green); }
 
   .qr-overlay{ position:fixed; inset:0; background:rgba(14,29,23,.92); z-index:95; display:none; align-items:center; justify-content:center; padding:24px; }
   .qr-overlay.open{ display:flex; }
@@ -150,9 +162,11 @@
         <button onclick="changeTableCount(-1)">−</button>
         <span id="tableCountVal">20</span>
         <button onclick="changeTableCount(1)">+</button>
+        <button id="confirmTableCountBtn" class="confirm-check" onclick="confirmTableCount()" disabled title="Утвердить">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </button>
       </div>
     </div>
-    <button class="close-table-btn" id="confirmTableCountBtn" onclick="confirmTableCount()" style="display:none;width:100%;margin-bottom:18px;">Утвердить количество столов</button>
 
     <h2>Добавить сотрудника</h2>
     <div class="role-buttons">
@@ -227,7 +241,7 @@ function connect(){
       unavailable = msg.unavailable || {};
       if(pendingTableCount === null || pendingTableCount === tableCount){
         document.getElementById('tableCountVal').textContent = tableCount;
-        document.getElementById('confirmTableCountBtn').style.display = 'none';
+        document.getElementById('confirmTableCountBtn').disabled = true;
         pendingTableCount = null;
       }
       render();
@@ -454,12 +468,12 @@ function changeTableCount(delta){
   const next = Math.max(1, base + delta);
   pendingTableCount = next;
   document.getElementById('tableCountVal').textContent = next;
-  document.getElementById('confirmTableCountBtn').style.display = (next !== tableCount) ? 'block' : 'none';
+  document.getElementById('confirmTableCountBtn').disabled = (next === tableCount);
 }
 function confirmTableCount(){
   if(pendingTableCount === null) return;
   socket.send(JSON.stringify({type:"set_table_count", count: pendingTableCount}));
-  document.getElementById('confirmTableCountBtn').style.display = 'none';
+  document.getElementById('confirmTableCountBtn').disabled = true;
 }
 
 function createStaff(role){
@@ -486,18 +500,44 @@ function renderStaffGroup(role, elId, headId, label){
   if(list.length===0){ el.innerHTML = `<div class="empty">Пока никого нет</div>`; return; }
   let html = "";
   list.forEach(s => {
+    const url = location.origin + '/' + ROLE_PAGES[role] + '?staff=' + s.id;
+    const inviteText = encodeURIComponent(`Приглашение в GO pub — ${ROLE_LABELS[role]}: `);
+    const encodedUrl = encodeURIComponent(url);
     html += `<div class="staff-row">
       <div class="info">
         <span class="name ${s.name?'':'pending'}">${s.name || 'Ожидает имени…'}</span>
         <span class="role-tag">${ROLE_LABELS[role]}</span>
       </div>
       <div class="actions">
+        <a class="icon-btn wa" href="https://wa.me/?text=${inviteText}${encodedUrl}" target="_blank" rel="noopener" title="Отправить в WhatsApp">
+          <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><path d="M16 3C9.1 3 3.5 8.6 3.5 15.5c0 2.5.7 4.8 1.9 6.8L3 29l6.9-2.3c1.9 1 4.1 1.6 6.1 1.6 6.9 0 12.5-5.6 12.5-12.5S22.9 3 16 3z" fill="#25D366"/><path d="M22.4 19.1c-.3-.2-1.9-1-2.2-1.1-.3-.1-.5-.2-.7.2s-.8 1.1-1 1.3-.4.2-.7.1c-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-2-1.8-2.3-.2-.3 0-.5.1-.6.1-.1.3-.4.5-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.6s-.7-1.7-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.2.2 2 3.1 4.9 4.2 2.8 1.1 2.8.8 3.3.7.5-.1 1.6-.7 1.8-1.3.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.6-.4z" fill="#fff"/></svg>
+        </a>
+        <a class="icon-btn tg" href="https://t.me/share/url?url=${encodedUrl}&text=${inviteText}" target="_blank" rel="noopener" title="Отправить в Telegram">
+          <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" fill="#29A9EA"/><path d="M8.5 15.8l13-5c.6-.2 1.2.2.9.9l-2.2 10.4c-.2.8-.7.9-1.3.6l-3.6-2.7-1.7 1.6c-.2.2-.4.3-.7.3l.2-3.6 6.6-6c.3-.2-.1-.4-.4-.2l-8.1 5.1-3.5-1.1c-.8-.2-.8-.8.1-1.2z" fill="#fff"/></svg>
+        </a>
+        <button class="icon-btn" onclick="copyStaffLink('${url}', this)" title="Скопировать ссылку">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+        </button>
         <button onclick="showQr('${role}','${s.id}')">QR</button>
         <button class="danger" onclick="deleteStaff('${s.id}')">Удалить</button>
       </div>
     </div>`;
   });
   el.innerHTML = html;
+}
+
+function copyStaffLink(url, btn){
+  const done = () => {
+    btn.classList.add('copied');
+    const original = btn.innerHTML;
+    btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`;
+    setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = original; }, 1500);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(done).catch(() => { prompt("Скопируйте ссылку:", url); });
+  } else {
+    prompt("Скопируйте ссылку:", url);
+  }
 }
 
 function showQr(role, id){
