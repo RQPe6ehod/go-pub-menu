@@ -318,6 +318,8 @@ const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
 const ROLE = "manager";
 let socket, allOrders = [], allHistory = [], openTables = {}, closedTables = [], staff = [], tableCount = 20, unavailable = {};
 let inventory = {kitchen:{}, bar:{}};
+let vapidPublicKey = null;
+let pushSetupDone = false;
 let mgrMode = 'overview';
 let staffName = "";
 
@@ -389,6 +391,8 @@ function connect(){
       closedTables = msg.closedTables || []; staff = msg.staff || []; tableCount = msg.tableCount || 20;
       unavailable = msg.unavailable || {};
       inventory = msg.inventory || {kitchen:{}, bar:{}};
+      vapidPublicKey = msg.vapidPublicKey || vapidPublicKey;
+      if(vapidPublicKey && !pushSetupDone){ pushSetupDone = true; setupPush(); }
       if(pendingTableCount === null || pendingTableCount === tableCount){
         document.getElementById('tableCountVal').textContent = tableCount;
         document.getElementById('confirmTableCountBtn').disabled = true;
@@ -922,6 +926,35 @@ function downloadReceiptFile(r){
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for(let i=0;i<rawData.length;++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function setupPush(){
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  if(!vapidPublicKey) return;
+  try{
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    if(Notification.permission === 'default') await Notification.requestPermission();
+    if(Notification.permission !== 'granted') return;
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub){
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+      });
+    }
+    let pushId = localStorage.getItem('gopub_push_id_'+ROLE);
+    if(!pushId){ pushId = (crypto.randomUUID ? crypto.randomUUID() : (Date.now()+'-'+Math.random())); localStorage.setItem('gopub_push_id_'+ROLE, pushId); }
+    socket.send(JSON.stringify({type:'register_push', pushId, subscription: sub.toJSON()}));
+  }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
 }
 </script>
 </body>

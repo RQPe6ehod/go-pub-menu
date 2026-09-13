@@ -90,9 +90,7 @@
 <div class="lock" id="lock">
   <div class="lock-box">
     <h2>GO pub · Бар</h2>
-    <p id="lockMsg">Введите PIN-код бармена</p>
-    <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••">
-    <button id="pinBtn" onclick="tryPin()">Войти</button>
+    <p id="lockMsg">У вас нет доступа. Обратитесь к менеджеру, чтобы получить персональную QR-ссылку.</p>
     <div class="err" id="pinErr"></div>
   </div>
 </div>
@@ -109,7 +107,7 @@
 <header>
   <h1>GO pub · Бар <span id="staffNameTag" onclick="openNamePrompt()" style="color:var(--gold); font-weight:600; cursor:pointer;"></span></h1>
   <div class="conn off" id="conn">подключение…</div>
-  <div class="settings-links"><a href="#" onclick="openNamePrompt();return false;">Изменить имя</a><a href="#" onclick="openPinPrompt();return false;">Сменить PIN</a></div>
+  <div class="settings-links"><a href="#" onclick="openNamePrompt();return false;">Изменить имя</a></div>
 </header>
 
 <main>
@@ -170,6 +168,8 @@ let staffId = null;
 let staffName = "";
 let unavailable = {};
 let inventory = {};
+let vapidPublicKey = null;
+let pushSetupDone = false;
 let pickerSelection = {}; // name -> comment (for disable sheet)
 let enableSelection = new Set(); // names selected to restore
 
@@ -196,24 +196,9 @@ const DEST = "bar";
   staffId = localStorage.getItem('gopub_staff_id_'+ROLE);
 })();
 
-function getPin(){ return sessionStorage.getItem("gopub_pin_"+ROLE); }
-function setPin(p){ sessionStorage.setItem("gopub_pin_"+ROLE, p); }
-function tryPin(){
-  const p = document.getElementById('pinInput').value.trim();
-  if(!p) return;
-  setPin(p);
-  document.getElementById('pinErr').textContent = "";
-  connect();
-}
-function showLock(err){
-  if(staffId){
-    document.getElementById('lockMsg').textContent = "Не удалось подтвердить это устройство. Попросите менеджера прислать новую QR-ссылку.";
-    document.getElementById('pinInput').style.display = 'none';
-    document.getElementById('pinBtn').style.display = 'none';
-  }
+function showLock(){
+  document.getElementById('lockMsg').textContent = "У вас нет доступа. Обратитесь к менеджеру, чтобы получить персональную QR-ссылку.";
   document.getElementById('lock').style.display = 'flex';
-  document.getElementById('pinErr').textContent = err || "";
-  document.getElementById('pinInput').value = "";
 }
 function hideLock(){ document.getElementById('lock').style.display = 'none'; }
 function showNameLock(){
@@ -226,12 +211,7 @@ function submitName(){
   const name = document.getElementById('nameInput').value.trim();
   if(!name) return;
   staffName = name;
-  if(staffId){
-    socket.send(JSON.stringify({type:"set_staff_name", staffId, name}));
-  } else {
-    localStorage.setItem('gopub_display_name_'+ROLE, name);
-    socket.send(JSON.stringify({type:"set_display_name", name}));
-  }
+  socket.send(JSON.stringify({type:"set_staff_name", staffId, name}));
   hideNameLock();
   updateStaffNameTag();
 }
@@ -239,64 +219,36 @@ function updateStaffNameTag(){
   document.getElementById('staffNameTag').textContent = staffName ? "— " + staffName : "— указать имя";
 }
 
-let lastPinAttempt = null;
-function openPinPrompt(){
-  const p1 = prompt("Новый PIN для входа (4-6 цифр):");
-  if(p1 === null) return;
-  const clean = p1.trim();
-  if(!/^\d{4,6}$/.test(clean)){ alert("PIN должен состоять из 4-6 цифр"); return; }
-  lastPinAttempt = clean;
-  socket.send(JSON.stringify({type:"change_pin", role:ROLE, newPin:clean}));
-}
-
 function connect(){
-  const pin = staffId ? null : getPin();
-  if(!staffId && !pin){ showLock(); return; }
+  if(!staffId){ showLock(); return; }
   socket = new WebSocket(WS_URL);
   socket.onopen = () => {
     setConn(true);
-    const payload = {type:"hello", role:ROLE};
-    if(staffId) payload.staffId = staffId; else payload.pin = pin;
-    socket.send(JSON.stringify(payload));
+    socket.send(JSON.stringify({type:"hello", role:ROLE, staffId}));
   };
   socket.onclose = () => { setConn(false); setTimeout(connect, 2000); };
   socket.onerror = () => socket.close();
   socket.onmessage = (evt) => {
     const msg = JSON.parse(evt.data);
-    if(msg.type === "auth_ok"){
-      hideLock();
-      if(!staffId){
-        const cached = localStorage.getItem('gopub_display_name_'+ROLE);
-        if(cached){ staffName = cached; socket.send(JSON.stringify({type:"set_display_name", name:cached})); updateStaffNameTag(); }
-        else updateStaffNameTag();
-      }
-    }
+    if(msg.type === "auth_ok"){ hideLock(); }
     if(msg.type === "auth_error"){
-      if(!staffId){
-        sessionStorage.removeItem("gopub_pin_"+ROLE);
-        showLock("Неверный PIN");
-      } else if(msg.reason === "unknown_staff"){
+      if(msg.reason === "unknown_staff"){
         localStorage.removeItem('gopub_staff_id_'+ROLE);
         localStorage.removeItem('gopub_staff_name_'+ROLE);
         staffId = null;
         document.getElementById('lockMsg').textContent = "Вы не являетесь барменом. Обратитесь к менеджеру, чтобы вас добавили.";
-        document.getElementById('pinInput').style.display = 'none';
-        document.getElementById('pinBtn').style.display = 'none';
         document.getElementById('lock').style.display = 'flex';
       } else {
-        showLock("");
+        showLock();
       }
     }
-    if(msg.type === "pin_changed"){
-      if(!staffId) setPin(lastPinAttempt);
-      alert("PIN обновлён. Запомните новый PIN — он понадобится при следующем входе.");
-    }
-    if(msg.type === "pin_change_error"){ alert("Не удалось изменить PIN — используйте 4-6 цифр."); }
     if(msg.type === "state"){
       allOrders = msg.orders;
       allHistory = msg.history || [];
       unavailable = msg.unavailable || {};
       inventory = (msg.inventory && msg.inventory[DEST]) || {};
+      vapidPublicKey = msg.vapidPublicKey || vapidPublicKey;
+      if(vapidPublicKey && !pushSetupDone){ pushSetupDone = true; setupPush(); }
       updateUnavailBadge();
       updateLowStockBadge();
       if(staffId){
@@ -528,6 +480,35 @@ function confirmEnable(){
   if(names.length===0){ closeSheet('enableSheet'); return; }
   socket.send(JSON.stringify({type:"enable_items", names}));
   closeSheet('enableSheet');
+}
+
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for(let i=0;i<rawData.length;++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function setupPush(){
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  if(!vapidPublicKey) return;
+  try{
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    if(Notification.permission === 'default') await Notification.requestPermission();
+    if(Notification.permission !== 'granted') return;
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub){
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+      });
+    }
+    let pushId = localStorage.getItem('gopub_push_id_'+ROLE);
+    if(!pushId){ pushId = (crypto.randomUUID ? crypto.randomUUID() : (Date.now()+'-'+Math.random())); localStorage.setItem('gopub_push_id_'+ROLE, pushId); }
+    socket.send(JSON.stringify({type:'register_push', pushId, subscription: sub.toJSON()}));
+  }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
 }
 
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
