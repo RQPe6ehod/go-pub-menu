@@ -32,6 +32,13 @@
   .line b{ color:var(--gold); }
   .done-btn{ margin-top:14px; width:100%; padding:14px; border:none; border-radius:12px; background:var(--green); color:#0E1D17; font-weight:700; font-size:15px; }
   .accept-btn{ margin-top:14px; width:100%; padding:14px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; }
+  .settings-links{ margin-top:8px; display:flex; gap:6px; }
+  .settings-links a{
+    font-size:10.5px; color:var(--muted); text-decoration:none;
+    border:1px solid var(--line); border-radius:999px; padding:4px 10px;
+    background:var(--panel);
+  }
+  .settings-links a:active{ background:var(--gold); color:var(--bg-deep); border-color:var(--gold); }
   .status-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
   .status-new{ font-size:11px; padding:3px 9px; border-radius:999px; font-weight:700; background:rgba(224,149,74,.2); color:var(--gold); }
   .timer{ font-family:'Fraunces',serif; font-weight:700; font-size:18px; color:var(--green); }
@@ -100,9 +107,9 @@
 </div>
 
 <header>
-  <h1>GO pub · Кухня <span id="staffNameTag" onclick="openNamePrompt()" style="color:var(--gold); font-weight:600; cursor:pointer; text-decoration:underline dotted;"></span></h1>
+  <h1>GO pub · Кухня <span id="staffNameTag" onclick="openNamePrompt()" style="color:var(--gold); font-weight:600; cursor:pointer;"></span></h1>
   <div class="conn off" id="conn">подключение…</div>
-  <div style="margin-top:4px;"><a href="#" onclick="openNamePrompt();return false;" style="font-size:11px;color:var(--muted);text-decoration:none;">Изменить имя</a> · <a href="#" onclick="openPinPrompt();return false;" style="font-size:11px;color:var(--muted);text-decoration:none;">Сменить PIN</a></div>
+  <div class="settings-links"><a href="#" onclick="openNamePrompt();return false;">Изменить имя</a><a href="#" onclick="openPinPrompt();return false;">Сменить PIN</a></div>
 </header>
 
 <main>

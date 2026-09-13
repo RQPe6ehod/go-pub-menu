@@ -31,6 +31,13 @@
   .mgr-tabs{ display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
   .mgr-tabs button{ flex:1 1 auto; min-width:120px; padding:9px 0; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-weight:600; font-size:13px; }
   .mgr-tabs button.active{ background:var(--gold); border-color:var(--gold); color:var(--bg-deep); }
+  .settings-links{ margin-top:8px; display:flex; gap:6px; }
+  .settings-links a{
+    font-size:10.5px; color:var(--muted); text-decoration:none;
+    border:1px solid var(--line); border-radius:999px; padding:4px 10px;
+    background:var(--panel);
+  }
+  .settings-links a:active{ background:var(--gold); color:var(--bg-deep); border-color:var(--gold); }
   .day-header{ font-family:'Fraunces',serif; color:var(--gold); font-size:16px; margin:22px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--line); }
   .day-header:first-child{ margin-top:0; }
   .staff-day-group{ margin-bottom:6px; }
@@ -152,7 +159,7 @@
 <header>
   <h1>GO pub · Менеджер</h1>
   <div class="conn off" id="conn">подключение…</div>
-  <div style="margin-top:4px;"><a href="#" onclick="openPinPrompt();return false;" style="font-size:11px;color:var(--muted);text-decoration:none;">Сменить PIN</a></div>
+  <div class="settings-links"><a href="#" onclick="openPinPrompt();return false;">Сменить PIN</a></div>
 </header>
 
 <main>
