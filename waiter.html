@@ -43,6 +43,25 @@
   .qty button{ width:28px; height:28px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:16px; }
   .qty span{ min-width:16px; text-align:center; font-weight:600; }
 
+  .dest-tabs{ display:flex; gap:6px; margin-bottom:12px; }
+  .dest-tabs button{ flex:1; padding:9px 0; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-weight:600; font-size:13px; }
+  .dest-tabs button.active{ background:var(--gold); border-color:var(--gold); color:var(--bg-deep); }
+
+  .chip-row{ display:flex; gap:8px; overflow-x:auto; padding-bottom:10px; margin-bottom:6px; scrollbar-width:none; }
+  .chip-row::-webkit-scrollbar{ display:none; }
+  .chip-row button{ flex:0 0 auto; white-space:nowrap; background:var(--panel); border:1px solid var(--line); color:var(--muted); font-size:12.5px; font-weight:500; padding:7px 13px; border-radius:999px; }
+  .chip-row button.active{ background:var(--gold); border-color:var(--gold); color:var(--bg-deep); font-weight:600; }
+  .chip-row button.has-items{ border-color:var(--gold); color:var(--gold); }
+
+  .accordion-cat{ border-bottom:1px solid var(--line); }
+  .accordion-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 2px; cursor:pointer; }
+  .accordion-head h3{ font-family:'Fraunces',serif; color:var(--gold); font-size:16px; margin:0; display:flex; align-items:center; gap:8px; }
+  .accordion-head .count{ background:var(--gold); color:var(--bg-deep); font-size:11px; font-weight:700; border-radius:999px; padding:1px 8px; }
+  .accordion-head .chevron{ color:var(--muted); font-size:13px; transition:transform .2s ease; }
+  .accordion-head.open .chevron{ transform:rotate(180deg); }
+  .accordion-body{ display:none; padding-bottom:8px; }
+  .accordion-body.open{ display:block; }
+
   .cart-bar{
     position:fixed; bottom:0; left:0; right:0; background:var(--gold); color:var(--bg-deep);
     padding:14px 20px; display:flex; justify-content:space-between; align-items:center;
@@ -99,7 +118,11 @@
     <button onclick="setMode('board')">Мои заказы</button>
   </div>
 
-  <div id="orderView"></div>
+  <div id="orderView">
+    <div class="dest-tabs" id="destTabs"></div>
+    <div class="chip-row" id="catChips"></div>
+    <div id="catList"></div>
+  </div>
   <div id="boardView" style="display:none"></div>
 </main>
 
@@ -143,6 +166,8 @@ const ROLE = "waiter";
 let socket = null;
 let currentTable = null;
 let mode = "order";
+let activeDest = "kitchen";
+let openCat = null;
 let cart = {}; // key: "kitchen|Название" -> {name, qty, dest, price}
 let allOrders = [];
 
@@ -209,28 +234,76 @@ function setMode(m){
   if(m==='board') renderBoard();
 }
 
+function catCount(dest, cat){
+  return cat.items.reduce((s,[name]) => s + (cart[dest+"|"+name] ? cart[dest+"|"+name].qty : 0), 0);
+}
+
+function renderDestTabs(){
+  const el = document.getElementById('destTabs');
+  el.innerHTML = `
+    <button class="${activeDest==='kitchen'?'active':''}" onclick="setDest('kitchen')">Кухня</button>
+    <button class="${activeDest==='bar'?'active':''}" onclick="setDest('bar')">Бар</button>`;
+}
+
+function setDest(dest){
+  activeDest = dest;
+  openCat = null;
+  renderChips();
+  renderDestTabs();
+  renderMenu();
+}
+
+function renderChips(){
+  const el = document.getElementById('catChips');
+  el.innerHTML = "";
+  MENU[activeDest].forEach(cat => {
+    const b = document.createElement('button');
+    const n = catCount(activeDest, cat);
+    b.textContent = cat.title + (n>0 ? ` (${n})` : '');
+    b.className = (openCat===cat.title ? 'active' : (n>0 ? 'has-items' : ''));
+    b.onclick = () => selectCategory(cat.title);
+    el.appendChild(b);
+  });
+}
+
+function selectCategory(title){
+  openCat = (openCat===title) ? null : title;
+  renderChips();
+  renderMenu();
+  if(openCat){
+    setTimeout(() => {
+      const node = document.getElementById('acc-'+cssSafe(title));
+      if(node) node.scrollIntoView({behavior:'smooth', block:'start'});
+    }, 30);
+  }
+}
+
 function renderMenu(){
-  const el = document.getElementById('orderView');
+  const el = document.getElementById('catList');
   let html = "";
-  ["kitchen","bar"].forEach(dest => {
-    html += `<h2 style="font-family:'Fraunces',serif;color:var(--gold);font-size:15px;margin:14px 0 8px;">${dest==='kitchen'?'Кухня':'Бар'}</h2>`;
-    MENU[dest].forEach(cat => {
-      html += `<div class="cat"><h3>${cat.title}</h3>`;
-      cat.items.forEach(([name, price]) => {
-        const key = dest+"|"+name;
-        const qty = cart[key] ? cart[key].qty : 0;
-        html += `<div class="item">
-          <div class="name">${name}</div>
-          <div class="price">${price}</div>
-          <div class="qty">
-            <button onclick="changeQty('${dest}','${name.replace(/'/g,"\\'")}',-1)">−</button>
-            <span id="qty-${dest}-${cssSafe(name)}">${qty}</span>
-            <button onclick="changeQty('${dest}','${name.replace(/'/g,"\\'")}',1,'${price}')">+</button>
-          </div>
-        </div>`;
-      });
-      html += `</div>`;
+  MENU[activeDest].forEach(cat => {
+    const isOpen = openCat === cat.title;
+    const n = catCount(activeDest, cat);
+    html += `<div class="accordion-cat" id="acc-${cssSafe(cat.title)}">
+      <div class="accordion-head ${isOpen?'open':''}" onclick="selectCategory('${cat.title.replace(/'/g,"\\'")}')">
+        <h3>${cat.title} ${n>0?`<span class="count">${n}</span>`:''}</h3>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="accordion-body ${isOpen?'open':''}">`;
+    cat.items.forEach(([name, price]) => {
+      const key = activeDest+"|"+name;
+      const qty = cart[key] ? cart[key].qty : 0;
+      html += `<div class="item">
+        <div class="name">${name}</div>
+        <div class="price">${price}</div>
+        <div class="qty">
+          <button onclick="changeQty('${activeDest}','${name.replace(/'/g,"\\'")}',-1)">−</button>
+          <span id="qty-${activeDest}-${cssSafe(name)}">${qty}</span>
+          <button onclick="changeQty('${activeDest}','${name.replace(/'/g,"\\'")}',1,'${price}')">+</button>
+        </div>
+      </div>`;
     });
+    html += `</div></div>`;
   });
   el.innerHTML = html;
 }
@@ -245,6 +318,7 @@ function changeQty(dest, name, delta, price){
   else cart[key] = { name, qty: next, dest, price: existingPrice };
   const span = document.getElementById('qty-'+dest+'-'+cssSafe(name));
   if(span) span.textContent = next;
+  renderChips();
   updateCartBar();
 }
 
@@ -307,6 +381,8 @@ function serveOrder(id){
 
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
 renderTables();
+renderDestTabs();
+renderChips();
 renderMenu();
 connect();
 </script>
