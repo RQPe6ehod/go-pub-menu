@@ -45,6 +45,14 @@
   .staff-stat-row{ display:flex; justify-content:space-between; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:8px; font-size:13.5px; }
   .staff-stat-row .n{ font-weight:600; }
   .staff-stat-row .v{ color:var(--gold); font-family:'Fraunces',serif; font-weight:700; }
+  .an-row{ display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:8px; }
+  .an-row .label{ font-size:13.5px; }
+  .an-row .sub{ font-size:11px; color:var(--muted); margin-top:1px; }
+  .an-row .value{ text-align:right; }
+  .an-row .value .rev{ font-family:'Fraunces',serif; color:var(--gold); font-weight:700; font-size:14.5px; }
+  .an-row .value .count{ font-size:11px; color:var(--muted); }
+  .an-bar{ height:4px; background:var(--line); border-radius:99px; margin-top:6px; overflow:hidden; }
+  .an-bar-fill{ height:100%; background:var(--gold); border-radius:99px; }
   .badge-count{ background:var(--red); color:#fff; font-size:10px; font-weight:700; border-radius:999px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 4px; }
 
   .unavail-row{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
@@ -156,18 +164,28 @@
   </div>
 </div>
 
+<div class="lock" id="nameLock" style="display:none">
+  <div class="lock-box">
+    <h2>Как вас зовут?</h2>
+    <p>Ваше имя будет отображаться в интерфейсе</p>
+    <input id="nameInput" type="text" maxlength="30" placeholder="Иван" style="letter-spacing:normal; font-size:18px; text-align:left; padding:14px 16px;">
+    <button onclick="submitName()">Сохранить</button>
+  </div>
+</div>
+
 <header>
-  <h1>GO pub · Менеджер</h1>
+  <h1>GO pub · Менеджер <span id="staffNameTag" onclick="openNamePrompt()" style="color:var(--gold); font-weight:600; cursor:pointer;"></span></h1>
   <div class="conn off" id="conn">подключение…</div>
-  <div class="settings-links"><a href="#" onclick="openPinPrompt();return false;">Сменить PIN</a></div>
+  <div class="settings-links"><a href="#" onclick="openNamePrompt();return false;">Изменить имя</a><a href="#" onclick="openPinPrompt();return false;">Сменить PIN</a></div>
 </header>
 
 <main>
-  <div class="mgr-tabs">
+  <div class="mgr-tabs" id="mainTabs">
     <button class="active" onclick="setMgrMode('overview')">Обзор</button>
     <button onclick="setMgrMode('staff')">Сотрудники</button>
     <button onclick="setMgrMode('unavail')" style="position:relative;">Недоступные блюда<span class="badge-count" id="unavailBadge" style="display:none;position:absolute;top:-6px;right:-6px;">0</span></button>
     <button onclick="setMgrMode('history')">История</button>
+    <button onclick="setMgrMode('analytics')">Аналитика</button>
   </div>
 
   <div id="overviewView">
@@ -229,6 +247,31 @@
   </div>
 
   <div id="historyView2" style="display:none"></div>
+
+  <div id="analyticsView" style="display:none">
+    <div class="stats small">
+      <div class="stat"><div class="num" id="anTotalOrders">0</div><div class="lbl">заказов всего</div></div>
+      <div class="stat"><div class="num" id="anTotalRevenue">0</div><div class="lbl">выручка всего, тг</div></div>
+      <div class="stat"><div class="num" id="anAvgCheck">0</div><div class="lbl">средний чек, тг</div></div>
+    </div>
+
+    <h2>Динамика</h2>
+    <div class="mgr-tabs" id="granTabs">
+      <button class="active" onclick="setGranularity('day')">По дням</button>
+      <button onclick="setGranularity('week')">По неделям</button>
+      <button onclick="setGranularity('month')">По месяцам</button>
+    </div>
+    <div id="anTimeline"></div>
+
+    <h2>Разбивка</h2>
+    <div class="mgr-tabs" id="groupTabs">
+      <button class="active" onclick="setGroupBy('waiter')">Официанты</button>
+      <button onclick="setGroupBy('cook')">Повара</button>
+      <button onclick="setGroupBy('bartender')">Бармены</button>
+      <button onclick="setGroupBy('dish')">Блюда</button>
+    </div>
+    <div id="anBreakdown"></div>
+  </div>
 </main>
 
 <div class="qr-overlay" id="qrOverlay">
@@ -267,6 +310,7 @@ const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
 const ROLE = "manager";
 let socket, allOrders = [], allHistory = [], openTables = {}, closedTables = [], staff = [], tableCount = 20, unavailable = {};
 let mgrMode = 'overview';
+let staffName = "";
 
 function getPin(){ return sessionStorage.getItem("gopub_pin_"+ROLE); }
 function setPin(p){ sessionStorage.setItem("gopub_pin_"+ROLE, p); }
@@ -283,6 +327,25 @@ function showLock(err){
   document.getElementById('pinInput').value = "";
 }
 function hideLock(){ document.getElementById('lock').style.display = 'none'; }
+
+function showNameLock(){
+  document.getElementById('nameInput').value = staffName || "";
+  document.getElementById('nameLock').style.display = 'flex';
+}
+function hideNameLock(){ document.getElementById('nameLock').style.display = 'none'; }
+function openNamePrompt(){ showNameLock(); }
+function submitName(){
+  const name = document.getElementById('nameInput').value.trim();
+  if(!name) return;
+  staffName = name;
+  localStorage.setItem('gopub_display_name_'+ROLE, name);
+  socket.send(JSON.stringify({type:"set_display_name", name}));
+  hideNameLock();
+  updateStaffNameTag();
+}
+function updateStaffNameTag(){
+  document.getElementById('staffNameTag').textContent = staffName ? "— " + staffName : "— указать имя";
+}
 
 let lastPinAttempt = null;
 function openPinPrompt(){
@@ -303,7 +366,12 @@ function connect(){
   socket.onerror = () => socket.close();
   socket.onmessage = (evt) => {
     const msg = JSON.parse(evt.data);
-    if(msg.type === "auth_ok"){ hideLock(); }
+    if(msg.type === "auth_ok"){
+      hideLock();
+      const cached = localStorage.getItem('gopub_display_name_'+ROLE);
+      if(cached){ staffName = cached; socket.send(JSON.stringify({type:"set_display_name", name:cached})); updateStaffNameTag(); }
+      else updateStaffNameTag();
+    }
     if(msg.type === "auth_error"){ sessionStorage.removeItem("gopub_pin_"+ROLE); showLock("Неверный PIN"); }
     if(msg.type === "pin_changed"){ setPin(lastPinAttempt); alert("PIN обновлён. Запомните новый PIN — он понадобится при следующем входе."); }
     if(msg.type === "pin_change_error"){ alert("Не удалось изменить PIN — используйте 4-6 цифр."); }
@@ -320,6 +388,7 @@ function connect(){
       renderStaff();
       renderUnavailable();
       if(mgrMode === 'history') renderStaffHistory();
+      if(mgrMode === 'analytics') renderAnalytics();
     }
   };
 }
@@ -425,13 +494,147 @@ setInterval(render, 1000);
 
 function setMgrMode(m){
   mgrMode = m;
-  const idx = {overview:0, staff:1, unavail:2, history:3}[m];
-  document.querySelectorAll('.mgr-tabs button').forEach((b,i) => b.classList.toggle('active', i===idx));
+  const idx = {overview:0, staff:1, unavail:2, history:3, analytics:4}[m];
+  document.querySelectorAll('#mainTabs button').forEach((b,i) => b.classList.toggle('active', i===idx));
   document.getElementById('overviewView').style.display = m==='overview' ? '' : 'none';
   document.getElementById('staffView').style.display = m==='staff' ? '' : 'none';
   document.getElementById('unavailView').style.display = m==='unavail' ? '' : 'none';
   document.getElementById('historyView2').style.display = m==='history' ? '' : 'none';
+  document.getElementById('analyticsView').style.display = m==='analytics' ? '' : 'none';
   if(m==='history') renderStaffHistory();
+  if(m==='analytics') renderAnalytics();
+}
+
+let granularity = 'day';
+let groupBy = 'waiter';
+function setGranularity(g){
+  granularity = g;
+  document.querySelectorAll('#granTabs button').forEach((b,i) => b.classList.toggle('active', ['day','week','month'][i]===g));
+  renderAnalytics();
+}
+function setGroupBy(g){
+  groupBy = g;
+  document.querySelectorAll('#groupTabs button').forEach((b,i) => b.classList.toggle('active', ['waiter','cook','bartender','dish'][i]===g));
+  renderAnalytics();
+}
+
+function isoWeekInfo(ts){
+  const d = new Date(ts);
+  d.setHours(0,0,0,0);
+  d.setDate(d.getDate() - ((d.getDay()+6)%7)); // back to Monday
+  return d;
+}
+function bucketKey(ts, g){
+  const d = new Date(ts);
+  if(g==='day') return d.toDateString();
+  if(g==='week') return isoWeekInfo(ts).toDateString();
+  return d.getFullYear()+'-'+d.getMonth();
+}
+function bucketLabel(ts, g){
+  const d = new Date(ts);
+  if(g==='day') return dayLabel(ts);
+  if(g==='week'){
+    const start = isoWeekInfo(ts);
+    const end = new Date(start); end.setDate(start.getDate()+6);
+    return `${start.toLocaleDateString('ru-RU',{day:'numeric',month:'short'})} – ${end.toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}`;
+  }
+  return d.toLocaleDateString('ru-RU', {month:'long', year:'numeric'});
+}
+
+function renderAnalytics(){
+  const totalOrders = closedTables.length;
+  const totalRevenue = closedTables.reduce((s,c) => s + (c.total||0), 0);
+  const avgCheck = totalOrders ? Math.round(totalRevenue/totalOrders) : 0;
+  document.getElementById('anTotalOrders').textContent = totalOrders;
+  document.getElementById('anTotalRevenue').textContent = totalRevenue.toLocaleString('ru-RU');
+  document.getElementById('anAvgCheck').textContent = avgCheck.toLocaleString('ru-RU');
+
+  // --- timeline ---
+  const buckets = {}; // key -> {ts, orders, revenue}
+  closedTables.forEach(c => {
+    const key = bucketKey(c.closedAt, granularity);
+    if(!buckets[key]) buckets[key] = { ts: c.closedAt, orders: 0, revenue: 0 };
+    buckets[key].orders++;
+    buckets[key].revenue += c.total || 0;
+    if(c.closedAt > buckets[key].ts) buckets[key].ts = c.closedAt;
+  });
+  const sortedBuckets = Object.values(buckets).sort((a,b) => b.ts - a.ts);
+  const maxRevenue = Math.max(1, ...sortedBuckets.map(b => b.revenue));
+  const tlEl = document.getElementById('anTimeline');
+  if(sortedBuckets.length===0){ tlEl.innerHTML = `<div class="empty">Данных пока нет</div>`; }
+  else {
+    tlEl.innerHTML = sortedBuckets.map(b => `
+      <div class="an-row" style="display:block;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div><div class="label">${bucketLabel(b.ts, granularity)}</div><div class="sub">${b.orders} заказ${b.orders===1?'':(b.orders<5?'а':'ов')}</div></div>
+          <div class="value"><div class="rev">${b.revenue.toLocaleString('ru-RU')} тг</div></div>
+        </div>
+        <div class="an-bar"><div class="an-bar-fill" style="width:${Math.round(b.revenue/maxRevenue*100)}%"></div></div>
+      </div>`).join('');
+  }
+
+  // --- breakdown ---
+  const bdEl = document.getElementById('anBreakdown');
+  if(groupBy === 'dish'){
+    const agg = {}; // name -> {qty, revenue}
+    closedTables.forEach(c => {
+      c.items.forEach(i => {
+        const price = parseInt(String(i.price).replace(/[^\d]/g,''),10) || 0;
+        if(!agg[i.name]) agg[i.name] = {qty:0, revenue:0};
+        agg[i.name].qty += i.qty;
+        agg[i.name].revenue += price * i.qty;
+      });
+    });
+    const rows = Object.entries(agg).sort((a,b) => b[1].revenue - a[1].revenue);
+    if(rows.length===0){ bdEl.innerHTML = `<div class="empty">Данных пока нет</div>`; }
+    else {
+      const maxRev = Math.max(1, ...rows.map(r => r[1].revenue));
+      bdEl.innerHTML = rows.map(([name, s]) => `
+        <div class="an-row" style="display:block;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div><div class="label">${name}</div><div class="sub">продано: ${s.qty}</div></div>
+            <div class="value"><div class="rev">${s.revenue.toLocaleString('ru-RU')} тг</div></div>
+          </div>
+          <div class="an-bar"><div class="an-bar-fill" style="width:${Math.round(s.revenue/maxRev*100)}%"></div></div>
+        </div>`).join('');
+    }
+  } else if(groupBy === 'waiter'){
+    const agg = {}; // name -> {orders, revenue}
+    closedTables.forEach(c => {
+      const name = c.closedBy || "Без имени";
+      if(!agg[name]) agg[name] = {orders:0, revenue:0};
+      agg[name].orders++;
+      agg[name].revenue += c.total || 0;
+    });
+    renderPersonBreakdown(bdEl, agg, "orders", "revenue", "тг", true);
+  } else {
+    // cook / bartender — count of completed tickets from history
+    const isKitchen = groupBy === 'cook';
+    const agg = {};
+    allHistory.forEach(o => {
+      const items = isKitchen ? o.kitchenItems : o.barItems;
+      const name = isKitchen ? o.cookName : o.bartenderName;
+      if(items && items.length && name){
+        if(!agg[name]) agg[name] = {orders:0};
+        agg[name].orders++;
+      }
+    });
+    renderPersonBreakdown(bdEl, agg, "orders", null, null, false);
+  }
+}
+
+function renderPersonBreakdown(el, agg, countKey, revenueKey, unit, showRevenue){
+  const rows = Object.entries(agg).sort((a,b) => (b[1][revenueKey]||b[1][countKey]) - (a[1][revenueKey]||a[1][countKey]));
+  if(rows.length===0){ el.innerHTML = `<div class="empty">Данных пока нет</div>`; return; }
+  const maxVal = Math.max(1, ...rows.map(r => showRevenue ? r[1][revenueKey] : r[1][countKey]));
+  el.innerHTML = rows.map(([name, s]) => `
+    <div class="an-row" style="display:block;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><div class="label">${name}</div><div class="sub">${s[countKey]} заказ${s[countKey]===1?'':(s[countKey]<5?'а':'ов')}</div></div>
+        ${showRevenue ? `<div class="value"><div class="rev">${s[revenueKey].toLocaleString('ru-RU')} ${unit}</div></div>` : ''}
+      </div>
+      <div class="an-bar"><div class="an-bar-fill" style="width:${Math.round((showRevenue?s[revenueKey]:s[countKey])/maxVal*100)}%"></div></div>
+    </div>`).join('');
 }
 
 function dayLabel(ts){
