@@ -28,6 +28,42 @@
   .stat .lbl{ font-size:11px; color:var(--muted); margin-top:2px; }
 
   h2{ font-family:'Fraunces',serif; font-size:17px; color:var(--gold); margin:22px 0 10px; }
+  .mgr-tabs{ display:flex; gap:6px; margin-bottom:16px; }
+  .mgr-tabs button{ flex:1; padding:9px 0; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-weight:600; font-size:13px; }
+  .mgr-tabs button.active{ background:var(--gold); border-color:var(--gold); color:var(--bg-deep); }
+  .badge-count{ background:var(--red); color:#fff; font-size:10px; font-weight:700; border-radius:999px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 4px; }
+
+  .unavail-row{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .unavail-row .name{ font-weight:600; font-size:14.5px; margin-bottom:2px; }
+  .unavail-row .meta{ font-size:11.5px; color:var(--muted); }
+  .unavail-row .comment{ font-size:12.5px; color:var(--gold); margin-top:4px; }
+
+  .settings-row{ display:flex; align-items:center; justify-content:space-between; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:18px; }
+  .settings-row .label{ font-size:13.5px; }
+  .settings-row .stepper{ display:flex; align-items:center; gap:10px; }
+  .settings-row .stepper button{ width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:16px; }
+  .settings-row .stepper span{ min-width:26px; text-align:center; font-weight:700; font-family:'Fraunces',serif; font-size:16px; }
+
+  .role-buttons{ display:flex; gap:8px; margin-bottom:16px; }
+  .role-buttons button{ flex:1; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; }
+  .role-buttons button:active{ background:var(--gold); color:var(--bg-deep); }
+
+  .staff-row{ display:flex; align-items:center; justify-content:space-between; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .staff-row .info{ display:flex; flex-direction:column; }
+  .staff-row .name{ font-weight:600; font-size:14.5px; }
+  .staff-row .name.pending{ color:var(--muted); font-weight:400; font-style:italic; }
+  .staff-row .role-tag{ font-size:11px; color:var(--muted); }
+  .staff-row .actions{ display:flex; gap:6px; }
+  .staff-row .actions button{ padding:7px 12px; border-radius:8px; font-size:12px; font-weight:600; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); }
+  .staff-row .actions button.danger{ border-color:var(--red); color:var(--red); }
+
+  .qr-overlay{ position:fixed; inset:0; background:rgba(14,29,23,.92); z-index:95; display:none; align-items:center; justify-content:center; padding:24px; }
+  .qr-overlay.open{ display:flex; }
+  .qr-box{ background:#fff; border-radius:16px; padding:24px; text-align:center; max-width:320px; width:100%; }
+  .qr-box img{ width:220px; height:220px; margin-bottom:14px; }
+  .qr-box .role{ font-family:'Fraunces',serif; color:#1b1b1b; font-size:16px; margin-bottom:4px; }
+  .qr-box .link{ font-size:11px; color:#777; word-break:break-all; margin-bottom:16px; }
+  .qr-box button{ width:100%; padding:12px; border:none; border-radius:10px; background:var(--gold); color:#1b1b1b; font-weight:700; }
   .ticket{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
   .ticket .top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
   .table-badge{ font-family:'Fraunces',serif; font-weight:700; color:var(--gold); }
@@ -70,27 +106,82 @@
 </header>
 
 <main>
-  <div class="stats small">
-    <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">заказов активно</div></div>
-    <div class="stat"><div class="num" id="statProgress">0</div><div class="lbl">в работе</div></div>
-    <div class="stat"><div class="num" id="statReady">0</div><div class="lbl">готово, ждут</div></div>
-  </div>
-  <div class="stats">
-    <div class="stat"><div class="num" id="statRevenue">0</div><div class="lbl">выручка сегодня, тг</div></div>
-    <div class="stat"><div class="num" id="statServed">0</div><div class="lbl">обслужено сегодня</div></div>
+  <div class="mgr-tabs">
+    <button class="active" onclick="setMgrMode('overview')">Обзор</button>
+    <button onclick="setMgrMode('staff')">Сотрудники</button>
+    <button onclick="setMgrMode('unavail')" style="position:relative;">Недоступные блюда<span class="badge-count" id="unavailBadge" style="display:none;position:absolute;top:-6px;right:-6px;">0</span></button>
   </div>
 
-  <h2>Все заказы</h2>
-  <div id="board"></div>
+  <div id="overviewView">
+    <div class="stats small">
+      <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">заказов активно</div></div>
+      <div class="stat"><div class="num" id="statProgress">0</div><div class="lbl">в работе</div></div>
+      <div class="stat"><div class="num" id="statReady">0</div><div class="lbl">готово, ждут</div></div>
+    </div>
+    <div class="stats small">
+      <div class="stat"><div class="num" id="statOpenTables">0</div><div class="lbl">столов занято</div></div>
+      <div class="stat"><div class="num" id="statRevenue">0</div><div class="lbl">выручка сегодня, тг</div></div>
+      <div class="stat"><div class="num" id="statServed">0</div><div class="lbl">столов закрыто</div></div>
+    </div>
 
-  <h2>История (сегодня)</h2>
-  <div id="history"></div>
+    <h2>Занятые столы</h2>
+    <div id="tablesBoard"></div>
+
+    <h2>Все тикеты в работе</h2>
+    <div id="board"></div>
+
+    <h2>Закрытые столы (сегодня)</h2>
+    <div id="history"></div>
+  </div>
+
+  <div id="staffView" style="display:none">
+    <h2>Количество столов</h2>
+    <div class="settings-row">
+      <span class="label">Доступно столов у официанта</span>
+      <div class="stepper">
+        <button onclick="changeTableCount(-1)">−</button>
+        <span id="tableCountVal">20</span>
+        <button onclick="changeTableCount(1)">+</button>
+      </div>
+    </div>
+
+    <h2>Добавить сотрудника</h2>
+    <div class="role-buttons">
+      <button onclick="createStaff('waiter')">+ Официант</button>
+      <button onclick="createStaff('cook')">+ Повар</button>
+      <button onclick="createStaff('bartender')">+ Бармен</button>
+    </div>
+
+    <h2>Официанты</h2>
+    <div id="staffWaiter"></div>
+    <h2>Повара</h2>
+    <div id="staffCook"></div>
+    <h2>Бармены</h2>
+    <div id="staffBartender"></div>
+  </div>
+
+  <div id="unavailView" style="display:none">
+    <h2>Кухня</h2>
+    <div id="unavailKitchen"></div>
+    <h2>Бар</h2>
+    <div id="unavailBar"></div>
+  </div>
 </main>
+
+<div class="qr-overlay" id="qrOverlay">
+  <div class="qr-box">
+    <div class="role" id="qrRole"></div>
+    <img id="qrImg" src="">
+    <div class="link" id="qrLink"></div>
+    <button onclick="closeQr()">Закрыть</button>
+  </div>
+</div>
 
 <script>
 const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
 const ROLE = "manager";
-let socket, allOrders = [], allHistory = [];
+let socket, allOrders = [], allHistory = [], openTables = {}, closedTables = [], staff = [], tableCount = 20, unavailable = {};
+let mgrMode = 'overview';
 
 function getPin(){ return sessionStorage.getItem("gopub_pin_"+ROLE); }
 function setPin(p){ sessionStorage.setItem("gopub_pin_"+ROLE, p); }
@@ -119,7 +210,15 @@ function connect(){
     const msg = JSON.parse(evt.data);
     if(msg.type === "auth_ok"){ hideLock(); }
     if(msg.type === "auth_error"){ sessionStorage.removeItem("gopub_pin_"+ROLE); showLock("Неверный PIN"); }
-    if(msg.type === "state"){ allOrders = msg.orders; allHistory = msg.history || []; render(); }
+    if(msg.type === "state"){
+      allOrders = msg.orders; allHistory = msg.history || []; openTables = msg.openTables || {};
+      closedTables = msg.closedTables || []; staff = msg.staff || []; tableCount = msg.tableCount || 20;
+      unavailable = msg.unavailable || {};
+      document.getElementById('tableCountVal').textContent = tableCount;
+      render();
+      renderStaff();
+      renderUnavailable();
+    }
   };
 }
 function setConn(on){
@@ -158,13 +257,29 @@ function render(){
   document.getElementById('statReady').textContent = ready;
   document.getElementById('statProgress').textContent = total - ready;
 
-  const todays = allHistory.filter(o => isToday(o.servedAt));
-  const revenue = todays.reduce((s,o) => s + (o.total||0), 0);
+  const tableNums = Object.keys(openTables).map(Number).sort((a,b)=>a-b);
+  document.getElementById('statOpenTables').textContent = tableNums.length;
+
+  const closedToday = closedTables.filter(c => isToday(c.closedAt));
+  const revenue = closedToday.reduce((s,c) => s + (c.total||0), 0);
   document.getElementById('statRevenue').textContent = revenue.toLocaleString('ru-RU');
-  document.getElementById('statServed').textContent = todays.length;
+  document.getElementById('statServed').textContent = closedToday.length;
+
+  const tablesEl = document.getElementById('tablesBoard');
+  if(tableNums.length===0){ tablesEl.innerHTML = `<div class="empty">Сейчас нет занятых столов</div>`; }
+  else {
+    let thtml = "";
+    tableNums.forEach(t => {
+      const s = openTables[t];
+      const activeCount = allOrders.filter(o => o.table === t).length;
+      thtml += `<div class="ticket"><div class="top"><span class="table-badge">Стол ${t}</span><span class="time">открыт ${timeAgo(s.openedAt)}</span></div>
+        <div class="line">${activeCount>0 ? `В работе тикетов: ${activeCount}` : 'Всё подано, ждёт закрытия'}</div></div>`;
+    });
+    tablesEl.innerHTML = thtml;
+  }
 
   const el = document.getElementById('board');
-  if(total===0){ el.innerHTML = `<div class="empty">Активных заказов нет</div>`; }
+  if(total===0){ el.innerHTML = `<div class="empty">Активных тикетов нет</div>`; }
   else {
     let html = "";
     allOrders.slice().sort((a,b)=>b.createdAt-a.createdAt).forEach(o => {
@@ -172,15 +287,18 @@ function render(){
       if(o.kitchenItems.length) html += `<span class="badge ${o.kitchenStatus==='ready'?'ready':'pending'}">Кухня: ${o.kitchenStatus==='ready'?'готово':(o.kitchenStatus==='accepted'?'готовит':'в очереди')}</span>`;
       if(o.barItems.length) html += `<span class="badge ${o.barStatus==='ready'?'ready':'pending'}">Бар: ${o.barStatus==='ready'?'готово':(o.barStatus==='accepted'?'готовит':'в очереди')}</span>`;
       html += `</div>`;
+      if(o.waiterName) html += `<div class="line" style="color:var(--muted);font-size:11.5px;">Официант: ${o.waiterName}</div>`;
       o.kitchenItems.forEach(i => html += `<div class="line">${i.name} <small>× ${i.qty}</small></div>`);
       if(o.kitchenItems.length){
         html += timingLine("Реакция кухни", o.kitchenStatus, o.createdAt, o.kitchenAcceptedAt);
         html += timingLine("Готовка", o.kitchenStatus, o.kitchenAcceptedAt, o.kitchenReadyAt);
+        if(o.cookName) html += `<div class="line" style="color:var(--muted);font-size:11.5px;">Повар: ${o.cookName}</div>`;
       }
       o.barItems.forEach(i => html += `<div class="line">${i.name} <small>× ${i.qty}</small></div>`);
       if(o.barItems.length){
         html += timingLine("Реакция бара", o.barStatus, o.createdAt, o.barAcceptedAt);
         html += timingLine("Готовка", o.barStatus, o.barAcceptedAt, o.barReadyAt);
+        if(o.bartenderName) html += `<div class="line" style="color:var(--muted);font-size:11.5px;">Бармен: ${o.bartenderName}</div>`;
       }
       html += `</div>`;
     });
@@ -188,10 +306,10 @@ function render(){
   }
 
   const histEl = document.getElementById('history');
-  if(todays.length===0){ histEl.innerHTML = `<div class="empty">Сегодня ещё не было обслуженных заказов</div>`; return; }
+  if(closedToday.length===0){ histEl.innerHTML = `<div class="empty">Сегодня ещё не закрывали столы</div>`; return; }
   let hhtml = "";
-  todays.slice().sort((a,b)=>b.servedAt-a.servedAt).forEach(o => {
-    hhtml += `<div class="hist-row"><span class="t">Стол ${o.table} · ${new Date(o.servedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span><span class="p">${(o.total||0).toLocaleString('ru-RU')} тг</span></div>`;
+  closedToday.slice().sort((a,b)=>b.closedAt-a.closedAt).forEach(c => {
+    hhtml += `<div class="hist-row"><span class="t">Стол ${c.table} · ${new Date(c.closedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span><span class="p">${c.total.toLocaleString('ru-RU')} тг</span></div>`;
   });
   histEl.innerHTML = hhtml;
 }
@@ -202,6 +320,97 @@ function timeAgo(ts){
 
 connect();
 setInterval(render, 1000);
+
+function setMgrMode(m){
+  mgrMode = m;
+  document.querySelectorAll('.mgr-tabs button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.mgr-tabs button')[m==='overview'?0:(m==='staff'?1:2)].classList.add('active');
+  document.getElementById('overviewView').style.display = m==='overview' ? '' : 'none';
+  document.getElementById('staffView').style.display = m==='staff' ? '' : 'none';
+  document.getElementById('unavailView').style.display = m==='unavail' ? '' : 'none';
+}
+
+function renderUnavailable(){
+  const keys = Object.keys(unavailable);
+  document.getElementById('unavailBadge').style.display = keys.length>0 ? 'flex' : 'none';
+  document.getElementById('unavailBadge').textContent = keys.length;
+
+  const kitchenKeys = keys.filter(k => k.startsWith('kitchen|'));
+  const barKeys = keys.filter(k => k.startsWith('bar|'));
+
+  const renderGroup = (elId, groupKeys, destLen) => {
+    const el = document.getElementById(elId);
+    if(groupKeys.length===0){ el.innerHTML = `<div class="empty">Все позиции доступны</div>`; return; }
+    let html = "";
+    groupKeys.forEach(key => {
+      const name = key.slice(destLen);
+      const info = unavailable[key];
+      html += `<div class="unavail-row">
+        <div class="name">${name}</div>
+        <div class="meta">${info.disabledBy ? 'Убрал: '+info.disabledBy+' · ' : ''}${timeAgo(info.disabledAt)}</div>
+        ${info.comment ? `<div class="comment">Причина: ${info.comment}</div>` : ''}
+      </div>`;
+    });
+    el.innerHTML = html;
+  };
+  renderGroup('unavailKitchen', kitchenKeys, 'kitchen|'.length);
+  renderGroup('unavailBar', barKeys, 'bar|'.length);
+}
+
+function changeTableCount(delta){
+  const next = Math.max(1, tableCount + delta);
+  tableCount = next;
+  document.getElementById('tableCountVal').textContent = next;
+  socket.send(JSON.stringify({type:"set_table_count", count: next}));
+}
+
+function createStaff(role){
+  socket.send(JSON.stringify({type:"create_staff", role}));
+}
+function deleteStaff(id){
+  if(!confirm("Удалить этого сотрудника? Ссылка перестанет работать.")) return;
+  socket.send(JSON.stringify({type:"delete_staff", staffId:id}));
+}
+
+const ROLE_LABELS = { waiter: "Официант", cook: "Повар", bartender: "Бармен" };
+const ROLE_PAGES = { waiter: "waiter.html", cook: "cook.html", bartender: "bartender.html" };
+
+function renderStaff(){
+  renderStaffGroup('waiter', 'staffWaiter');
+  renderStaffGroup('cook', 'staffCook');
+  renderStaffGroup('bartender', 'staffBartender');
+}
+
+function renderStaffGroup(role, elId){
+  const el = document.getElementById(elId);
+  const list = staff.filter(s => s.role === role);
+  if(list.length===0){ el.innerHTML = `<div class="empty">Пока никого нет</div>`; return; }
+  let html = "";
+  list.forEach(s => {
+    html += `<div class="staff-row">
+      <div class="info">
+        <span class="name ${s.name?'':'pending'}">${s.name || 'Ожидает имени…'}</span>
+        <span class="role-tag">${ROLE_LABELS[role]}</span>
+      </div>
+      <div class="actions">
+        <button onclick="showQr('${role}','${s.id}')">QR</button>
+        <button class="danger" onclick="deleteStaff('${s.id}')">Удалить</button>
+      </div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function showQr(role, id){
+  const url = location.origin + '/' + ROLE_PAGES[role] + '?staff=' + id;
+  document.getElementById('qrRole').textContent = ROLE_LABELS[role];
+  document.getElementById('qrLink').textContent = url;
+  document.getElementById('qrImg').src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(url);
+  document.getElementById('qrOverlay').classList.add('open');
+}
+function closeQr(){
+  document.getElementById('qrOverlay').classList.remove('open');
+}
 </script>
 </body>
 </html>
