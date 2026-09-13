@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>GO pub — Бар</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#101E2A; --bg-deep:#0A141C; --panel:#17293A; --line:#254257;
+    --gold:#3FA9E0; --cream:#E8F3FA; --muted:#7FA0B8; --green:#4CAF7D; --red:#D9534F;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{ background:var(--bg); color:var(--cream); font-family:'Inter',sans-serif; min-height:100vh; }
+  header{ position:sticky; top:0; z-index:20; background:var(--bg-deep); border-bottom:1px solid var(--line); padding:16px 18px; }
+  header h1{ font-family:'Fraunces',serif; font-size:20px; margin:0 0 2px; }
+  header .conn{ font-size:11px; color:var(--muted); }
+  header .conn.on{ color:var(--green); }
+  header .conn.off{ color:var(--red); }
+
+  main{ padding:16px 18px; max-width:520px; margin:0 auto; }
+  .grid{ display:grid; gap:14px; }
+  .ticket{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; }
+  .ticket.new{ animation: pulse 1.4s ease-in-out 2; border-color: var(--gold); }
+  @keyframes pulse{ 0%,100%{ box-shadow:0 0 0 rgba(63,169,224,0);} 50%{ box-shadow:0 0 0 8px rgba(63,169,224,.15);} }
+  .ticket .top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .table-badge{ font-family:'Fraunces',serif; font-weight:700; font-size:22px; color:var(--gold); }
+  .time{ font-size:11px; color:var(--muted); }
+  .line{ font-size:16px; padding:6px 0; border-bottom:1px dashed var(--line); }
+  .line:last-of-type{ border-bottom:none; }
+  .line b{ color:var(--gold); }
+  .done-btn{ margin-top:14px; width:100%; padding:14px; border:none; border-radius:12px; background:var(--green); color:#0E1D17; font-weight:700; font-size:15px; }
+  .empty{ color:var(--muted); text-align:center; padding:60px 20px; font-size:15px; }
+
+  .lock{ position:fixed; inset:0; background:var(--bg-deep); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .lock-box{ width:100%; max-width:300px; text-align:center; }
+  .lock-box h2{ font-family:'Fraunces',serif; color:var(--cream); margin-bottom:6px; }
+  .lock-box p{ color:var(--muted); font-size:13px; margin-bottom:18px; }
+  .lock-box input{ width:100%; text-align:center; font-size:24px; letter-spacing:8px; padding:14px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); margin-bottom:12px; }
+  .lock-box button{ width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; }
+  .lock-box .err{ color:var(--red); font-size:12.5px; margin-top:10px; min-height:16px; }
+</style>
+</head>
+<body>
+
+<div class="lock" id="lock">
+  <div class="lock-box">
+    <h2>GO pub · Бар</h2>
+    <p>Введите PIN-код бармена</p>
+    <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••">
+    <button onclick="tryPin()">Войти</button>
+    <div class="err" id="pinErr"></div>
+  </div>
+</div>
+
+<header>
+  <h1>GO pub · Бар</h1>
+  <div class="conn off" id="conn">подключение…</div>
+</header>
+
+<main>
+  <div class="grid" id="board"></div>
+</main>
+
+<script>
+const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
+const ROLE = "bartender";
+let socket, allOrders = [], newIds = new Set();
+
+function getPin(){ return sessionStorage.getItem("gopub_pin_"+ROLE); }
+function setPin(p){ sessionStorage.setItem("gopub_pin_"+ROLE, p); }
+function tryPin(){
+  const p = document.getElementById('pinInput').value.trim();
+  if(!p) return;
+  setPin(p);
+  document.getElementById('pinErr').textContent = "";
+  connect();
+}
+function showLock(err){
+  document.getElementById('lock').style.display = 'flex';
+  document.getElementById('pinErr').textContent = err || "";
+  document.getElementById('pinInput').value = "";
+}
+function hideLock(){ document.getElementById('lock').style.display = 'none'; }
+
+function connect(){
+  const pin = getPin();
+  if(!pin){ showLock(); return; }
+  socket = new WebSocket(WS_URL);
+  socket.onopen = () => { setConn(true); socket.send(JSON.stringify({type:"hello", role:ROLE, pin})); };
+  socket.onclose = () => { setConn(false); setTimeout(connect, 2000); };
+  socket.onerror = () => socket.close();
+  socket.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if(msg.type === "auth_ok"){ hideLock(); }
+    if(msg.type === "auth_error"){ sessionStorage.removeItem("gopub_pin_"+ROLE); showLock("Неверный PIN"); }
+    if(msg.type === "state"){ allOrders = msg.orders; render(); }
+    if(msg.type === "notify"){ ding(msg); }
+  };
+}
+function setConn(on){
+  const el = document.getElementById('conn');
+  el.textContent = on ? "в сети" : "нет связи — переподключение…";
+  el.className = "conn " + (on?"on":"off");
+}
+function ding(msg){
+  if(msg.cancelled) return;
+  try{ new Audio("data:audio/wav;base64,UklGRhwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=").play(); }catch(e){}
+  if(navigator.vibrate) navigator.vibrate([250,100,250,100,250]);
+  if("Notification" in window && Notification.permission === "granted"){
+    new Notification("Новый заказ — стол " + msg.table);
+  }
+  newIds.add(msg.orderId);
+}
+
+function render(){
+  const el = document.getElementById('board');
+  const pending = allOrders.filter(o => o.barStatus === "pending");
+  if(pending.length===0){ el.innerHTML = `<div class="empty">Новых заказов нет 🍸</div>`; return; }
+  let html = "";
+  pending.slice().sort((a,b)=>a.createdAt-b.createdAt).forEach(o => {
+    const isNew = newIds.has(o.id);
+    html += `<div class="ticket ${isNew?'new':''}">
+      <div class="top"><span class="table-badge">Стол ${o.table}</span><span class="time">${timeAgo(o.createdAt)}</span></div>`;
+    o.barItems.forEach(i => html += `<div class="line"><b>${i.qty}×</b> ${i.name}</div>`);
+    html += `<button class="done-btn" onclick="markBarReady('${o.id}')">Готово</button></div>`;
+  });
+  el.innerHTML = html;
+  newIds.clear();
+}
+function timeAgo(ts){
+  const m = Math.floor((Date.now()-ts)/60000);
+  return m<1 ? "только что" : m+" мин назад";
+}
+function markBarReady(id){ socket.send(JSON.stringify({type:"bar_ready", orderId:id})); }
+
+if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
+connect();
+setInterval(render, 30000);
+</script>
+</body>
+</html>

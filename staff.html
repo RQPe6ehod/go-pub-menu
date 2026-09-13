@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>GO pub — Персонал</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#142720; --bg-deep:#0E1D17; --panel:#1C3628; --line:#2C4A3A; --gold:#C79A46; --cream:#F3EEDF; --muted:#8FA08D; }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--cream); font-family:'Inter',sans-serif; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .wrap{ width:100%; max-width:400px; text-align:center; }
+  h1{ font-family:'Fraunces',serif; font-size:26px; margin-bottom:6px; }
+  p{ color:var(--muted); font-size:13px; margin-bottom:26px; }
+  a.role{
+    display:flex; align-items:center; gap:14px; text-decoration:none; color:var(--cream);
+    background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px 18px; margin-bottom:12px;
+    font-family:'Fraunces',serif; font-size:17px; font-weight:600;
+  }
+  a.role .emoji{ font-size:24px; }
+  a.role small{ display:block; font-family:'Inter',sans-serif; font-weight:400; font-size:11.5px; color:var(--muted); margin-top:2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>GO pub</h1>
+  <p>Выберите рабочее место</p>
+  <a class="role" href="/waiter.html"><span class="emoji">🧾</span><span>Официант<small>Приём и передача заказов</small></span></a>
+  <a class="role" href="/cook.html"><span class="emoji">🍳</span><span>Кухня<small>Кухонные тикеты</small></span></a>
+  <a class="role" href="/bartender.html"><span class="emoji">🍸</span><span>Бар<small>Барные тикеты</small></span></a>
+  <a class="role" href="/manager.html"><span class="emoji">📊</span><span>Директор<small>Все заказы и выручка</small></span></a>
+</div>
+</body>
+</html>

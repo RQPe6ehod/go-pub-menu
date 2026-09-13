@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>GO pub — Директор</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#142720; --bg-deep:#0E1D17; --panel:#1C3628; --line:#2C4A3A;
+    --gold:#C79A46; --cream:#F3EEDF; --muted:#8FA08D; --green:#4CAF7D; --red:#D9534F;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{ background:var(--bg); color:var(--cream); font-family:'Inter',sans-serif; }
+  header{ position:sticky; top:0; z-index:20; background:var(--bg-deep); border-bottom:1px solid var(--line); padding:16px 18px; }
+  header h1{ font-family:'Fraunces',serif; font-size:20px; margin:0 0 2px; }
+  header .conn{ font-size:11px; color:var(--muted); }
+  header .conn.on{ color:var(--green); }
+  header .conn.off{ color:var(--red); }
+
+  main{ padding:16px 18px; max-width:640px; margin:0 auto; }
+
+  .stats{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:12px; }
+  .stats.small{ grid-template-columns:repeat(3,1fr); }
+  .stat{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px 8px; text-align:center; }
+  .stat .num{ font-family:'Fraunces',serif; font-weight:700; font-size:26px; color:var(--gold); }
+  .stat .lbl{ font-size:11px; color:var(--muted); margin-top:2px; }
+
+  h2{ font-family:'Fraunces',serif; font-size:17px; color:var(--gold); margin:22px 0 10px; }
+  .ticket{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .ticket .top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .table-badge{ font-family:'Fraunces',serif; font-weight:700; color:var(--gold); }
+  .time{ font-size:11px; color:var(--muted); }
+  .badges{ display:flex; gap:6px; margin-bottom:6px; }
+  .badge{ font-size:11px; padding:3px 9px; border-radius:999px; font-weight:600; }
+  .badge.pending{ background:rgba(199,154,70,.18); color:var(--gold); }
+  .badge.ready{ background:rgba(76,175,125,.18); color:var(--green); }
+  .line{ font-size:13px; color:var(--cream); margin-bottom:2px; }
+  .line small{ color:var(--muted); }
+  .empty{ color:var(--muted); text-align:center; padding:30px 0; font-size:14px; }
+  .hist-row{ display:flex; justify-content:space-between; font-size:13px; padding:8px 0; border-bottom:1px solid var(--line); }
+  .hist-row .t{ color:var(--muted); }
+  .hist-row .p{ font-family:'Fraunces',serif; color:var(--gold); font-weight:600; }
+
+  .lock{ position:fixed; inset:0; background:var(--bg-deep); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .lock-box{ width:100%; max-width:300px; text-align:center; }
+  .lock-box h2{ font-family:'Fraunces',serif; color:var(--cream); margin-bottom:6px; }
+  .lock-box p{ color:var(--muted); font-size:13px; margin-bottom:18px; }
+  .lock-box input{ width:100%; text-align:center; font-size:24px; letter-spacing:8px; padding:14px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); margin-bottom:12px; }
+  .lock-box button{ width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; }
+  .lock-box .err{ color:var(--red); font-size:12.5px; margin-top:10px; min-height:16px; }
+</style>
+</head>
+<body>
+
+<div class="lock" id="lock">
+  <div class="lock-box">
+    <h2>GO pub · Директор</h2>
+    <p>Введите PIN-код директора</p>
+    <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••">
+    <button onclick="tryPin()">Войти</button>
+    <div class="err" id="pinErr"></div>
+  </div>
+</div>
+
+<header>
+  <h1>GO pub · Директор</h1>
+  <div class="conn off" id="conn">подключение…</div>
+</header>
+
+<main>
+  <div class="stats small">
+    <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">заказов активно</div></div>
+    <div class="stat"><div class="num" id="statProgress">0</div><div class="lbl">в работе</div></div>
+    <div class="stat"><div class="num" id="statReady">0</div><div class="lbl">готово, ждут</div></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="num" id="statRevenue">0</div><div class="lbl">выручка сегодня, тг</div></div>
+    <div class="stat"><div class="num" id="statServed">0</div><div class="lbl">обслужено сегодня</div></div>
+  </div>
+
+  <h2>Все заказы</h2>
+  <div id="board"></div>
+
+  <h2>История (сегодня)</h2>
+  <div id="history"></div>
+</main>
+
+<script>
+const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
+const ROLE = "manager";
+let socket, allOrders = [], allHistory = [];
+
+function getPin(){ return sessionStorage.getItem("gopub_pin_"+ROLE); }
+function setPin(p){ sessionStorage.setItem("gopub_pin_"+ROLE, p); }
+function tryPin(){
+  const p = document.getElementById('pinInput').value.trim();
+  if(!p) return;
+  setPin(p);
+  document.getElementById('pinErr').textContent = "";
+  connect();
+}
+function showLock(err){
+  document.getElementById('lock').style.display = 'flex';
+  document.getElementById('pinErr').textContent = err || "";
+  document.getElementById('pinInput').value = "";
+}
+function hideLock(){ document.getElementById('lock').style.display = 'none'; }
+
+function connect(){
+  const pin = getPin();
+  if(!pin){ showLock(); return; }
+  socket = new WebSocket(WS_URL);
+  socket.onopen = () => { setConn(true); socket.send(JSON.stringify({type:"hello", role:ROLE, pin})); };
+  socket.onclose = () => { setConn(false); setTimeout(connect, 2000); };
+  socket.onerror = () => socket.close();
+  socket.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if(msg.type === "auth_ok"){ hideLock(); }
+    if(msg.type === "auth_error"){ sessionStorage.removeItem("gopub_pin_"+ROLE); showLock("Неверный PIN"); }
+    if(msg.type === "state"){ allOrders = msg.orders; allHistory = msg.history || []; render(); }
+  };
+}
+function setConn(on){
+  const el = document.getElementById('conn');
+  el.textContent = on ? "в сети" : "нет связи — переподключение…";
+  el.className = "conn " + (on?"on":"off");
+}
+
+function isReady(o){
+  const k = o.kitchenStatus==='ready' || o.kitchenStatus==='none';
+  const b = o.barStatus==='ready' || o.barStatus==='none';
+  return k && b;
+}
+function isToday(ts){
+  const d = new Date(ts), now = new Date();
+  return d.toDateString() === now.toDateString();
+}
+
+function render(){
+  const total = allOrders.length;
+  const ready = allOrders.filter(isReady).length;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statReady').textContent = ready;
+  document.getElementById('statProgress').textContent = total - ready;
+
+  const todays = allHistory.filter(o => isToday(o.servedAt));
+  const revenue = todays.reduce((s,o) => s + (o.total||0), 0);
+  document.getElementById('statRevenue').textContent = revenue.toLocaleString('ru-RU');
+  document.getElementById('statServed').textContent = todays.length;
+
+  const el = document.getElementById('board');
+  if(total===0){ el.innerHTML = `<div class="empty">Активных заказов нет</div>`; }
+  else {
+    let html = "";
+    allOrders.slice().sort((a,b)=>b.createdAt-a.createdAt).forEach(o => {
+      html += `<div class="ticket"><div class="top"><span class="table-badge">Стол ${o.table}</span><span class="time">${timeAgo(o.createdAt)}</span></div><div class="badges">`;
+      if(o.kitchenItems.length) html += `<span class="badge ${o.kitchenStatus==='ready'?'ready':'pending'}">Кухня: ${o.kitchenStatus==='ready'?'готово':'готовит'}</span>`;
+      if(o.barItems.length) html += `<span class="badge ${o.barStatus==='ready'?'ready':'pending'}">Бар: ${o.barStatus==='ready'?'готово':'готовит'}</span>`;
+      html += `</div>`;
+      o.kitchenItems.forEach(i => html += `<div class="line">${i.name} <small>× ${i.qty}</small></div>`);
+      o.barItems.forEach(i => html += `<div class="line">${i.name} <small>× ${i.qty}</small></div>`);
+      html += `</div>`;
+    });
+    el.innerHTML = html;
+  }
+
+  const histEl = document.getElementById('history');
+  if(todays.length===0){ histEl.innerHTML = `<div class="empty">Сегодня ещё не было обслуженных заказов</div>`; return; }
+  let hhtml = "";
+  todays.slice().sort((a,b)=>b.servedAt-a.servedAt).forEach(o => {
+    hhtml += `<div class="hist-row"><span class="t">Стол ${o.table} · ${new Date(o.servedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span><span class="p">${(o.total||0).toLocaleString('ru-RU')} тг</span></div>`;
+  });
+  histEl.innerHTML = hhtml;
+}
+function timeAgo(ts){
+  const m = Math.floor((Date.now()-ts)/60000);
+  return m<1 ? "только что" : m+" мин назад";
+}
+
+connect();
+setInterval(render, 30000);
+</script>
+</body>
+</html>

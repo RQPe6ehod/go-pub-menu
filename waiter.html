@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>GO pub — Официант</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#142720; --bg-deep:#0E1D17; --panel:#1C3628; --line:#2C4A3A;
+    --gold:#C79A46; --cream:#F3EEDF; --muted:#8FA08D;
+    --red:#D9534F; --green:#4CAF7D;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{ background:var(--bg); color:var(--cream); font-family:'Inter',sans-serif; padding-bottom:100px; }
+  header{ position:sticky; top:0; z-index:20; background:var(--bg-deep); border-bottom:1px solid var(--line); padding:16px 18px; }
+  header h1{ font-family:'Fraunces',serif; font-size:19px; margin:0 0 2px; }
+  header .conn{ font-size:11px; color:var(--muted); }
+  header .conn.on{ color:var(--green); }
+  header .conn.off{ color:var(--red); }
+
+  main{ padding:16px 18px; max-width:520px; margin:0 auto; }
+
+  .table-row{ display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; margin-bottom:16px; }
+  .table-row button{
+    flex:0 0 auto; width:52px; height:52px; border-radius:12px;
+    background:var(--panel); border:1px solid var(--line); color:var(--cream);
+    font-family:'Fraunces',serif; font-weight:700; font-size:17px;
+  }
+  .table-row button.active{ background:var(--gold); border-color:var(--gold); color:var(--bg-deep); }
+
+  .tabs{ display:flex; gap:6px; margin-bottom:12px; }
+  .tabs button{ flex:1; padding:9px 0; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-weight:600; font-size:13px; }
+  .tabs button.active{ background:var(--gold); border-color:var(--gold); color:var(--bg-deep); }
+
+  .cat{ margin-bottom:18px; }
+  .cat h3{ font-family:'Fraunces',serif; color:var(--gold); font-size:16px; margin:0 0 8px; }
+  .item{ display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); }
+  .item .name{ flex:1; font-size:14.5px; }
+  .item .price{ font-size:12px; color:var(--muted); }
+  .qty{ display:flex; align-items:center; gap:8px; }
+  .qty button{ width:28px; height:28px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:16px; }
+  .qty span{ min-width:16px; text-align:center; font-weight:600; }
+
+  .cart-bar{
+    position:fixed; bottom:0; left:0; right:0; background:var(--gold); color:var(--bg-deep);
+    padding:14px 20px; display:flex; justify-content:space-between; align-items:center;
+    font-weight:700; font-family:'Fraunces',serif; font-size:16px; z-index:30;
+  }
+  .cart-bar.hidden{ display:none; }
+
+  section.board{ margin-top:6px; }
+  section.board h2{ font-family:'Fraunces',serif; font-size:18px; color:var(--gold); margin-bottom:10px; }
+  .ticket{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .ticket .top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .ticket .table-badge{ font-family:'Fraunces',serif; font-weight:700; color:var(--gold); }
+  .badge{ font-size:11px; padding:3px 9px; border-radius:999px; font-weight:600; }
+  .badge.pending{ background:rgba(199,154,70,.18); color:var(--gold); }
+  .badge.ready{ background:rgba(76,175,125,.18); color:var(--green); }
+  .ticket .line{ font-size:13px; color:var(--cream); margin-bottom:2px; }
+  .ticket .line small{ color:var(--muted); }
+  .serve-btn{ margin-top:8px; width:100%; padding:10px; border:none; border-radius:10px; background:var(--green); color:#0E1D17; font-weight:700; }
+  .empty{ color:var(--muted); font-size:13px; text-align:center; padding:20px 0; }
+
+  .lock{ position:fixed; inset:0; background:var(--bg-deep); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .lock-box{ width:100%; max-width:300px; text-align:center; }
+  .lock-box h2{ font-family:'Fraunces',serif; color:var(--cream); margin-bottom:6px; }
+  .lock-box p{ color:var(--muted); font-size:13px; margin-bottom:18px; }
+  .lock-box input{ width:100%; text-align:center; font-size:24px; letter-spacing:8px; padding:14px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); margin-bottom:12px; }
+  .lock-box button{ width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; }
+  .lock-box .err{ color:var(--red); font-size:12.5px; margin-top:10px; min-height:16px; }
+  .cancel-btn{ margin-top:8px; width:100%; padding:9px; border:1px solid var(--red); background:transparent; color:var(--red); border-radius:10px; font-weight:600; font-size:13px; }
+</style>
+</head>
+<body>
+
+<div class="lock" id="lock">
+  <div class="lock-box">
+    <h2>GO pub · Официант</h2>
+    <p>Введите PIN-код официанта</p>
+    <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••">
+    <button onclick="tryPin()">Войти</button>
+    <div class="err" id="pinErr"></div>
+  </div>
+</div>
+
+
+<header>
+  <h1>GO pub · Официант</h1>
+  <div class="conn off" id="conn">подключение…</div>
+</header>
+
+<main>
+  <div class="table-row" id="tables"></div>
+
+  <div class="tabs">
+    <button class="active" onclick="setMode('order')">Новый заказ</button>
+    <button onclick="setMode('board')">Мои заказы</button>
+  </div>
+
+  <div id="orderView"></div>
+  <div id="boardView" style="display:none"></div>
+</main>
+
+<div class="cart-bar hidden" id="cartBar" onclick="submitOrder()">
+  <span id="cartSummary"></span>
+  <span>Готово →</span>
+</div>
+
+<script>
+// ---- EDIT THIS after you deploy the Worker ----
+const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
+
+const MENU = {
+  kitchen: [
+    { title:"Салаты", items:[["Пекинский","3 690"],["Греческий","3 590"],["Хрустящие баклажаны","3 890"],["Теплый из требухи с овощами","3 890"],["Салат GO","3 890"]]},
+    { title:"Холодные закуски", items:[["Ассорти под водочку","3 990"],["Соленья","3 790"],["Кавказская нарезка","3 890"],["Мясная нарезка","6 590"],["Холодец по-домашнему","3 650"],["Мужская закуска","6 590"],["Баклажаны в панировке","3 790"]]},
+    { title:"Горячие закуски", items:[["Крылья BBQ","3 590"],["Сырные палочки","3 190"],["Нагетсы","2 890"],["Луковые кольца","2 690"],["Гренки","1 990"],["Бараньи семечки","3 950"],["Жареные пельмени","3 290"],["Мини чебуречки","2 690"],["Печень с курдючком","3 790"]]},
+    { title:"Супы", items:[["Пельмени домашние","2 790"],["Лапша домашняя","2 290"],["Солянка","2 690"],["Том-Ям","3 590"],["Рамён","2 990"]]},
+    { title:"Море Go", items:[["Креветки пивные","4 290"],["Жаренные карасики с картофелем","3 590"],["Мойва","3 690"],["Сазан на компанию","16 590"]]},
+    { title:"Street food", items:[["Beef Burger","3 890"],["Chicken Burger","3 690"],["Шаурма с курицей","3 590"],["Куриный пирог GO","5 390"],["Баскет с фри","9 290"]]},
+    { title:"Пицца", items:[["Курица с грибами","3 890"],["Мексикано","3 990"],["Пицца 4 сезона","3 890"],["Маргарита","3 190"],["Пепперони","3 890"],["Сырная","3 990"]]},
+    { title:"Паста", items:[["Альфредо с фетучини","3 790"],["Болоньезе","3 790"]]},
+    { title:"Шашлык", items:[["Баранина","5 000"],["Телятина","5 000"],["Утка","4 590"],["Крылышки","3 990"],["Куриное филе","3 750"],["Грибы","3 750"],["Картофельный","2 450"],["Овощи гриль","2 890"]]},
+    { title:"Горячие блюда", items:[["Стейк Рибай","7 390"],["Стейк Ти-бон","7 390"],["Микс на жаровне","4 490"],["Мясо по-мексикански","4 890"],["Медальоны в сливочно-грибном соусе","5 290"],["Куырдак","5 290"],["Курица с грибами в сливочном соусе с пюре","4 190"],["Говядина с шампиньонами и рисом","4 790"]]},
+    { title:"Гарнир", items:[["Рис","1 450"],["Картофельный фри","1 500"],["Картофельные дольки","1 550"],["Картошка по-домашнему","2 790"],["Соусы","800"]]},
+    { title:"Дессерт", items:[["Фруктовая нарезка","7 990"],["Сладкий десерт","2 190"],["Мороженое","1 990"],["Лимон","890"],["Хлебная корзина","800"]]},
+  ],
+  bar: [
+    { title:"Бутылочное пиво", items:[["Heineken 0.5","2 250"],["Corona Extra 0.35L","3 550"],["Krusovice Svetle 0.45L","1 590"],["Krusovice Cerne 0.45L","1 590"]]},
+    { title:"Разливное пиво (0.5л)", items:[["Пражское","1 450"],["Баварское нефильтрованное","1 750"],["Budweiser Budvar","3 590"],["Guinness","3 990"]]},
+    { title:"Закуски к пиву", items:[["Арахис соленый","1 690"],["Чечил","1 990"],["Чипсы","2 190"],["Фисташки соленые","2 390"],["Курт","1 990"]]},
+    { title:"Водка (50мл)", items:[["Хортица","950"],["Absolut Blue","1 950"],["Tito's","2 790"],["Grey Goose","3 700"],["Belvedere","4 100"]]},
+    { title:"Виски (50мл)", items:[["Ballantine's","2 350"],["Jameson","2 600"],["Jack Daniels","3 500"],["Chivas 12 y.o.","4 100"]]},
+    { title:"Коктейли", items:[["Aperol Spritz","3 190"],["Gin Tonic","2 790"],["Long Island","3 290"],["Cuba Libre","2 590"],["Mimosa","2 490"],["Mojito","2 690"]]},
+    { title:"Безалкогольные", items:[["Coca-Cola","1 990"],["Минеральная вода","1 150"],["Сок","2 390"],["Red Bull","2 450"],["Лимонады","2 790"]]},
+    { title:"Чай/Кофе", items:[["Чай в ассортименте","800"],["Jacobs кофе","1 300"]]},
+  ]
+};
+
+const ROLE = "waiter";
+let socket = null;
+let currentTable = null;
+let mode = "order";
+let cart = {}; // key: "kitchen|Название" -> {name, qty, dest, price}
+let allOrders = [];
+
+function getPin(){ return sessionStorage.getItem("gopub_pin_"+ROLE); }
+function setPin(p){ sessionStorage.setItem("gopub_pin_"+ROLE, p); }
+
+function tryPin(){
+  const p = document.getElementById('pinInput').value.trim();
+  if(!p) return;
+  setPin(p);
+  document.getElementById('pinErr').textContent = "";
+  connect();
+}
+
+function showLock(err){
+  document.getElementById('lock').style.display = 'flex';
+  document.getElementById('pinErr').textContent = err || "";
+  document.getElementById('pinInput').value = "";
+}
+function hideLock(){ document.getElementById('lock').style.display = 'none'; }
+
+function connect(){
+  const pin = getPin();
+  if(!pin){ showLock(); return; }
+  socket = new WebSocket(WS_URL);
+  socket.onopen = () => { document.getElementById('conn').textContent = "в сети"; document.getElementById('conn').className = "conn on"; socket.send(JSON.stringify({type:"hello", role:ROLE, pin})); };
+  socket.onclose = () => { document.getElementById('conn').textContent = "нет связи — переподключение…"; document.getElementById('conn').className = "conn off"; setTimeout(connect, 2000); };
+  socket.onerror = () => socket.close();
+  socket.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if(msg.type === "auth_ok"){ hideLock(); }
+    if(msg.type === "auth_error"){ sessionStorage.removeItem("gopub_pin_"+ROLE); showLock("Неверный PIN"); }
+    if(msg.type === "state"){ allOrders = msg.orders; renderBoard(); }
+    if(msg.type === "notify"){ alertReady(msg); }
+  };
+}
+
+function alertReady(msg){
+  try{ new Audio("data:audio/wav;base64,UklGRhwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=").play(); }catch(e){}
+  if(navigator.vibrate) navigator.vibrate([200,80,200]);
+  if("Notification" in window && Notification.permission === "granted"){
+    new Notification("Стол " + msg.table + " — готово (" + (msg.part==='kitchen'?'кухня':'бар') + ")");
+  }
+  setMode('board');
+}
+
+function renderTables(){
+  const el = document.getElementById('tables');
+  el.innerHTML = "";
+  for(let i=1;i<=20;i++){
+    const b = document.createElement('button');
+    b.textContent = i;
+    b.onclick = () => { currentTable = i; renderTables(); };
+    if(currentTable===i) b.className = "active";
+    el.appendChild(b);
+  }
+}
+
+function setMode(m){
+  mode = m;
+  document.querySelectorAll('.tabs button').forEach((b,i)=>b.classList.toggle('active', (i===0)===(m==='order')));
+  document.getElementById('orderView').style.display = m==='order' ? '' : 'none';
+  document.getElementById('boardView').style.display = m==='board' ? '' : 'none';
+  if(m==='board') renderBoard();
+}
+
+function renderMenu(){
+  const el = document.getElementById('orderView');
+  let html = "";
+  ["kitchen","bar"].forEach(dest => {
+    html += `<h2 style="font-family:'Fraunces',serif;color:var(--gold);font-size:15px;margin:14px 0 8px;">${dest==='kitchen'?'Кухня':'Бар'}</h2>`;
+    MENU[dest].forEach(cat => {
+      html += `<div class="cat"><h3>${cat.title}</h3>`;
+      cat.items.forEach(([name, price]) => {
+        const key = dest+"|"+name;
+        const qty = cart[key] ? cart[key].qty : 0;
+        html += `<div class="item">
+          <div class="name">${name}</div>
+          <div class="price">${price}</div>
+          <div class="qty">
+            <button onclick="changeQty('${dest}','${name.replace(/'/g,"\\'")}',-1)">−</button>
+            <span id="qty-${dest}-${cssSafe(name)}">${qty}</span>
+            <button onclick="changeQty('${dest}','${name.replace(/'/g,"\\'")}',1,'${price}')">+</button>
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    });
+  });
+  el.innerHTML = html;
+}
+function cssSafe(s){ return s.replace(/[^a-zA-Zа-яА-Я0-9]/g,'_'); }
+
+function changeQty(dest, name, delta, price){
+  const key = dest+"|"+name;
+  const current = cart[key] ? cart[key].qty : 0;
+  const existingPrice = cart[key] ? cart[key].price : price;
+  const next = Math.max(0, current + delta);
+  if(next===0) delete cart[key];
+  else cart[key] = { name, qty: next, dest, price: existingPrice };
+  const span = document.getElementById('qty-'+dest+'-'+cssSafe(name));
+  if(span) span.textContent = next;
+  updateCartBar();
+}
+
+function updateCartBar(){
+  const keys = Object.keys(cart);
+  const bar = document.getElementById('cartBar');
+  if(keys.length===0 || !currentTable){ bar.classList.add('hidden'); return; }
+  bar.classList.remove('hidden');
+  const totalItems = keys.reduce((s,k)=>s+cart[k].qty,0);
+  document.getElementById('cartSummary').textContent = `Стол ${currentTable} · ${totalItems} поз.`;
+}
+
+function submitOrder(){
+  if(!currentTable){ alert("Сначала выберите стол"); return; }
+  const kitchenItems = Object.values(cart).filter(i=>i.dest==='kitchen').map(i=>({name:i.name, qty:i.qty, price:i.price}));
+  const barItems = Object.values(cart).filter(i=>i.dest==='bar').map(i=>({name:i.name, qty:i.qty, price:i.price}));
+  if(kitchenItems.length===0 && barItems.length===0) return;
+  socket.send(JSON.stringify({type:"new_order", table: currentTable, kitchenItems, barItems}));
+  cart = {};
+  renderMenu();
+  updateCartBar();
+  setMode('board');
+}
+
+function renderBoard(){
+  const el = document.getElementById('boardView');
+  if(allOrders.length===0){ el.innerHTML = `<div class="empty">Активных заказов нет</div>`; return; }
+  let html = "";
+  allOrders.slice().sort((a,b)=>b.createdAt-a.createdAt).forEach(o => {
+    const kReady = o.kitchenStatus==='ready' || o.kitchenStatus==='none';
+    const bReady = o.barStatus==='ready' || o.barStatus==='none';
+    html += `<div class="ticket">
+      <div class="top"><span class="table-badge">Стол ${o.table}</span></div>`;
+    if(o.kitchenItems.length){
+      html += `<div class="line"><span class="badge ${o.kitchenStatus==='ready'?'ready':'pending'}">${o.kitchenStatus==='ready'?'Кухня готова':'Кухня готовит'}</span></div>`;
+      o.kitchenItems.forEach(i=> html += `<div class="line">${i.name} <small>× ${i.qty}</small></div>`);
+    }
+    if(o.barItems.length){
+      html += `<div class="line" style="margin-top:6px;"><span class="badge ${o.barStatus==='ready'?'ready':'pending'}">${o.barStatus==='ready'?'Бар готов':'Бар готовит'}</span></div>`;
+      o.barItems.forEach(i=> html += `<div class="line">${i.name} <small>× ${i.qty}</small></div>`);
+    }
+    if(kReady && bReady){
+      html += `<button class="serve-btn" onclick="serveOrder('${o.id}')">Выдано гостю</button>`;
+    } else {
+      html += `<button class="cancel-btn" onclick="cancelOrder('${o.id}')">Отменить заказ</button>`;
+    }
+    html += `</div>`;
+  });
+  el.innerHTML = html;
+}
+
+function cancelOrder(id){
+  if(!confirm("Отменить этот заказ?")) return;
+  socket.send(JSON.stringify({type:"cancel_order", orderId:id}));
+}
+
+function serveOrder(id){
+  socket.send(JSON.stringify({type:"served", orderId:id}));
+}
+
+if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
+renderTables();
+renderMenu();
+connect();
+</script>
+</body>
+</html>
