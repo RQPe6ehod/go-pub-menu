@@ -1,0 +1,35 @@
+{
+  "name": "GO pub — Бар",
+  "short_name": "GO Бар",
+  "start_url": "/bartender.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#101E2A",
+  "theme_color": "#3FA9E0",
+  "icons": [
+    {
+      "src": "/icons/icon-bartender-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-bartender-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-bartender-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-bartender-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

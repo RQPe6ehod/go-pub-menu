@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>GO pub — Менеджер</title>
+<link rel="manifest" href="/manifest-manager.json">
+<meta name="theme-color" content="#C79A46">
+<link rel="apple-touch-icon" href="/icons/icon-manager-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -173,10 +176,18 @@
   </div>
 </div>
 
+<div class="lock" id="iosLock" style="display:none">
+  <div class="lock-box">
+    <h2>Установка на экран</h2>
+    <p>В Safari нажмите значок «Поделиться» <span style="font-weight:700;">⬆️</span> внизу экрана, затем выберите <span style="color:var(--gold);font-weight:600;">«На экран «Домой»»</span>.</p>
+    <button onclick="document.getElementById('iosLock').style.display='none'">Понятно</button>
+  </div>
+</div>
+
 <header>
   <h1>GO pub · Менеджер <span id="staffNameTag" onclick="openNamePrompt()" style="color:var(--gold); font-weight:600; cursor:pointer;"></span></h1>
   <div class="conn off" id="conn">подключение…</div>
-  <div class="settings-links"><a href="#" onclick="openNamePrompt();return false;">Изменить имя</a><a href="#" onclick="openPinPrompt();return false;">Сменить PIN</a></div>
+  <div class="settings-links"><a href="#" onclick="openNamePrompt();return false;">Изменить имя</a><a href="#" onclick="openPinPrompt();return false;">Сменить PIN</a><a href="#" onclick="installApp();return false;">На экран</a></div>
 </header>
 
 <main>
@@ -935,6 +946,25 @@ function urlBase64ToUint8Array(base64String){
   const outputArray = new Uint8Array(rawData.length);
   for(let i=0;i<rawData.length;++i) outputArray[i] = rawData.charCodeAt(i);
   return outputArray;
+}
+
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+function isIos(){ return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream; }
+function isStandalone(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
+function installApp(){
+  if(isStandalone()){ alert("Приложение уже установлено на экран."); return; }
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.finally(() => { deferredInstallPrompt = null; });
+  } else if(isIos()){
+    document.getElementById('iosLock').style.display = 'flex';
+  } else {
+    alert("Откройте меню браузера и выберите «Добавить на главный экран» / «Установить приложение».");
+  }
 }
 
 async function setupPush(){

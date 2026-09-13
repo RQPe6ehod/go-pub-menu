@@ -1,0 +1,35 @@
+{
+  "name": "GO pub — Официант",
+  "short_name": "GO Официант",
+  "start_url": "/waiter.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#142720",
+  "theme_color": "#C79A46",
+  "icons": [
+    {
+      "src": "/icons/icon-waiter-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-waiter-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-waiter-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-waiter-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
