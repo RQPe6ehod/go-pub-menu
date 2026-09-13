@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" id="htmlRoot">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
@@ -33,13 +33,42 @@
   }
   ::selection{ background: var(--gold); color: var(--bg-deep); }
 
-  /* ---------- Header ---------- */
   header.top{
     position: sticky; top:0; z-index: 30;
     background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg) 100%);
     border-bottom: 1px solid var(--line);
-    padding: 18px 20px 0;
+    padding: 14px 20px 0;
   }
+
+  .lang-switch-wrap{ display:flex; justify-content:center; position:relative; margin-bottom: 8px; }
+  .lang-btn{
+    display:flex; align-items:center; gap:6px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--cream-dim);
+    padding: 6px 14px; border-radius: 999px; font-size: 12.5px; font-weight:600; cursor:pointer;
+  }
+  .lang-btn svg{ opacity:.85; }
+  .lang-menu{
+    display:none; position:absolute; top: 36px; z-index:40;
+    background: var(--panel); border:1px solid var(--line); border-radius: 12px;
+    overflow:hidden; box-shadow: 0 10px 30px var(--shadow);
+    min-width: 150px;
+  }
+  .lang-menu.open{ display:block; }
+  .lang-menu button{
+    display:block; width:100%; text-align:left; padding: 10px 16px;
+    background:transparent; border:none; color: var(--cream); font-size: 13.5px; cursor:pointer;
+  }
+  .lang-menu button:hover, .lang-menu button.active{ background: rgba(199,154,70,0.15); color: var(--gold); }
+  .lang-menu button + button{ border-top: 1px solid var(--line); }
+
+  .credit-link{
+    display:inline-flex; align-items:center; gap: 4px;
+    color: var(--gold); text-decoration:none; font-weight:600;
+    font-size: 10.5px; letter-spacing:.03em; margin-bottom: 10px;
+  }
+  .credit-link:hover{ text-decoration:underline; }
+  .credit-icon{ flex-shrink:0; opacity:.9; }
+
   .brand-row{
     display:flex; align-items:center; justify-content:space-between; gap: 12px;
     margin-bottom: 14px;
@@ -57,12 +86,7 @@
   .brand-text{ line-height:1.05; }
   .brand-text .name{ font-family:'Fraunces', serif; font-weight:600; font-size: 20px; color: var(--cream); }
   .brand-text .sub{ font-size: 11px; color: var(--muted); letter-spacing: .06em; }
-  .svc-note{ font-size: 10.5px; color: var(--muted); text-align:right; line-height:1.3; max-width: 110px; }
-  .credit-link{
-    display:inline-block; color: var(--gold); text-decoration:none; font-weight:600;
-    font-size: 10.5px; letter-spacing:.03em; margin-bottom: 10px;
-  }
-  .credit-link:hover{ text-decoration:underline; }
+  .svc-note{ font-size: 10.5px; color: var(--muted); text-align:right; line-height:1.3; max-width: 130px; }
 
   .mode-switch{
     display:flex; background: var(--bg-deep); border: 1px solid var(--line);
@@ -99,10 +123,9 @@
   }
   nav.chips button.active{ background: var(--gold); border-color: var(--gold); color: var(--bg-deep); font-weight:600; }
 
-  /* ---------- Content ---------- */
   main{ padding: 22px 20px 0; max-width: 640px; margin: 0 auto; }
 
-  section.category{ margin-bottom: 34px; scroll-margin-top: 168px; }
+  section.category{ margin-bottom: 34px; scroll-margin-top: 208px; }
   .cat-head{ display:flex; align-items:baseline; gap:10px; margin-bottom: 4px; }
   .cat-head h2{
     font-family:'Fraunces', serif; font-weight:600; font-size: 23px; margin:0;
@@ -137,16 +160,28 @@
 <body>
 
 <header class="top">
-  <a href="/contact.html" class="credit-link">by RQ Coding</a>
+  <div class="lang-switch-wrap">
+    <button class="lang-btn" onclick="toggleLangMenu()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20"/></svg>
+      <span id="langLabel">RU</span>
+    </button>
+    <div class="lang-menu" id="langMenu">
+      <button onclick="setLang('ru')" data-lang="ru">Русский</button>
+      <button onclick="setLang('en')" data-lang="en">English</button>
+      <button onclick="setLang('kk')" data-lang="kk">Қазақша</button>
+    </div>
+  </div>
+
+  <a href="/contact.html" class="credit-link">by RQ Coding<svg class="credit-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/><path d="M14 4h6v6"/><path d="M10 14L20 4"/></svg></a>
   <div class="brand-row">
     <div class="brand">
       <div class="brand-mark">GO</div>
       <div class="brand-text">
         <div class="name">GO pub</div>
-        <div class="sub">ЦИФРОВОЕ МЕНЮ</div>
+        <div class="sub" id="taglineText">ЦИФРОВОЕ МЕНЮ</div>
       </div>
     </div>
-    <div class="svc-note">Обслуживание 10%. Цены указаны в тенге.</div>
+    <div class="svc-note" id="svcNote">Обслуживание 10%. Цены указаны в тенге.</div>
   </div>
 
   <div class="mode-switch">
@@ -166,238 +201,58 @@
 
 <footer class="foot">
   <div class="gold">GO pub</div>
-  Приятного аппетита!<br>
-  Отсканируйте QR‑код у столика, чтобы вернуться к меню в любой момент.
+  <span id="enjoyText">Приятного аппетита!</span><br>
+  <span id="scanNoteText">Отсканируйте QR‑код у столика, чтобы вернуться к меню в любой момент.</span>
 </footer>
 
 <script>
-const MENU = {
-  food: [
-    { title: "Салаты", items: [
-      {n:1, name:"Пекинский", desc:"мясо, огурцы, болгарский перец, соус, лист салата", price:"3 690"},
-      {n:2, name:"Греческий", desc:"овощи, сыр фетакса, сливки", price:"3 590"},
-      {n:3, name:"Хрустящие баклажаны", desc:"баклажан, помидор, соус", price:"3 890"},
-      {n:4, name:"Теплый из требухи с овощами", price:"3 890"},
-      {n:5, name:"Салат GO", desc:"курица с апельсином, грибы, помидоры", price:"3 890"},
-    ]},
-    { title: "Холодные закуски", items: [
-      {n:1, name:"Ассорти под водочку", desc:"скумбрия, сельдь, долма, соленые огурчики", price:"3 990"},
-      {n:2, name:"Соленья", desc:"квашеная капуста, корнишоны, маринованные черри, оливки", price:"3 790"},
-      {n:3, name:"Кавказская нарезка", desc:"огурцы, помидоры, болгарский перец, сыр Фета, зелень", price:"3 890"},
-      {n:4, name:"Мясная нарезка", desc:"шужук, казы, мясо", price:"6 590"},
-      {n:5, name:"Холодец по-домашнему", price:"3 650"},
-      {n:6, name:"Мужская закуска", desc:"квашеная капуста, огурчики маринованные, курдючок баранины, холодец, горчица, черный хлеб", price:"6 590"},
-      {n:7, name:"Баклажаны в панировке", price:"3 790"},
-    ]},
-    { title: "Горячие закуски", items: [
-      {n:1, name:"Крылья BBQ", price:"3 590"},
-      {n:2, name:"Сырные палочки", price:"3 190"},
-      {n:3, name:"Нагетсы", price:"2 890"},
-      {n:4, name:"Луковые кольца", price:"2 690"},
-      {n:5, name:"Гренки", price:"1 990"},
-      {n:6, name:"Бараньи семечки", price:"3 950"},
-      {n:7, name:"Жареные пельмени", price:"3 290"},
-      {n:8, name:"Мини чебуречки", price:"2 690"},
-      {n:9, name:"Печень с курдючком", price:"3 790"},
-    ]},
-    { title: "Супы", items: [
-      {n:1, name:"Пельмени домашние", price:"2 790"},
-      {n:2, name:"Лапша домашняя", price:"2 290"},
-      {n:3, name:"Солянка", price:"2 690"},
-      {n:4, name:"Том-Ям", price:"3 590"},
-      {n:5, name:"Рамён", price:"2 990"},
-    ]},
-    { title: "Море Go", items: [
-      {n:1, name:"Креветки пивные", price:"4 290"},
-      {n:2, name:"Жаренные карасики с картофелем", price:"3 590"},
-      {n:3, name:"Мойва", price:"3 690"},
-      {n:4, name:"Сазан на компанию с салатом по-домашнему", price:"16 590"},
-    ]},
-    { title: "Пивной пир", note: "сеты для компании, с пивом", items: [
-      {n:1, name:"Рыбный сет + Пражское", desc:"сазан, мойва, караси, креветки, луковые кольца, картофельные дольки", price:"29 990"},
-      {n:2, name:"Куриный сет + Пражское", desc:"BBQ, наггетсы, kfc, луковые кольца, сырные палочки, фри", price:"24 990"},
-      {n:3, name:"Мясная доска + Баварское нефильтрованное", desc:"рибай, тибон, стейк куриный, утка, колбасы, цыпленок табака, овощи гриль", price:"31 990"},
-      {n:4, name:"Улов рыбака + Баварское нефильтрованное", desc:"копченая, вяленая, сушеная рыбка", price:"21 990"},
-      {n:5, name:"Шашлычный сет GO + Пражское или Баварское нефильтрованное", desc:"2 баранины, 2 утки, 2 филе, 2 крыла, грибы, овощи, картофельные дольки", price:"35 990"},
-    ]},
-    { title: "Street food", items: [
-      {n:1, name:"Beef Burger", price:"3 890"},
-      {n:2, name:"Chicken Burger", price:"3 690"},
-      {n:3, name:"Шаурма с курицей", price:"3 590"},
-      {n:4, name:"Куриный пирог GO", price:"5 390"},
-      {n:5, name:"Баскет с фри", price:"9 290"},
-    ]},
-    { title: "Пицца", items: [
-      {n:1, name:"Курица с грибами", desc:"моцарелла, филе курицы, соус, шампиньоны", price:"3 890"},
-      {n:2, name:"Мексикано", desc:"моцарелла, мясо говядины, болгарский перец, халапеньо", price:"3 990"},
-      {n:3, name:"Пицца 4 сезона", desc:"моцарелла, салями, грибы, мясо говядины, помидоры", price:"3 890"},
-      {n:4, name:"Маргарита", desc:"моцарелла, помидоры, соус", price:"3 190"},
-      {n:5, name:"Пепперони", desc:"моцарелла, копченая колбаса", price:"3 890"},
-      {n:6, name:"Сырная", price:"3 990"},
-    ]},
-    { title: "Паста", items: [
-      {n:1, name:"Альфредо с фетучини", price:"3 790"},
-      {n:2, name:"Болоньезе", price:"3 790"},
-    ]},
-    { title: "Шашлык", items: [
-      {n:1, name:"Баранина", price:"5 000"},
-      {n:2, name:"Телятина", price:"5 000"},
-      {n:3, name:"Утка", price:"4 590"},
-      {n:4, name:"Крылышки", price:"3 990"},
-      {n:5, name:"Куриное филе", price:"3 750"},
-      {n:6, name:"Грибы", price:"3 750"},
-      {n:7, name:"Картофельный", price:"2 450"},
-      {n:8, name:"Овощи гриль", price:"2 890"},
-    ]},
-    { title: "Горячие блюда", items: [
-      {n:1, name:"Стейк Рибай", price:"7 390"},
-      {n:2, name:"Стейк Ти-бон", price:"7 390"},
-      {n:3, name:"Микс на жаровне", price:"4 490"},
-      {n:4, name:"Мясо по-мексикански", price:"4 890"},
-      {n:5, name:"Медальоны в сливочно-грибном соусе", price:"5 290"},
-      {n:6, name:"Куырдак", price:"5 290"},
-      {n:7, name:"Курица с грибами в сливочном соусе с пюре", price:"4 190"},
-      {n:8, name:"Говядина с шампиньонами и рисом", price:"4 790"},
-    ]},
-    { title: "Сеты на компанию", items: [
-      {n:1, name:"Пивная доска №1", desc:"чебуреки, гренки, редис, соусы", price:"4 990"},
-      {n:2, name:"Пивная доска №2", desc:"пельмени жареные, сырные палочки, луковые кольца, гренки, соусы", price:"11 590"},
-      {n:3, name:"Пивная доска №3", desc:"крылья BBQ, бараньи семечки, сырные палочки, наггетсы, соусы, орешки", price:"14 490"},
-      {n:4, name:"Ассорти колбасок, дольки, соусы", price:"12 690"},
-      {n:5, name:"Пивной микс", desc:"чечил, фисташки, орешки, чипсы, сухарики, курт", price:"7 690"},
-      {n:6, name:"Ведро креветок", price:"14 990"},
-      {n:7, name:"Стейки 2+1", price:"16 990"},
-    ]},
-    { title: "Гарнир", items: [
-      {n:1, name:"Рис", price:"1 450"},
-      {n:2, name:"Картофельный фри", price:"1 500"},
-      {n:3, name:"Картофельные дольки", price:"1 550"},
-      {n:4, name:"Картошка по-домашнему", price:"2 790"},
-      {n:5, name:"Соусы", price:"800"},
-    ]},
-    { title: "Дессерт", items: [
-      {n:1, name:"Фруктовая нарезка", price:"7 990"},
-      {n:2, name:"Сладкий десерт", price:"2 190"},
-      {n:3, name:"Мороженое", price:"1 990"},
-      {n:4, name:"Лимон", price:"890"},
-      {n:5, name:"Хлебная корзина", price:"800"},
-      {n:6, name:"Хлебная корзина 1/2", price:"400"},
-    ]},
-  ],
+const MENU = {"food": [{"title": {"ru": "Салаты", "en": "Salads", "kk": "Салаттар"}, "items": [{"n": 1, "name": {"ru": "Пекинский", "en": "Peking Salad", "kk": "Бейжің салаты"}, "price": "3 690", "desc": {"ru": "мясо, огурцы, болгарский перец, соус, лист салата", "en": "meat, cucumber, bell pepper, sauce, lettuce", "kk": "ет, қияр, бұрыш, тұздық, салат жапырағы"}}, {"n": 2, "name": {"ru": "Греческий", "en": "Greek Salad", "kk": "Грек салаты"}, "price": "3 590", "desc": {"ru": "овощи, сыр фетакса, сливки", "en": "vegetables, feta cheese, cream", "kk": "көкөніс, фета ірімшігі, қаймақ"}}, {"n": 3, "name": {"ru": "Хрустящие баклажаны", "en": "Crispy Eggplant", "kk": "Қытырлақ баклажан"}, "price": "3 890", "desc": {"ru": "баклажан, помидор, соус", "en": "eggplant, tomato, sauce", "kk": "баклажан, қызанақ, тұздық"}}, {"n": 4, "name": {"ru": "Теплый из требухи с овощами", "en": "Warm Tripe with Vegetables", "kk": "Көкөністі жылы қарын салаты"}, "price": "3 890"}, {"n": 5, "name": {"ru": "Салат GO", "en": "GO Salad", "kk": "GO салаты"}, "price": "3 890", "desc": {"ru": "курица с апельсином, грибы, помидоры", "en": "chicken with orange, mushrooms, tomatoes", "kk": "тауық еті, апельсин, саңырауқұлақ, қызанақ"}}]}, {"title": {"ru": "Холодные закуски", "en": "Cold Appetizers", "kk": "Салқын тағамдар"}, "items": [{"n": 1, "name": {"ru": "Ассорти под водочку", "en": "Vodka Platter", "kk": "Арақ ассорти"}, "price": "3 990", "desc": {"ru": "скумбрия, сельдь, долма, соленые огурчики", "en": "mackerel, herring, dolma, pickles", "kk": "скумбрия, майшабақ, толма, тұздалған қияр"}}, {"n": 2, "name": {"ru": "Соленья", "en": "Pickles", "kk": "Тұздықтар"}, "price": "3 790", "desc": {"ru": "квашеная капуста, корнишоны, маринованные черри, оливки", "en": "sauerkraut, gherkins, pickled cherry tomatoes, olives", "kk": "ашытылған қырыққабат, қиярша, маринадталған қызанақ, зәйтүн"}}, {"n": 3, "name": {"ru": "Кавказская нарезка", "en": "Caucasian Platter", "kk": "Кавказ асаны"}, "price": "3 890", "desc": {"ru": "огурцы, помидоры, болгарский перец, сыр Фета, зелень", "en": "cucumber, tomato, bell pepper, feta cheese, herbs", "kk": "қияр, қызанақ, бұрыш, фета ірімшігі, көк жиек"}}, {"n": 4, "name": {"ru": "Мясная нарезка", "en": "Meat Platter", "kk": "Ет асаны"}, "price": "6 590", "desc": {"ru": "шужук, казы, мясо", "en": "shuzhuk, kazy, meat", "kk": "шұжық, қазы, ет"}}, {"n": 5, "name": {"ru": "Холодец по-домашнему", "en": "Homemade Aspic", "kk": "Үй жасаған холодец"}, "price": "3 650"}, {"n": 6, "name": {"ru": "Мужская закуска", "en": "Hearty Platter", "kk": "Ер-азамат тіскебасары"}, "price": "6 590", "desc": {"ru": "квашеная капуста, огурчики маринованные, курдючок баранины, холодец, горчица, черный хлеб", "en": "sauerkraut, pickled cucumbers, lamb fat tail, aspic, mustard, black bread", "kk": "ашытылған қырыққабат, маринадталған қияр, қой құйрығы, холодец, қыша, қара нан"}}, {"n": 7, "name": {"ru": "Баклажаны в панировке", "en": "Breaded Eggplant", "kk": "Қамырланған баклажан"}, "price": "3 790"}]}, {"title": {"ru": "Горячие закуски", "en": "Hot Appetizers", "kk": "Ыстық тіскебасарлар"}, "items": [{"n": 1, "name": {"ru": "Крылья BBQ", "en": "BBQ Wings", "kk": "BBQ қанаттары"}, "price": "3 590"}, {"n": 2, "name": {"ru": "Сырные палочки", "en": "Cheese Sticks", "kk": "Ірімшік таяқшалары"}, "price": "3 190"}, {"n": 3, "name": {"ru": "Нагетсы", "en": "Nuggets", "kk": "Наггетс"}, "price": "2 890"}, {"n": 4, "name": {"ru": "Луковые кольца", "en": "Onion Rings", "kk": "Пияз сақиналары"}, "price": "2 690"}, {"n": 5, "name": {"ru": "Гренки", "en": "Croutons", "kk": "Қытырлақ нан"}, "price": "1 990"}, {"n": 6, "name": {"ru": "Бараньи семечки", "en": "Lamb Testicles", "kk": "Қошқар жұмыртқасы"}, "price": "3 950"}, {"n": 7, "name": {"ru": "Жареные пельмени", "en": "Fried Pelmeni", "kk": "Қуырылған пельмень"}, "price": "3 290"}, {"n": 8, "name": {"ru": "Мини чебуречки", "en": "Mini Chebureki", "kk": "Мини шелпек"}, "price": "2 690"}, {"n": 9, "name": {"ru": "Печень с курдючком", "en": "Liver with Fat Tail", "kk": "Құйрықпен бауыр"}, "price": "3 790"}]}, {"title": {"ru": "Супы", "en": "Soups", "kk": "Сорпалар"}, "items": [{"n": 1, "name": {"ru": "Пельмени домашние", "en": "Homemade Pelmeni", "kk": "Үй пельмені"}, "price": "2 790"}, {"n": 2, "name": {"ru": "Лапша домашняя", "en": "Homemade Noodle Soup", "kk": "Үй кеспесі"}, "price": "2 290"}, {"n": 3, "name": {"ru": "Солянка", "en": "Solyanka", "kk": "Солянка"}, "price": "2 690"}, {"n": 4, "name": {"ru": "Том-Ям", "en": "Tom Yum", "kk": "Том-Ям"}, "price": "3 590"}, {"n": 5, "name": {"ru": "Рамён", "en": "Ramen", "kk": "Рамен"}, "price": "2 990"}]}, {"title": {"ru": "Море Go", "en": "Sea GO", "kk": "Теңіз GO"}, "items": [{"n": 1, "name": {"ru": "Креветки пивные", "en": "Beer Shrimp", "kk": "Сыралы асшаян"}, "price": "4 290"}, {"n": 2, "name": {"ru": "Жаренные карасики с картофелем", "en": "Fried Crucian Carp with Potatoes", "kk": "Картоппен қуырылған табан балық"}, "price": "3 590"}, {"n": 3, "name": {"ru": "Мойва", "en": "Capelin", "kk": "Мойва"}, "price": "3 690"}, {"n": 4, "name": {"ru": "Сазан на компанию с салатом по-домашнему", "en": "Whole Carp to Share with Homemade Salad", "kk": "Топқа арналған сазан, үй салаты"}, "price": "16 590"}]}, {"title": {"ru": "Пивной пир", "en": "Beer Feast", "kk": "Сыра мерекесі"}, "note": {"ru": "сеты для компании, с пивом", "en": "sharing sets with beer", "kk": "топқа арналған, сырамен жинақтар"}, "items": [{"n": 1, "name": {"ru": "Рыбный сет + Пражское", "en": "Fish Set + Prague Beer", "kk": "Балық жинағы + Прага сырасы"}, "price": "29 990", "desc": {"ru": "сазан, мойва, караси, креветки, луковые кольца, картофельные дольки", "en": "carp, capelin, crucian carp, shrimp, onion rings, potato wedges", "kk": "сазан, мойва, табан балық, асшаян, пияз сақинасы, картоп бөлшектері"}}, {"n": 2, "name": {"ru": "Куриный сет + Пражское", "en": "Chicken Set + Prague Beer", "kk": "Тауық жинағы + Прага сырасы"}, "price": "24 990", "desc": {"ru": "BBQ, наггетсы, kfc, луковые кольца, сырные палочки, фри", "en": "BBQ wings, nuggets, kfc-style chicken, onion rings, cheese sticks, fries", "kk": "BBQ қанат, наггетс, kfc тауық, пияз сақинасы, ірімшік таяқша, фри"}}, {"n": 3, "name": {"ru": "Мясная доска + Баварское нефильтрованное", "en": "Meat Board + Bavarian Unfiltered", "kk": "Ет тақтасы + Бавария сырасы"}, "price": "31 990", "desc": {"ru": "рибай, тибон, стейк куриный, утка, колбасы, цыпленок табака, овощи гриль", "en": "ribeye, t-bone, chicken steak, duck, sausages, chicken tabaka, grilled vegetables", "kk": "рибай, ти-бон, тауық стейгі, үйрек, шұжық, тәбака тауығы, грильдегі көкөніс"}}, {"n": 4, "name": {"ru": "Улов рыбака + Баварское нефильтрованное", "en": "Fisherman's Catch + Bavarian Unfiltered", "kk": "Балықшы уловы + Бавария сырасы"}, "price": "21 990", "desc": {"ru": "копченая, вяленая, сушеная рыбка", "en": "smoked, cured, dried fish", "kk": "ыстатылған, кептірілген балық"}}, {"n": 5, "name": {"ru": "Шашлычный сет GO + Пражское или Баварское нефильтрованное", "en": "GO Skewer Set + Prague or Bavarian Unfiltered", "kk": "GO шашлық жинағы + Прага/Бавария сырасы"}, "price": "35 990", "desc": {"ru": "2 баранины, 2 утки, 2 филе, 2 крыла, грибы, овощи, картофельные дольки", "en": "2 lamb, 2 duck, 2 fillet, 2 wings, mushrooms, vegetables, potato wedges", "kk": "2 қой еті, 2 үйрек, 2 филе, 2 қанат, саңырауқұлақ, көкөніс, картоп бөлшектері"}}]}, {"title": {"ru": "Street food", "en": "Street Food", "kk": "Көше тағамдары"}, "items": [{"n": 1, "name": {"ru": "Beef Burger", "en": "Beef Burger", "kk": "Бифбургер"}, "price": "3 890"}, {"n": 2, "name": {"ru": "Chicken Burger", "en": "Chicken Burger", "kk": "Тауықбургер"}, "price": "3 690"}, {"n": 3, "name": {"ru": "Шаурма с курицей", "en": "Chicken Shawarma", "kk": "Тауық шаурмасы"}, "price": "3 590"}, {"n": 4, "name": {"ru": "Куриный пирог GO", "en": "GO Chicken Pie", "kk": "GO тауық пирогы"}, "price": "5 390"}, {"n": 5, "name": {"ru": "Баскет с фри", "en": "Basket with Fries", "kk": "Фримен себет"}, "price": "9 290"}]}, {"title": {"ru": "Пицца", "en": "Pizza", "kk": "Пицца"}, "items": [{"n": 1, "name": {"ru": "Курица с грибами", "en": "Chicken & Mushroom", "kk": "Тауық пен саңырауқұлақ"}, "price": "3 890", "desc": {"ru": "моцарелла, филе курицы, соус, шампиньоны", "en": "mozzarella, chicken fillet, sauce, mushrooms", "kk": "моцарелла, тауық филесі, тұздық, шампиньон"}}, {"n": 2, "name": {"ru": "Мексикано", "en": "Mexicano", "kk": "Мексикано"}, "price": "3 990", "desc": {"ru": "моцарелла, мясо говядины, болгарский перец, халапеньо", "en": "mozzarella, beef, bell pepper, jalapeño", "kk": "моцарелла, сиыр еті, бұрыш, халапеньо"}}, {"n": 3, "name": {"ru": "Пицца 4 сезона", "en": "Four Seasons", "kk": "Төрт маусым"}, "price": "3 890", "desc": {"ru": "моцарелла, салями, грибы, мясо говядины, помидоры", "en": "mozzarella, salami, mushrooms, beef, tomatoes", "kk": "моцарелла, салями, саңырауқұлақ, сиыр еті, қызанақ"}}, {"n": 4, "name": {"ru": "Маргарита", "en": "Margherita", "kk": "Маргарита"}, "price": "3 190", "desc": {"ru": "моцарелла, помидоры, соус", "en": "mozzarella, tomatoes, sauce", "kk": "моцарелла, қызанақ, тұздық"}}, {"n": 5, "name": {"ru": "Пепперони", "en": "Pepperoni", "kk": "Пепперони"}, "price": "3 890", "desc": {"ru": "моцарелла, копченая колбаса", "en": "mozzarella, smoked sausage", "kk": "моцарелла, ысталған шұжық"}}, {"n": 6, "name": {"ru": "Сырная", "en": "Four Cheese", "kk": "Ірімшікті"}, "price": "3 990"}]}, {"title": {"ru": "Паста", "en": "Pasta", "kk": "Паста"}, "items": [{"n": 1, "name": {"ru": "Альфредо с фетучини", "en": "Fettuccine Alfredo", "kk": "Феттучини Альфредо"}, "price": "3 790"}, {"n": 2, "name": {"ru": "Болоньезе", "en": "Bolognese", "kk": "Болоньезе"}, "price": "3 790"}]}, {"title": {"ru": "Шашлык", "en": "Skewers", "kk": "Шашлық"}, "items": [{"n": 1, "name": {"ru": "Баранина", "en": "Lamb", "kk": "Қой еті"}, "price": "5 000"}, {"n": 2, "name": {"ru": "Телятина", "en": "Veal", "kk": "Бұзау еті"}, "price": "5 000"}, {"n": 3, "name": {"ru": "Утка", "en": "Duck", "kk": "Үйрек"}, "price": "4 590"}, {"n": 4, "name": {"ru": "Крылышки", "en": "Wings", "kk": "Қанат"}, "price": "3 990"}, {"n": 5, "name": {"ru": "Куриное филе", "en": "Chicken Fillet", "kk": "Тауық филесі"}, "price": "3 750"}, {"n": 6, "name": {"ru": "Грибы", "en": "Mushrooms", "kk": "Саңырауқұлақ"}, "price": "3 750"}, {"n": 7, "name": {"ru": "Картофельный", "en": "Potato", "kk": "Картоп"}, "price": "2 450"}, {"n": 8, "name": {"ru": "Овощи гриль", "en": "Grilled Vegetables", "kk": "Грильдегі көкөніс"}, "price": "2 890"}]}, {"title": {"ru": "Горячие блюда", "en": "Main Courses", "kk": "Ыстық тағамдар"}, "items": [{"n": 1, "name": {"ru": "Стейк Рибай", "en": "Ribeye Steak", "kk": "Рибай стейгі"}, "price": "7 390"}, {"n": 2, "name": {"ru": "Стейк Ти-бон", "en": "T-Bone Steak", "kk": "Ти-бон стейгі"}, "price": "7 390"}, {"n": 3, "name": {"ru": "Микс на жаровне", "en": "Grill Mix", "kk": "Грильдегі ассорти"}, "price": "4 490"}, {"n": 4, "name": {"ru": "Мясо по-мексикански", "en": "Mexican-Style Meat", "kk": "Мексикалық ет"}, "price": "4 890"}, {"n": 5, "name": {"ru": "Медальоны в сливочно-грибном соусе", "en": "Medallions in Creamy Mushroom Sauce", "kk": "Қаймақ-саңырауқұлақ тұздығындағы медальон"}, "price": "5 290"}, {"n": 6, "name": {"ru": "Куырдак", "en": "Kuyrdak", "kk": "Куырдақ"}, "price": "5 290"}, {"n": 7, "name": {"ru": "Курица с грибами в сливочном соусе с пюре", "en": "Chicken & Mushrooms in Cream Sauce with Mash", "kk": "Пюремен қаймақты тұздықтағы тауық"}, "price": "4 190"}, {"n": 8, "name": {"ru": "Говядина с шампиньонами и рисом", "en": "Beef with Mushrooms and Rice", "kk": "Күрішпен, шампиньонмен сиыр еті"}, "price": "4 790"}]}, {"title": {"ru": "Сеты на компанию", "en": "Sharing Sets", "kk": "Топқа арналған жинақтар"}, "items": [{"n": 1, "name": {"ru": "Пивная доска №1", "en": "Beer Board #1", "kk": "Сыра тақтасы №1"}, "price": "4 990", "desc": {"ru": "чебуреки, гренки, редис, соусы", "en": "chebureki, croutons, radish, sauces", "kk": "шелпек, қытырлақ нан, шалғам, тұздықтар"}}, {"n": 2, "name": {"ru": "Пивная доска №2", "en": "Beer Board #2", "kk": "Сыра тақтасы №2"}, "price": "11 590", "desc": {"ru": "пельмени жареные, сырные палочки, луковые кольца, гренки, соусы", "en": "fried pelmeni, cheese sticks, onion rings, croutons, sauces", "kk": "қуырылған пельмень, ірімшік таяқша, пияз сақинасы, қытырлақ нан, тұздықтар"}}, {"n": 3, "name": {"ru": "Пивная доска №3", "en": "Beer Board #3", "kk": "Сыра тақтасы №3"}, "price": "14 490", "desc": {"ru": "крылья BBQ, бараньи семечки, сырные палочки, наггетсы, соусы, орешки", "en": "BBQ wings, lamb testicles, cheese sticks, nuggets, sauces, nuts", "kk": "BBQ қанат, қошқар жұмыртқасы, ірімшік таяқша, наггетс, тұздықтар, жаңғақ"}}, {"n": 4, "name": {"ru": "Ассорти колбасок, дольки, соусы", "en": "Sausage Assortment, Wedges, Sauces", "kk": "Шұжық ассортиі, картоп бөлшектері, тұздықтар"}, "price": "12 690"}, {"n": 5, "name": {"ru": "Пивной микс", "en": "Beer Mix", "kk": "Сыра миксі"}, "price": "7 690", "desc": {"ru": "чечил, фисташки, орешки, чипсы, сухарики, курт", "en": "chechil cheese, pistachios, nuts, chips, croutons, kurt", "kk": "шешіл ірімшігі, фисташка, жаңғақ, чипсы, кептірілген нан, құрт"}}, {"n": 6, "name": {"ru": "Ведро креветок", "en": "Bucket of Shrimp", "kk": "Асшаян шелегі"}, "price": "14 990"}, {"n": 7, "name": {"ru": "Стейки 2+1", "en": "Steaks 2+1", "kk": "Стейктер 2+1"}, "price": "16 990"}]}, {"title": {"ru": "Гарнир", "en": "Sides", "kk": "Гарнирлер"}, "items": [{"n": 1, "name": {"ru": "Рис", "en": "Rice", "kk": "Күріш"}, "price": "1 450"}, {"n": 2, "name": {"ru": "Картофельный фри", "en": "French Fries", "kk": "Картоп фри"}, "price": "1 500"}, {"n": 3, "name": {"ru": "Картофельные дольки", "en": "Potato Wedges", "kk": "Картоп бөлшектері"}, "price": "1 550"}, {"n": 4, "name": {"ru": "Картошка по-домашнему", "en": "Home-style Potatoes", "kk": "Үй картобы"}, "price": "2 790"}, {"n": 5, "name": {"ru": "Соусы", "en": "Sauces", "kk": "Тұздықтар"}, "price": "800"}]}, {"title": {"ru": "Дессерт", "en": "Dessert", "kk": "Десерттер"}, "items": [{"n": 1, "name": {"ru": "Фруктовая нарезка", "en": "Fruit Platter", "kk": "Жеміс тілімдері"}, "price": "7 990"}, {"n": 2, "name": {"ru": "Сладкий десерт", "en": "Sweet Dessert", "kk": "Тәтті десерт"}, "price": "2 190"}, {"n": 3, "name": {"ru": "Мороженое", "en": "Ice Cream", "kk": "Балмұздақ"}, "price": "1 990"}, {"n": 4, "name": {"ru": "Лимон", "en": "Lemon", "kk": "Лимон"}, "price": "890"}, {"n": 5, "name": {"ru": "Хлебная корзина", "en": "Bread Basket", "kk": "Нан себеті"}, "price": "800"}, {"n": 6, "name": {"ru": "Хлебная корзина 1/2", "en": "Bread Basket (half)", "kk": "Нан себеті 1/2"}, "price": "400"}]}], "bar": [{"title": {"ru": "Бутылочное пиво", "en": "Bottled Beer", "kk": "Бөтелкедегі сыра"}, "items": [{"name": {"ru": "Heineken 0.5", "en": "Heineken 0.5", "kk": "Heineken 0.5"}, "price": "2 250"}, {"name": {"ru": "Heineken безалкогольное 0.5", "en": "Heineken Non-Alcoholic 0.5", "kk": "Heineken алкогольсіз 0.5"}, "price": "2 450"}, {"name": {"ru": "Kronenbourg 1664 0.5L", "en": "Kronenbourg 1664 0.5L", "kk": "Kronenbourg 1664 0.5L"}, "price": "2 350"}, {"name": {"ru": "Corona Extra 0.35L", "en": "Corona Extra 0.35L", "kk": "Corona Extra 0.35L"}, "price": "3 550"}, {"name": {"ru": "Krusovice Svetle 0.45L", "en": "Krusovice Svetle 0.45L", "kk": "Krusovice Svetle 0.45L"}, "price": "1 590"}, {"name": {"ru": "Krusovice Cerne 0.45L", "en": "Krusovice Cerne 0.45L", "kk": "Krusovice Cerne 0.45L"}, "price": "1 590"}, {"name": {"ru": "Жигули Барное безалкогольное 0.45L", "en": "Zhiguli Barnoye Non-Alcoholic 0.45L", "kk": "Жигули Барное алкогольсіз 0.45L"}, "price": "1 450"}]}, {"title": {"ru": "Разливное пиво", "en": "Draft Beer", "kk": "Құйма сыра"}, "note": {"ru": "цена за 0.5 л / за 3 л", "en": "price per 0.5 L / 3 L", "kk": "0.5 л / 3 л бағасы"}, "items": [{"name": {"ru": "Пражское", "en": "Prague", "kk": "Прага"}, "price": "1 450", "price2": "7 990"}, {"name": {"ru": "Баварское нефильтрованное", "en": "Bavarian Unfiltered", "kk": "Бавария сүзілмеген"}, "price": "1 750", "price2": "9 990"}, {"name": {"ru": "Budweiser Budvar", "en": "Budweiser Budvar", "kk": "Budweiser Budvar"}, "price": "3 590", "price2": "20 590"}, {"name": {"ru": "Guinness", "en": "Guinness", "kk": "Guinness"}, "price": "3 990"}]}, {"title": {"ru": "Закуски к пиву", "en": "Beer Snacks", "kk": "Сыраға тіскебасар"}, "items": [{"name": {"ru": "Арахис соленый", "en": "Salted Peanuts", "kk": "Тұзды жержаңғақ"}, "price": "1 690"}, {"name": {"ru": "Чечил", "en": "Chechil Cheese", "kk": "Шешіл ірімшігі"}, "price": "1 990"}, {"name": {"ru": "Чипсы", "en": "Chips", "kk": "Чипсы"}, "price": "2 190"}, {"name": {"ru": "Фисташки соленые", "en": "Salted Pistachios", "kk": "Тұзды фисташка"}, "price": "2 390"}, {"name": {"ru": "Курт", "en": "Kurt", "kk": "Құрт"}, "price": "1 990"}]}, {"title": {"ru": "Водка", "en": "Vodka", "kk": "Арақ"}, "note": {"ru": "цена за 0.5 л / за 50 мл", "en": "price per 0.5 L / 50 ml", "kk": "0.5 л / 50 мл бағасы"}, "items": [{"name": {"ru": "Хортица", "en": "Khortytsa", "kk": "Хортица"}, "price": "9 500", "price2": "950"}, {"name": {"ru": "Бульбашъ особая", "en": "Bulbash Osobaya", "kk": "Бульбашъ особая"}, "price": "9 800", "price2": "980"}, {"name": {"ru": "Kyzyl Zhar Legend", "en": "Kyzyl Zhar Legend", "kk": "Kyzyl Zhar Legend"}, "price": "9 900", "price2": "990"}, {"name": {"ru": "Romanov", "en": "Romanov", "kk": "Romanov"}, "price": "11 500", "price2": "1 150"}, {"name": {"ru": "Tchaikovsky", "en": "Tchaikovsky", "kk": "Tchaikovsky"}, "price": "12 900", "price2": "1 290"}, {"name": {"ru": "Smirnoff №21 RED", "en": "Smirnoff №21 RED", "kk": "Smirnoff №21 RED"}, "price": "13 900", "price2": "1 390"}, {"name": {"ru": "Absolut Blue", "en": "Absolut Blue", "kk": "Absolut Blue"}, "price": "19 500", "price2": "1 950"}, {"name": {"ru": "Tito's", "en": "Tito's", "kk": "Tito's"}, "price": "27 900", "price2": "2 790"}, {"name": {"ru": "Reyka", "en": "Reyka", "kk": "Reyka"}, "price": "32 000", "price2": "3 200"}, {"name": {"ru": "Grey Goose", "en": "Grey Goose", "kk": "Grey Goose"}, "price": "37 000", "price2": "3 700"}, {"name": {"ru": "Belvedere", "en": "Belvedere", "kk": "Belvedere"}, "price": "41 000", "price2": "4 100"}]}, {"title": {"ru": "Виски", "en": "Whisky", "kk": "Виски"}, "note": {"ru": "цена за 0.5 л / за 50 мл", "en": "price per 0.5 L / 50 ml", "kk": "0.5 л / 50 мл бағасы"}, "items": [{"name": {"ru": "Ballantine's", "en": "Ballantine's", "kk": "Ballantine's"}, "price": "23 500", "price2": "2 350"}, {"name": {"ru": "Red Label", "en": "Red Label", "kk": "Red Label"}, "price": "24 500", "price2": "2 450"}, {"name": {"ru": "Jameson", "en": "Jameson", "kk": "Jameson"}, "price": "26 000", "price2": "2 600"}, {"name": {"ru": "Tullamore D.E.W.", "en": "Tullamore D.E.W.", "kk": "Tullamore D.E.W."}, "price": "28 000", "price2": "2 800"}, {"name": {"ru": "Jack Daniels", "en": "Jack Daniels", "kk": "Jack Daniels"}, "price": "33 500", "price2": "3 500"}, {"name": {"ru": "Monkey Shoulder", "en": "Monkey Shoulder", "kk": "Monkey Shoulder"}, "price": "39 500", "price2": "3 900"}, {"name": {"ru": "Chivas 12 y.o.", "en": "Chivas 12 y.o.", "kk": "Chivas 12 y.o."}, "price": "41 000", "price2": "4 100"}]}, {"title": {"ru": "Коньяк", "en": "Cognac", "kk": "Коньяк"}, "note": {"ru": "цена за 0.5 л / за 50 мл", "en": "price per 0.5 L / 50 ml", "kk": "0.5 л / 50 мл бағасы"}, "items": [{"name": {"ru": "Казахстан 3 звезды", "en": "Kazakhstan 3 Stars", "kk": "Қазақстан 3 жұлдыз"}, "price": "12 500", "price2": "1 250"}, {"name": {"ru": "Казахстан 5 звезд", "en": "Kazakhstan 5 Stars", "kk": "Қазақстан 5 жұлдыз"}, "price": "15 500", "price2": "1 500"}, {"name": {"ru": "Арарат 3 звезды", "en": "Ararat 3 Stars", "kk": "Арарат 3 жұлдыз"}, "price": "17 500", "price2": "1 750"}, {"name": {"ru": "Арарат 5 звезд", "en": "Ararat 5 Stars", "kk": "Арарат 5 жұлдыз"}, "price": "20 000", "price2": "2 000"}, {"name": {"ru": "Hennessy V.S.", "en": "Hennessy V.S.", "kk": "Hennessy V.S."}, "price": "45 000", "price2": "4 500"}]}, {"title": {"ru": "Ром", "en": "Rum", "kk": "Ром"}, "note": {"ru": "цена за 0.5 л / за 50 мл", "en": "price per 0.5 L / 50 ml", "kk": "0.5 л / 50 мл бағасы"}, "items": [{"name": {"ru": "Oakheart", "en": "Oakheart", "kk": "Oakheart"}, "price": "20 000", "price2": "2 000"}]}, {"title": {"ru": "Текила", "en": "Tequila", "kk": "Текила"}, "note": {"ru": "цена за 0.5 л / за 50 мл", "en": "price per 0.5 L / 50 ml", "kk": "0.5 л / 50 мл бағасы"}, "items": [{"name": {"ru": "Olmeca", "en": "Olmeca", "kk": "Olmeca"}, "price": "21 500", "price2": "2 150"}]}, {"title": {"ru": "Джин", "en": "Gin", "kk": "Джин"}, "note": {"ru": "цена за 0.5 л / за 50 мл", "en": "price per 0.5 L / 50 ml", "kk": "0.5 л / 50 мл бағасы"}, "items": [{"name": {"ru": "Gordon's", "en": "Gordon's", "kk": "Gordon's"}, "price": "18 500", "price2": "1 850"}, {"name": {"ru": "Beefeater", "en": "Beefeater", "kk": "Beefeater"}, "price": "19 500", "price2": "1 950"}, {"name": {"ru": "Bickens", "en": "Bickens", "kk": "Bickens"}, "price": "20 500", "price2": "2 050"}]}, {"title": {"ru": "Ликеры", "en": "Liqueurs", "kk": "Ликерлер"}, "note": {"ru": "цена за 0.5 л / за 50 мл", "en": "price per 0.5 L / 50 ml", "kk": "0.5 л / 50 мл бағасы"}, "items": [{"name": {"ru": "Becherovka", "en": "Becherovka", "kk": "Becherovka"}, "price": "18 500", "price2": "1 850"}, {"name": {"ru": "Baileys", "en": "Baileys", "kk": "Baileys"}, "price": "19 500", "price2": "1 950"}, {"name": {"ru": "Jägermeister", "en": "Jägermeister", "kk": "Jägermeister"}, "price": "21 000", "price2": "2 100"}]}, {"title": {"ru": "Аперитивы и вино", "en": "Aperitifs & Wine", "kk": "Аперитивтер мен шарап"}, "items": [{"name": {"ru": "Martini", "en": "Martini", "kk": "Martini"}, "price": "18 500", "price2": "1 850", "desc": {"ru": "1 л / 100 мл", "en": "1 L / 100 ml", "kk": "1 л / 100 мл"}}, {"name": {"ru": "Вино в ассортименте", "en": "Assorted Wine", "kk": "Түрлі шарап"}, "price": "14 000", "price2": "2 200", "desc": {"ru": "0.7 л / 100 мл", "en": "0.7 L / 100 ml", "kk": "0.7 л / 100 мл"}}]}, {"title": {"ru": "Коктейли алкогольные", "en": "Cocktails", "kk": "Коктейльдер"}, "items": [{"name": {"ru": "Aperol Spritz", "en": "Aperol Spritz", "kk": "Aperol Spritz"}, "price": "3 190"}, {"name": {"ru": "Gin Tonic", "en": "Gin Tonic", "kk": "Gin Tonic"}, "price": "2 790"}, {"name": {"ru": "Long Island", "en": "Long Island", "kk": "Long Island"}, "price": "3 290"}, {"name": {"ru": "Cuba Libre", "en": "Cuba Libre", "kk": "Cuba Libre"}, "price": "2 590"}, {"name": {"ru": "Mimosa", "en": "Mimosa", "kk": "Mimosa"}, "price": "2 490"}, {"name": {"ru": "Mojito", "en": "Mojito", "kk": "Mojito"}, "price": "2 690"}]}, {"title": {"ru": "Безалкогольные напитки", "en": "Soft Drinks", "kk": "Алкогольсіз сусындар"}, "items": [{"name": {"ru": "Coca-Cola", "en": "Coca-Cola", "kk": "Coca-Cola"}, "price": "1 990", "price2": "1 490", "price3": "1 690", "desc": {"ru": "1 л / 0.5 л / 0.25 л", "en": "1 L / 0.5 L / 0.25 L", "kk": "1 л / 0.5 л / 0.25 л"}}, {"name": {"ru": "Минеральная вода", "en": "Mineral Water", "kk": "Минералды су"}, "price": "1 150", "price2": "890", "desc": {"ru": "1 л / 0.5 л", "en": "1 L / 0.5 L", "kk": "1 л / 0.5 л"}}, {"name": {"ru": "Сок", "en": "Juice", "kk": "Шырын"}, "price": "2 390"}, {"name": {"ru": "Red Bull", "en": "Red Bull", "kk": "Red Bull"}, "price": "2 450"}, {"name": {"ru": "Borjomi", "en": "Borjomi", "kk": "Borjomi"}, "price": "2 550"}, {"name": {"ru": "Тоник Schweppes", "en": "Schweppes Tonic", "kk": "Schweppes тоник"}, "price": "2 300"}, {"name": {"ru": "Лимонады", "en": "Lemonades", "kk": "Лимонадтар"}, "price": "2 790"}, {"name": {"ru": "Морс клюквенный", "en": "Cranberry Mors", "kk": "Мүкжидек морсы"}, "price": "2 590"}]}, {"title": {"ru": "Чай", "en": "Tea", "kk": "Шай"}, "items": [{"name": {"ru": "Чай в ассортименте (чашка)", "en": "Assorted Tea (cup)", "kk": "Түрлі шай (кесе)"}, "price": "800"}, {"name": {"ru": "Чай черный (чайник)", "en": "Black Tea (pot)", "kk": "Қара шай (шәйнек)"}, "price": "1 450"}, {"name": {"ru": "Чай зеленый (чайник)", "en": "Green Tea (pot)", "kk": "Жасыл шай (шәйнек)"}, "price": "1 650"}, {"name": {"ru": "Чай ташкентский (чайник)", "en": "Tashkent Tea (pot)", "kk": "Ташкент шайы (шәйнек)"}, "price": "2 190"}, {"name": {"ru": "Чай имбирный (чайник)", "en": "Ginger Tea (pot)", "kk": "Зімбір шайы (шәйнек)"}, "price": "2 590"}, {"name": {"ru": "Чай облепиховый (чайник)", "en": "Sea Buckthorn Tea (pot)", "kk": "Шырғанақ шайы (шәйнек)"}, "price": "2 690"}, {"name": {"ru": "Чай ягодный (чайник)", "en": "Berry Tea (pot)", "kk": "Жидек шайы (шәйнек)"}, "price": "2 790"}, {"name": {"ru": "Чай мараканский (чайник)", "en": "Moroccan Tea (pot)", "kk": "Мароккан шайы (шәйнек)"}, "price": "2 990"}]}, {"title": {"ru": "Кофе", "en": "Coffee", "kk": "Кофе"}, "items": [{"name": {"ru": "Jacobs (чашка)", "en": "Jacobs (cup)", "kk": "Jacobs (кесе)"}, "price": "1 300"}]}]};
 
-  bar: [
-    { title: "Бутылочное пиво", items: [
-      {name:"Heineken 0.5", price:"2 250"},
-      {name:"Heineken безалкогольное 0.5", price:"2 450"},
-      {name:"Kronenbourg 1664 0.5L", price:"2 350"},
-      {name:"Corona Extra 0.35L", price:"3 550"},
-      {name:"Krusovice Svetle 0.45L", price:"1 590"},
-      {name:"Krusovice Cerne 0.45L", price:"1 590"},
-      {name:"Жигули Барное безалкогольное 0.45L", price:"1 450"},
-    ]},
-    { title: "Разливное пиво", note: "цена за 0.5 л / за 3 л", items: [
-      {name:"Пражское", price:"1 450", price2:"7 990"},
-      {name:"Баварское нефильтрованное", price:"1 750", price2:"9 990"},
-      {name:"Budweiser Budvar", price:"3 590", price2:"20 590"},
-      {name:"Guinness", price:"3 990"},
-    ]},
-    { title: "Закуски к пиву", items: [
-      {name:"Арахис соленый", price:"1 690"},
-      {name:"Чечил", price:"1 990"},
-      {name:"Чипсы", price:"2 190"},
-      {name:"Фисташки соленые", price:"2 390"},
-      {name:"Курт", price:"1 990"},
-    ]},
-    { title: "Водка", note: "цена за 0.5 л / за 50 мл", items: [
-      {name:"Хортица", price:"9 500", price2:"950"},
-      {name:"Бульбашъ особая", price:"9 800", price2:"980"},
-      {name:"Kyzyl Zhar Legend", price:"9 900", price2:"990"},
-      {name:"Romanov", price:"11 500", price2:"1 150"},
-      {name:"Tchaikovsky", price:"12 900", price2:"1 290"},
-      {name:"Smirnoff №21 RED", price:"13 900", price2:"1 390"},
-      {name:"Absolut Blue", price:"19 500", price2:"1 950"},
-      {name:"Tito's", price:"27 900", price2:"2 790"},
-      {name:"Reyka", price:"32 000", price2:"3 200"},
-      {name:"Grey Goose", price:"37 000", price2:"3 700"},
-      {name:"Belvedere", price:"41 000", price2:"4 100"},
-    ]},
-    { title: "Виски", note: "цена за 0.5 л / за 50 мл", items: [
-      {name:"Ballantine's", price:"23 500", price2:"2 350"},
-      {name:"Red Label", price:"24 500", price2:"2 450"},
-      {name:"Jameson", price:"26 000", price2:"2 600"},
-      {name:"Tullamore D.E.W.", price:"28 000", price2:"2 800"},
-      {name:"Jack Daniels", price:"33 500", price2:"3 500"},
-      {name:"Monkey Shoulder", price:"39 500", price2:"3 900"},
-      {name:"Chivas 12 y.o.", price:"41 000", price2:"4 100"},
-    ]},
-    { title: "Коньяк", note: "цена за 0.5 л / за 50 мл", items: [
-      {name:"Казахстан 3 звезды", price:"12 500", price2:"1 250"},
-      {name:"Казахстан 5 звезд", price:"15 500", price2:"1 500"},
-      {name:"Арарат 3 звезды", price:"17 500", price2:"1 750"},
-      {name:"Арарат 5 звезд", price:"20 000", price2:"2 000"},
-      {name:"Hennessy V.S.", price:"45 000", price2:"4 500"},
-    ]},
-    { title: "Ром", note: "цена за 0.5 л / за 50 мл", items: [
-      {name:"Oakheart", price:"20 000", price2:"2 000"},
-    ]},
-    { title: "Текила", note: "цена за 0.5 л / за 50 мл", items: [
-      {name:"Olmeca", price:"21 500", price2:"2 150"},
-    ]},
-    { title: "Джин", note: "цена за 0.5 л / за 50 мл", items: [
-      {name:"Gordon's", price:"18 500", price2:"1 850"},
-      {name:"Beefeater", price:"19 500", price2:"1 950"},
-      {name:"Bickens", price:"20 500", price2:"2 050"},
-    ]},
-    { title: "Ликеры", note: "цена за 0.5 л / за 50 мл", items: [
-      {name:"Becherovka", price:"18 500", price2:"1 850"},
-      {name:"Baileys", price:"19 500", price2:"1 950"},
-      {name:"Jägermeister", price:"21 000", price2:"2 100"},
-    ]},
-    { title: "Аперитивы и вино", items: [
-      {name:"Martini", desc:"1 л / 100 мл", price:"18 500", price2:"1 850"},
-      {name:"Вино в ассортименте", desc:"0.7 л / 100 мл", price:"14 000", price2:"2 200"},
-    ]},
-    { title: "Коктейли алкогольные", items: [
-      {name:"Aperol Spritz", price:"3 190"},
-      {name:"Gin Tonic", price:"2 790"},
-      {name:"Long Island", price:"3 290"},
-      {name:"Cuba Libre", price:"2 590"},
-      {name:"Mimosa", price:"2 490"},
-      {name:"Mojito", price:"2 690"},
-    ]},
-    { title: "Безалкогольные напитки", items: [
-      {name:"Coca-Cola", desc:"1 л / 0.5 л / 0.25 л", price:"1 990", price2:"1 490", price3:"1 690"},
-      {name:"Минеральная вода", desc:"1 л / 0.5 л", price:"1 150", price2:"890"},
-      {name:"Сок", price:"2 390"},
-      {name:"Red Bull", price:"2 450"},
-      {name:"Borjomi", price:"2 550"},
-      {name:"Тоник Schweppes", price:"2 300"},
-      {name:"Лимонады", price:"2 790"},
-      {name:"Морс клюквенный", price:"2 590"},
-    ]},
-    { title: "Чай", items: [
-      {name:"Чай в ассортименте (чашка)", price:"800"},
-      {name:"Чай черный (чайник)", price:"1 450"},
-      {name:"Чай зеленый (чайник)", price:"1 650"},
-      {name:"Чай ташкентский (чайник)", price:"2 190"},
-      {name:"Чай имбирный (чайник)", price:"2 590"},
-      {name:"Чай облепиховый (чайник)", price:"2 690"},
-      {name:"Чай ягодный (чайник)", price:"2 790"},
-      {name:"Чай мараканский (чайник)", price:"2 990"},
-    ]},
-    { title: "Кофе", items: [
-      {name:"Jacobs (чашка)", price:"1 300"},
-    ]},
-  ]
+const STR = {
+  ru: { tagline:"ЦИФРОВОЕ МЕНЮ", svc:"Обслуживание 10%. Цены указаны в тенге.", kitchen:"Кухня", bar:"Бар", search:"Найти блюдо или напиток…", enjoy:"Приятного аппетита!", scanNote:"Отсканируйте QR‑код у столика, чтобы вернуться к меню в любой момент.", currency:" тг." },
+  en: { tagline:"DIGITAL MENU", svc:"10% service charge included. Prices in KZT.", kitchen:"Kitchen", bar:"Bar", search:"Search dish or drink…", enjoy:"Enjoy your meal!", scanNote:"Scan the QR code at your table to return to the menu anytime.", currency:" KZT" },
+  kk: { tagline:"ЦИФРЛЫҚ МӘЗІР", svc:"Қызмет көрсету ақысы 10%. Бағалар теңгемен.", kitchen:"Ас үй", bar:"Бар", search:"Тағам немесе сусын іздеу…", enjoy:"Ас болсын!", scanNote:"Кез келген уақытта мәзірге оралу үшін үстелдегі QR-кодты сканерлеңіз.", currency:" тг." }
 };
 
 let currentMode = 'food';
+let LANG = localStorage.getItem('gopub_lang') || 'ru';
+
+function toggleLangMenu(){
+  document.getElementById('langMenu').classList.toggle('open');
+}
+document.addEventListener('click', (e) => {
+  const wrap = document.querySelector('.lang-switch-wrap');
+  if(wrap && !wrap.contains(e.target)) document.getElementById('langMenu').classList.remove('open');
+});
+
+function setLang(lang){
+  LANG = lang;
+  localStorage.setItem('gopub_lang', lang);
+  document.getElementById('langLabel').textContent = lang.toUpperCase();
+  document.getElementById('htmlRoot').lang = lang;
+  document.querySelectorAll('.lang-menu button').forEach(b => b.classList.toggle('active', b.dataset.lang===lang));
+  document.getElementById('langMenu').classList.remove('open');
+  applyStaticStrings();
+  renderChips();
+  renderMain();
+}
+
+function applyStaticStrings(){
+  const s = STR[LANG];
+  document.getElementById('taglineText').textContent = s.tagline;
+  document.getElementById('svcNote').textContent = s.svc;
+  document.getElementById('btn-food').textContent = s.kitchen;
+  document.getElementById('btn-bar').textContent = s.bar;
+  document.getElementById('search').placeholder = s.search;
+  document.getElementById('enjoyText').textContent = s.enjoy;
+  document.getElementById('scanNoteText').textContent = s.scanNote;
+}
 
 function fmtPrice(item){
   let parts = [item.price];
   if(item.price2) parts.push(item.price2);
   if(item.price3) parts.push(item.price3);
-  return parts.join(' / ') + ' тг.';
+  return parts.join(' / ') + STR[LANG].currency;
 }
 
 function renderChips(){
@@ -405,7 +260,7 @@ function renderChips(){
   chips.innerHTML = '';
   MENU[currentMode].forEach((cat, i) => {
     const b = document.createElement('button');
-    b.textContent = cat.title;
+    b.textContent = cat.title[LANG] || cat.title.ru;
     b.dataset.idx = i;
     b.onclick = () => {
       document.getElementById('cat-' + i).scrollIntoView({behavior:'smooth', block:'start'});
@@ -423,17 +278,20 @@ function renderMain(){
     sec.className = 'category';
     sec.id = 'cat-' + i;
 
-    let html = `<div class="cat-head"><h2>${cat.title}</h2><div class="rule"></div></div>`;
-    if(cat.note) html += `<p class="cat-note">${cat.note}</p>`;
+    let html = `<div class="cat-head"><h2>${cat.title[LANG] || cat.title.ru}</h2><div class="rule"></div></div>`;
+    if(cat.note) html += `<p class="cat-note">${cat.note[LANG] || cat.note.ru}</p>`;
     cat.items.forEach(it => {
-      html += `<div class="item" data-search="${(it.name + ' ' + (it.desc||'')).toLowerCase()}">
+      const name = it.name[LANG] || it.name.ru;
+      const desc = it.desc ? (it.desc[LANG] || it.desc.ru) : null;
+      const searchBlob = [it.name.ru, it.name.en, it.name.kk, desc||''].join(' ').toLowerCase();
+      html += `<div class="item" data-search="${searchBlob}">
         <div class="item-row">
           ${it.n ? `<span class="item-num">${it.n}</span>` : ''}
-          <span class="item-name">${it.name}</span>
+          <span class="item-name">${name}</span>
           <span class="dots"></span>
           <span class="item-price">${fmtPrice(it)}</span>
         </div>
-        ${it.desc ? `<div class="item-desc">${it.desc}</div>` : ''}
+        ${desc ? `<div class="item-desc">${desc}</div>` : ''}
       </div>`;
     });
     sec.innerHTML = html;
@@ -480,10 +338,14 @@ function setupObserver(){
         }
       }
     });
-  }, { rootMargin: '-160px 0px -70% 0px' });
+  }, { rootMargin: '-190px 0px -70% 0px' });
   document.querySelectorAll('section.category').forEach(sec => observer.observe(sec));
 }
 
+document.querySelectorAll('.lang-menu button').forEach(b => b.classList.toggle('active', b.dataset.lang===LANG));
+document.getElementById('langLabel').textContent = LANG.toUpperCase();
+document.getElementById('htmlRoot').lang = LANG;
+applyStaticStrings();
 renderChips();
 renderMain();
 setupObserver();
