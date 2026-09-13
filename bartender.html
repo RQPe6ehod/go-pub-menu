@@ -31,6 +31,10 @@
   .line:last-of-type{ border-bottom:none; }
   .line b{ color:var(--gold); }
   .done-btn{ margin-top:14px; width:100%; padding:14px; border:none; border-radius:12px; background:var(--green); color:#0E1D17; font-weight:700; font-size:15px; }
+  .accept-btn{ margin-top:14px; width:100%; padding:14px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; }
+  .status-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+  .status-new{ font-size:11px; padding:3px 9px; border-radius:999px; font-weight:700; background:rgba(224,149,74,.2); color:var(--gold); }
+  .timer{ font-family:'Fraunces',serif; font-weight:700; font-size:18px; color:var(--green); }
   .empty{ color:var(--muted); text-align:center; padding:60px 20px; font-size:15px; }
 
   .lock{ position:fixed; inset:0; background:var(--bg-deep); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px; }
@@ -116,15 +120,22 @@ function ding(msg){
 
 function render(){
   const el = document.getElementById('board');
-  const pending = allOrders.filter(o => o.barStatus === "pending");
-  if(pending.length===0){ el.innerHTML = `<div class="empty">Новых заказов нет 🍸</div>`; return; }
+  const active = allOrders.filter(o => o.barStatus === "pending" || o.barStatus === "accepted");
+  if(active.length===0){ el.innerHTML = `<div class="empty">Новых заказов нет 🍸</div>`; return; }
   let html = "";
-  pending.slice().sort((a,b)=>a.createdAt-b.createdAt).forEach(o => {
+  active.slice().sort((a,b)=>a.createdAt-b.createdAt).forEach(o => {
     const isNew = newIds.has(o.id);
     html += `<div class="ticket ${isNew?'new':''}">
       <div class="top"><span class="table-badge">Стол ${o.table}</span><span class="time">${timeAgo(o.createdAt)}</span></div>`;
     o.barItems.forEach(i => html += `<div class="line"><b>${i.qty}×</b> ${i.name}</div>`);
-    html += `<button class="done-btn" onclick="markBarReady('${o.id}')">Готово</button></div>`;
+    if(o.barStatus === "pending"){
+      html += `<div class="status-row"><span class="status-new">Новый</span></div>
+        <button class="accept-btn" onclick="acceptBarOrder('${o.id}')">Принять в работу</button>`;
+    } else {
+      html += `<div class="status-row"><span>Готовится</span><span class="timer" data-since="${o.barAcceptedAt}">00:00</span></div>
+        <button class="done-btn" onclick="markBarReady('${o.id}')">Готово</button>`;
+    }
+    html += `</div>`;
   });
   el.innerHTML = html;
   newIds.clear();
@@ -133,11 +144,22 @@ function timeAgo(ts){
   const m = Math.floor((Date.now()-ts)/60000);
   return m<1 ? "только что" : m+" мин назад";
 }
+function tickTimers(){
+  document.querySelectorAll('.timer[data-since]').forEach(el => {
+    const since = parseInt(el.dataset.since, 10);
+    const s = Math.max(0, Math.floor((Date.now()-since)/1000));
+    const mm = String(Math.floor(s/60)).padStart(2,'0');
+    const ss = String(s%60).padStart(2,'0');
+    el.textContent = mm+":"+ss;
+  });
+}
+function acceptBarOrder(id){ socket.send(JSON.stringify({type:"bar_accept", orderId:id})); }
 function markBarReady(id){ socket.send(JSON.stringify({type:"bar_ready", orderId:id})); }
 
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
 connect();
 setInterval(render, 30000);
+setInterval(tickTimers, 1000);
 </script>
 </body>
 </html>

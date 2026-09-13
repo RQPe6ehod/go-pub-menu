@@ -138,6 +138,19 @@ function isToday(ts){
   return d.toDateString() === now.toDateString();
 }
 
+function fmtDur(ms){
+  const s = Math.max(0, Math.floor(ms/1000));
+  const m = Math.floor(s/60), r = s%60;
+  return m>0 ? `${m}м ${r}с` : `${r}с`;
+}
+
+function timingLine(label, status, startTs, endTs){
+  if(status === "none") return "";
+  if(endTs) return `<div class="line"><small>${label}: ${fmtDur(endTs-startTs)}</small></div>`;
+  if(startTs) return `<div class="line"><small>${label}: идёт — ${fmtDur(Date.now()-startTs)}</small></div>`;
+  return "";
+}
+
 function render(){
   const total = allOrders.length;
   const ready = allOrders.filter(isReady).length;
@@ -156,11 +169,19 @@ function render(){
     let html = "";
     allOrders.slice().sort((a,b)=>b.createdAt-a.createdAt).forEach(o => {
       html += `<div class="ticket"><div class="top"><span class="table-badge">Стол ${o.table}</span><span class="time">${timeAgo(o.createdAt)}</span></div><div class="badges">`;
-      if(o.kitchenItems.length) html += `<span class="badge ${o.kitchenStatus==='ready'?'ready':'pending'}">Кухня: ${o.kitchenStatus==='ready'?'готово':'готовит'}</span>`;
-      if(o.barItems.length) html += `<span class="badge ${o.barStatus==='ready'?'ready':'pending'}">Бар: ${o.barStatus==='ready'?'готово':'готовит'}</span>`;
+      if(o.kitchenItems.length) html += `<span class="badge ${o.kitchenStatus==='ready'?'ready':'pending'}">Кухня: ${o.kitchenStatus==='ready'?'готово':(o.kitchenStatus==='accepted'?'готовит':'в очереди')}</span>`;
+      if(o.barItems.length) html += `<span class="badge ${o.barStatus==='ready'?'ready':'pending'}">Бар: ${o.barStatus==='ready'?'готово':(o.barStatus==='accepted'?'готовит':'в очереди')}</span>`;
       html += `</div>`;
       o.kitchenItems.forEach(i => html += `<div class="line">${i.name} <small>× ${i.qty}</small></div>`);
+      if(o.kitchenItems.length){
+        html += timingLine("Реакция кухни", o.kitchenStatus, o.createdAt, o.kitchenAcceptedAt);
+        html += timingLine("Готовка", o.kitchenStatus, o.kitchenAcceptedAt, o.kitchenReadyAt);
+      }
       o.barItems.forEach(i => html += `<div class="line">${i.name} <small>× ${i.qty}</small></div>`);
+      if(o.barItems.length){
+        html += timingLine("Реакция бара", o.barStatus, o.createdAt, o.barAcceptedAt);
+        html += timingLine("Готовка", o.barStatus, o.barAcceptedAt, o.barReadyAt);
+      }
       html += `</div>`;
     });
     el.innerHTML = html;
@@ -180,7 +201,7 @@ function timeAgo(ts){
 }
 
 connect();
-setInterval(render, 30000);
+setInterval(render, 1000);
 </script>
 </body>
 </html>
