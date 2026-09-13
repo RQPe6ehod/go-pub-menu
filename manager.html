@@ -152,6 +152,7 @@
         <button onclick="changeTableCount(1)">+</button>
       </div>
     </div>
+    <button class="close-table-btn" id="confirmTableCountBtn" onclick="confirmTableCount()" style="display:none;width:100%;margin-bottom:18px;">Утвердить количество столов</button>
 
     <h2>Добавить сотрудника</h2>
     <div class="role-buttons">
@@ -160,11 +161,11 @@
       <button onclick="createStaff('bartender')">+ Бармен</button>
     </div>
 
-    <h2>Официанты</h2>
+    <h2 id="hWaiter">Официанты</h2>
     <div id="staffWaiter"></div>
-    <h2>Повара</h2>
+    <h2 id="hCook">Повара</h2>
     <div id="staffCook"></div>
-    <h2>Бармены</h2>
+    <h2 id="hBartender">Бармены</h2>
     <div id="staffBartender"></div>
   </div>
 
@@ -224,7 +225,11 @@ function connect(){
       allOrders = msg.orders; allHistory = msg.history || []; openTables = msg.openTables || {};
       closedTables = msg.closedTables || []; staff = msg.staff || []; tableCount = msg.tableCount || 20;
       unavailable = msg.unavailable || {};
-      document.getElementById('tableCountVal').textContent = tableCount;
+      if(pendingTableCount === null || pendingTableCount === tableCount){
+        document.getElementById('tableCountVal').textContent = tableCount;
+        document.getElementById('confirmTableCountBtn').style.display = 'none';
+        pendingTableCount = null;
+      }
       render();
       renderStaff();
       renderUnavailable();
@@ -443,11 +448,18 @@ function renderUnavailable(){
   renderGroup('unavailBar', barKeys, 'bar|'.length);
 }
 
+let pendingTableCount = null;
 function changeTableCount(delta){
-  const next = Math.max(1, tableCount + delta);
-  tableCount = next;
+  const base = pendingTableCount !== null ? pendingTableCount : tableCount;
+  const next = Math.max(1, base + delta);
+  pendingTableCount = next;
   document.getElementById('tableCountVal').textContent = next;
-  socket.send(JSON.stringify({type:"set_table_count", count: next}));
+  document.getElementById('confirmTableCountBtn').style.display = (next !== tableCount) ? 'block' : 'none';
+}
+function confirmTableCount(){
+  if(pendingTableCount === null) return;
+  socket.send(JSON.stringify({type:"set_table_count", count: pendingTableCount}));
+  document.getElementById('confirmTableCountBtn').style.display = 'none';
 }
 
 function createStaff(role){
@@ -462,14 +474,15 @@ const ROLE_LABELS = { waiter: "Официант", cook: "Повар", bartender:
 const ROLE_PAGES = { waiter: "waiter.html", cook: "cook.html", bartender: "bartender.html" };
 
 function renderStaff(){
-  renderStaffGroup('waiter', 'staffWaiter');
-  renderStaffGroup('cook', 'staffCook');
-  renderStaffGroup('bartender', 'staffBartender');
+  renderStaffGroup('waiter', 'staffWaiter', 'hWaiter', 'Официанты');
+  renderStaffGroup('cook', 'staffCook', 'hCook', 'Повара');
+  renderStaffGroup('bartender', 'staffBartender', 'hBartender', 'Бармены');
 }
 
-function renderStaffGroup(role, elId){
+function renderStaffGroup(role, elId, headId, label){
   const el = document.getElementById(elId);
   const list = staff.filter(s => s.role === role);
+  document.getElementById(headId).textContent = `${label} (${list.length})`;
   if(list.length===0){ el.innerHTML = `<div class="empty">Пока никого нет</div>`; return; }
   let html = "";
   list.forEach(s => {
