@@ -100,8 +100,9 @@
 </div>
 
 <header>
-  <h1>GO pub · Бар <span id="staffNameTag" style="color:var(--gold); font-weight:600;"></span></h1>
+  <h1>GO pub · Бар <span id="staffNameTag" onclick="openNamePrompt()" style="color:var(--gold); font-weight:600; cursor:pointer; text-decoration:underline dotted;"></span></h1>
   <div class="conn off" id="conn">подключение…</div>
+  <div style="margin-top:4px;"><a href="#" onclick="openNamePrompt();return false;" style="font-size:11px;color:var(--muted);text-decoration:none;">Изменить имя</a> · <a href="#" onclick="openPinPrompt();return false;" style="font-size:11px;color:var(--muted);text-decoration:none;">Сменить PIN</a></div>
 </header>
 
 <main>
@@ -194,18 +195,37 @@ function showLock(err){
   document.getElementById('pinInput').value = "";
 }
 function hideLock(){ document.getElementById('lock').style.display = 'none'; }
-function showNameLock(){ document.getElementById('nameLock').style.display = 'flex'; }
+function showNameLock(){
+  document.getElementById('nameInput').value = staffName || "";
+  document.getElementById('nameLock').style.display = 'flex';
+}
 function hideNameLock(){ document.getElementById('nameLock').style.display = 'none'; }
+function openNamePrompt(){ showNameLock(); }
 function submitName(){
   const name = document.getElementById('nameInput').value.trim();
   if(!name) return;
   staffName = name;
-  socket.send(JSON.stringify({type:"set_staff_name", staffId, name}));
+  if(staffId){
+    socket.send(JSON.stringify({type:"set_staff_name", staffId, name}));
+  } else {
+    localStorage.setItem('gopub_display_name_'+ROLE, name);
+    socket.send(JSON.stringify({type:"set_display_name", name}));
+  }
   hideNameLock();
   updateStaffNameTag();
 }
 function updateStaffNameTag(){
-  document.getElementById('staffNameTag').textContent = staffName ? "— " + staffName : "";
+  document.getElementById('staffNameTag').textContent = staffName ? "— " + staffName : "— указать имя";
+}
+
+let lastPinAttempt = null;
+function openPinPrompt(){
+  const p1 = prompt("Новый PIN для входа (4-6 цифр):");
+  if(p1 === null) return;
+  const clean = p1.trim();
+  if(!/^\d{4,6}$/.test(clean)){ alert("PIN должен состоять из 4-6 цифр"); return; }
+  lastPinAttempt = clean;
+  socket.send(JSON.stringify({type:"change_pin", role:ROLE, newPin:clean}));
 }
 
 function connect(){
@@ -222,11 +242,35 @@ function connect(){
   socket.onerror = () => socket.close();
   socket.onmessage = (evt) => {
     const msg = JSON.parse(evt.data);
-    if(msg.type === "auth_ok"){ hideLock(); }
-    if(msg.type === "auth_error"){
-      if(!staffId) sessionStorage.removeItem("gopub_pin_"+ROLE);
-      showLock(staffId ? "" : "Неверный PIN");
+    if(msg.type === "auth_ok"){
+      hideLock();
+      if(!staffId){
+        const cached = localStorage.getItem('gopub_display_name_'+ROLE);
+        if(cached){ staffName = cached; socket.send(JSON.stringify({type:"set_display_name", name:cached})); updateStaffNameTag(); }
+        else updateStaffNameTag();
+      }
     }
+    if(msg.type === "auth_error"){
+      if(!staffId){
+        sessionStorage.removeItem("gopub_pin_"+ROLE);
+        showLock("Неверный PIN");
+      } else if(msg.reason === "unknown_staff"){
+        localStorage.removeItem('gopub_staff_id_'+ROLE);
+        localStorage.removeItem('gopub_staff_name_'+ROLE);
+        staffId = null;
+        document.getElementById('lockMsg').textContent = "Вы не являетесь барменом. Обратитесь к менеджеру, чтобы вас добавили.";
+        document.getElementById('pinInput').style.display = 'none';
+        document.getElementById('pinBtn').style.display = 'none';
+        document.getElementById('lock').style.display = 'flex';
+      } else {
+        showLock("");
+      }
+    }
+    if(msg.type === "pin_changed"){
+      if(!staffId) setPin(lastPinAttempt);
+      alert("PIN обновлён. Запомните новый PIN — он понадобится при следующем входе.");
+    }
+    if(msg.type === "pin_change_error"){ alert("Не удалось изменить PIN — используйте 4-6 цифр."); }
     if(msg.type === "state"){
       allOrders = msg.orders;
       allHistory = msg.history || [];
@@ -237,6 +281,7 @@ function connect(){
         if(me){
           staffName = me.name || "";
           updateStaffNameTag();
+          if(staffName) localStorage.setItem('gopub_staff_name_'+ROLE, staffName);
           if(!staffName) showNameLock(); else hideNameLock();
         }
       }

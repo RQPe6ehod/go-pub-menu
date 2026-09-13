@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>GO pub — Директор</title>
+<title>GO pub — Менеджер</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -83,6 +83,36 @@
   .qr-box .role{ font-family:'Fraunces',serif; color:#1b1b1b; font-size:16px; margin-bottom:4px; }
   .qr-box .link{ font-size:11px; color:#777; word-break:break-all; margin-bottom:16px; }
   .qr-box button{ width:100%; padding:12px; border:none; border-radius:10px; background:var(--gold); color:#1b1b1b; font-weight:700; }
+
+  .receipt-overlay{ position:fixed; inset:0; background:rgba(14,29,23,.92); z-index:96; display:none; align-items:flex-end; justify-content:center; }
+  .receipt-overlay.open{ display:flex; }
+  .receipt-overlay .receipt-panel{ width:100%; max-width:400px; background:#fff; color:#111; border-radius:16px 16px 0 0; max-height:90vh; display:flex; flex-direction:column; font-family:'Inter',monospace; overflow-y:auto; }
+  .receipt-overlay .receipt-body{ padding:22px 24px 6px; }
+  .receipt-overlay .receipt-body h2{ text-align:center; font-family:'Fraunces',serif; font-size:22px; margin:0 0 4px; }
+  .receipt-overlay .sub{ text-align:center; font-size:12px; color:#666; margin-bottom:16px; }
+  .receipt-overlay .receipt-row{ display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px; color:#333; }
+  .receipt-overlay .receipt-hr{ border-top:1px dashed #bbb; margin:10px 0; }
+  .receipt-overlay .receipt-item{ display:flex; justify-content:space-between; font-size:13.5px; padding:4px 0; color:#111; }
+  .receipt-overlay .receipt-item .rn{ flex:1; padding-right:8px; }
+  .receipt-overlay .receipt-total{ display:flex; justify-content:space-between; font-family:'Fraunces',serif; font-weight:700; font-size:18px; margin-top:10px; color:#111; }
+  .receipt-overlay .receipt-actions{ display:flex; gap:8px; padding:16px 24px 8px; border-top:1px solid #ddd; }
+  .receipt-overlay .receipt-actions button{ flex:1; padding:12px 6px; border-radius:12px; border:none; font-weight:700; font-size:12.5px; }
+  .receipt-overlay .btn-close{ background:#eee; color:#333; }
+  .receipt-overlay .btn-download{ background:#e7e2d6; color:#1b1b1b; }
+  .receipt-overlay .btn-print{ background:var(--gold); color:#1b1b1b; }
+  .receipt-overlay .receipt-share{ display:flex; gap:8px; padding:0 24px 20px; }
+  .receipt-overlay .receipt-share .share-btn{ flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:11px 6px; border-radius:12px; font-weight:700; font-size:12.5px; text-decoration:none; }
+  .receipt-overlay .wa{ background:#eafaf0; color:#1b7a45; }
+  .receipt-overlay .tg{ background:#eaf6fd; color:#1478b0; }
+  .receipt-overlay .receipt-qr{ display:flex; align-items:center; gap:12px; padding:0 24px 4px; }
+  .receipt-overlay .receipt-qr img{ width:70px; height:70px; border-radius:8px; border:1px solid #ddd; flex-shrink:0; }
+  .receipt-overlay .qr-note{ font-size:11.5px; color:#888; line-height:1.4; }
+  @media print{
+    body *{ visibility:hidden; }
+    .receipt-overlay .receipt-panel, .receipt-overlay .receipt-panel *{ visibility:visible; }
+    .receipt-overlay .receipt-panel{ position:fixed; inset:0; max-height:none; border-radius:0; }
+    .receipt-overlay .receipt-actions, .receipt-overlay .receipt-share, .receipt-overlay .receipt-qr{ display:none; }
+  }
   .ticket{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
   .ticket .top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
   .table-badge{ font-family:'Fraunces',serif; font-weight:700; color:var(--gold); }
@@ -94,7 +124,7 @@
   .line{ font-size:13px; color:var(--cream); margin-bottom:2px; }
   .line small{ color:var(--muted); }
   .empty{ color:var(--muted); text-align:center; padding:30px 0; font-size:14px; }
-  .hist-row{ display:flex; justify-content:space-between; font-size:13px; padding:8px 0; border-bottom:1px solid var(--line); }
+  .hist-row{ display:flex; justify-content:space-between; font-size:13px; padding:8px 0; border-bottom:1px solid var(--line); cursor:pointer; }
   .hist-row .t{ color:var(--muted); }
   .hist-row .p{ font-family:'Fraunces',serif; color:var(--gold); font-weight:600; }
 
@@ -111,7 +141,7 @@
 
 <div class="lock" id="lock">
   <div class="lock-box">
-    <h2>GO pub · Директор</h2>
+    <h2>GO pub · Менеджер</h2>
     <p>Введите PIN-код директора</p>
     <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••">
     <button onclick="tryPin()">Войти</button>
@@ -120,8 +150,9 @@
 </div>
 
 <header>
-  <h1>GO pub · Директор</h1>
+  <h1>GO pub · Менеджер</h1>
   <div class="conn off" id="conn">подключение…</div>
+  <div style="margin-top:4px;"><a href="#" onclick="openPinPrompt();return false;" style="font-size:11px;color:var(--muted);text-decoration:none;">Сменить PIN</a></div>
 </header>
 
 <main>
@@ -202,6 +233,28 @@
   </div>
 </div>
 
+<div class="receipt-overlay" id="receiptOverlay">
+  <div class="receipt-panel">
+    <div class="receipt-body" id="receiptBody"></div>
+    <div class="receipt-qr" id="receiptQrBlock"></div>
+    <div class="receipt-actions">
+      <button class="btn-close" onclick="closeReceiptViewer()">Закрыть</button>
+      <button class="btn-download" onclick="downloadReceiptFile(currentReceipt)">Скачать</button>
+      <button class="btn-print" onclick="window.print()">Печать</button>
+    </div>
+    <div class="receipt-share">
+      <a class="share-btn wa" id="shareWa" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><path d="M16 3C9.1 3 3.5 8.6 3.5 15.5c0 2.5.7 4.8 1.9 6.8L3 29l6.9-2.3c1.9 1 4.1 1.6 6.1 1.6 6.9 0 12.5-5.6 12.5-12.5S22.9 3 16 3z" fill="#25D366"/><path d="M22.4 19.1c-.3-.2-1.9-1-2.2-1.1-.3-.1-.5-.2-.7.2s-.8 1.1-1 1.3-.4.2-.7.1c-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-2-1.8-2.3-.2-.3 0-.5.1-.6.1-.1.3-.4.5-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.6s-.7-1.7-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.2.2 2 3.1 4.9 4.2 2.8 1.1 2.8.8 3.3.7.5-.1 1.6-.7 1.8-1.3.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.6-.4z" fill="#fff"/></svg>
+        WhatsApp
+      </a>
+      <a class="share-btn tg" id="shareTg" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" fill="#29A9EA"/><path d="M8.5 15.8l13-5c.6-.2 1.2.2.9.9l-2.2 10.4c-.2.8-.7.9-1.3.6l-3.6-2.7-1.7 1.6c-.2.2-.4.3-.7.3l.2-3.6 6.6-6c.3-.2-.1-.4-.4-.2l-8.1 5.1-3.5-1.1c-.8-.2-.8-.8.1-1.2z" fill="#fff"/></svg>
+        Telegram
+      </a>
+    </div>
+  </div>
+</div>
+
 <script>
 const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
 const ROLE = "manager";
@@ -224,6 +277,16 @@ function showLock(err){
 }
 function hideLock(){ document.getElementById('lock').style.display = 'none'; }
 
+let lastPinAttempt = null;
+function openPinPrompt(){
+  const p1 = prompt("Новый PIN для входа (4-6 цифр):");
+  if(p1 === null) return;
+  const clean = p1.trim();
+  if(!/^\d{4,6}$/.test(clean)){ alert("PIN должен состоять из 4-6 цифр"); return; }
+  lastPinAttempt = clean;
+  socket.send(JSON.stringify({type:"change_pin", role:ROLE, newPin:clean}));
+}
+
 function connect(){
   const pin = getPin();
   if(!pin){ showLock(); return; }
@@ -235,6 +298,8 @@ function connect(){
     const msg = JSON.parse(evt.data);
     if(msg.type === "auth_ok"){ hideLock(); }
     if(msg.type === "auth_error"){ sessionStorage.removeItem("gopub_pin_"+ROLE); showLock("Неверный PIN"); }
+    if(msg.type === "pin_changed"){ setPin(lastPinAttempt); alert("PIN обновлён. Запомните новый PIN — он понадобится при следующем входе."); }
+    if(msg.type === "pin_change_error"){ alert("Не удалось изменить PIN — используйте 4-6 цифр."); }
     if(msg.type === "state"){
       allOrders = msg.orders; allHistory = msg.history || []; openTables = msg.openTables || {};
       closedTables = msg.closedTables || []; staff = msg.staff || []; tableCount = msg.tableCount || 20;
@@ -339,7 +404,7 @@ function render(){
   if(closedToday.length===0){ histEl.innerHTML = `<div class="empty">Сегодня ещё не закрывали столы</div>`; return; }
   let hhtml = "";
   closedToday.slice().sort((a,b)=>b.closedAt-a.closedAt).forEach(c => {
-    hhtml += `<div class="hist-row"><span class="t">Стол ${c.table} · ${new Date(c.closedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span><span class="p">${c.total.toLocaleString('ru-RU')} тг</span></div>`;
+    hhtml += `<div class="hist-row" onclick="openReceiptViewer('${c.id}')"><span class="t">Стол ${c.table} · ${new Date(c.closedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span><span class="p">${c.total.toLocaleString('ru-RU')} тг</span></div>`;
   });
   histEl.innerHTML = hhtml;
 }
@@ -483,6 +548,11 @@ function deleteStaff(id){
   if(!confirm("Удалить этого сотрудника? Ссылка перестанет работать.")) return;
   socket.send(JSON.stringify({type:"delete_staff", staffId:id}));
 }
+function reassignStaff(id, name){
+  const label = name ? `«${name}»` : "этого сотрудника";
+  if(!confirm(`Старое устройство ${label} перестанет работать, и понадобится показать новый QR на новом телефоне. Продолжить?`)) return;
+  socket.send(JSON.stringify({type:"reassign_staff", staffId:id}));
+}
 
 const ROLE_LABELS = { waiter: "Официант", cook: "Повар", bartender: "Бармен" };
 const ROLE_PAGES = { waiter: "waiter.html", cook: "cook.html", bartender: "bartender.html" };
@@ -519,6 +589,7 @@ function renderStaffGroup(role, elId, headId, label){
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
         </button>
         <button onclick="showQr('${role}','${s.id}')">QR</button>
+        <button onclick="reassignStaff('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')" title="Переназначить устройство">📱↺</button>
         <button class="danger" onclick="deleteStaff('${s.id}')">Удалить</button>
       </div>
     </div>`;
@@ -549,6 +620,60 @@ function showQr(role, id){
 }
 function closeQr(){
   document.getElementById('qrOverlay').classList.remove('open');
+}
+
+let currentReceipt = null;
+function openReceiptViewer(id){
+  const r = closedTables.find(c => c.id === id);
+  if(!r) return;
+  currentReceipt = r;
+  const body = document.getElementById('receiptBody');
+  let html = `<h2>GO pub</h2>
+    <div class="sub">Стол ${r.table}</div>
+    <div class="receipt-row"><span>Открыт</span><span>${new Date(r.openedAt).toLocaleString('ru-RU')}</span></div>
+    <div class="receipt-row"><span>Закрыт</span><span>${new Date(r.closedAt).toLocaleString('ru-RU')}</span></div>
+    ${r.closedBy ? `<div class="receipt-row"><span>Официант</span><span>${r.closedBy}</span></div>` : ''}
+    <div class="receipt-hr"></div>`;
+  r.items.forEach(i => {
+    const sum = parseInt(String(i.price).replace(/[^\d]/g,''),10) * i.qty;
+    html += `<div class="receipt-item"><span class="rn">${i.qty} × ${i.name}</span><span>${sum.toLocaleString('ru-RU')}</span></div>`;
+  });
+  html += `<div class="receipt-hr"></div>
+    <div class="receipt-row"><span>Сумма</span><span>${r.subtotal.toLocaleString('ru-RU')} тг</span></div>
+    <div class="receipt-row"><span>Обслуживание (10%)</span><span>${r.service.toLocaleString('ru-RU')} тг</span></div>
+    <div class="receipt-total"><span>Итого</span><span>${r.total.toLocaleString('ru-RU')} тг</span></div>`;
+  body.innerHTML = html;
+
+  const shareUrl = location.origin + '/receipt.html?id=' + r.id;
+  document.getElementById('receiptQrBlock').innerHTML = `
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(shareUrl)}">
+    <div class="qr-note">Гость может отсканировать этот QR, чтобы открыть и скачать чек на своём телефоне.</div>`;
+  const text = encodeURIComponent(`Чек GO pub — стол ${r.table}, итого ${r.total.toLocaleString('ru-RU')} тг: `);
+  document.getElementById('shareWa').href = `https://wa.me/?text=${text}${encodeURIComponent(shareUrl)}`;
+  document.getElementById('shareTg').href = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${text}`;
+
+  document.getElementById('receiptOverlay').classList.add('open');
+}
+function closeReceiptViewer(){
+  document.getElementById('receiptOverlay').classList.remove('open');
+}
+function downloadReceiptFile(r){
+  if(!r) return;
+  let text = `GO pub — чек\nСтол ${r.table}\nОткрыт: ${new Date(r.openedAt).toLocaleString('ru-RU')}\nЗакрыт: ${new Date(r.closedAt).toLocaleString('ru-RU')}\n\n`;
+  r.items.forEach(i => {
+    const price = parseInt(String(i.price).replace(/[^\d]/g,''),10) || 0;
+    text += `${i.qty} x ${i.name} — ${(price*i.qty).toLocaleString('ru-RU')} тг\n`;
+  });
+  text += `\nСумма: ${r.subtotal.toLocaleString('ru-RU')} тг\nОбслуживание (10%): ${r.service.toLocaleString('ru-RU')} тг\nИтого: ${r.total.toLocaleString('ru-RU')} тг\n`;
+  const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `chek-stol-${r.table}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 </script>
 </body>

@@ -126,15 +126,26 @@
   .receipt-item{ display:flex; justify-content:space-between; font-size:13.5px; padding:4px 0; }
   .receipt-item .rn{ flex:1; padding-right:8px; }
   .receipt-total{ display:flex; justify-content:space-between; font-family:'Fraunces',serif; font-weight:700; font-size:18px; margin-top:10px; }
-  .receipt-actions{ display:flex; gap:10px; padding:16px 24px; border-top:1px solid #ddd; }
-  .receipt-actions button{ flex:1; padding:13px; border-radius:12px; border:none; font-weight:700; }
+  .receipt-actions{ display:flex; gap:8px; padding:16px 24px 8px; border-top:1px solid #ddd; }
+  .receipt-actions button{ flex:1; padding:12px 6px; border-radius:12px; border:none; font-weight:700; font-size:12.5px; }
   .receipt-actions .btn-close{ background:#eee; color:#333; }
+  .receipt-actions .btn-download{ background:#e7e2d6; color:#1b1b1b; }
   .receipt-actions .btn-print{ background:var(--gold); color:#1b1b1b; }
+  .receipt-share{ display:flex; gap:8px; padding:0 24px 20px; }
+  .receipt-share .share-btn{
+    flex:1; display:flex; align-items:center; justify-content:center; gap:6px;
+    padding:11px 6px; border-radius:12px; font-weight:700; font-size:12.5px; text-decoration:none;
+  }
+  .receipt-share .wa{ background:#eafaf0; color:#1b7a45; }
+  .receipt-share .tg{ background:#eaf6fd; color:#1478b0; }
+  .receipt-qr{ display:flex; align-items:center; gap:12px; padding:0 24px 4px; }
+  .receipt-qr img{ width:70px; height:70px; border-radius:8px; border:1px solid #ddd; flex-shrink:0; }
+  .receipt-qr .qr-note{ font-size:11.5px; color:#888; line-height:1.4; }
   @media print{
     body *{ visibility:hidden; }
     .receipt-panel, .receipt-panel *{ visibility:visible; }
     .receipt-panel{ position:fixed; inset:0; max-height:none; border-radius:0; }
-    .receipt-actions{ display:none; }
+    .receipt-actions, .receipt-share, .receipt-qr{ display:none; }
   }
 
   .review{ position:fixed; inset:0; background:rgba(14,29,23,.92); z-index:90; display:none; align-items:flex-end; justify-content:center; }
@@ -174,8 +185,9 @@
 </div>
 
 <header>
-  <h1>GO pub · Официант <span id="staffNameTag" style="color:var(--gold); font-weight:600;"></span></h1>
+  <h1>GO pub · Официант <span id="staffNameTag" onclick="openNamePrompt()" style="color:var(--gold); font-weight:600; cursor:pointer; text-decoration:underline dotted;"></span></h1>
   <div class="conn off" id="conn">подключение…</div>
+  <div style="margin-top:4px;"><a href="#" onclick="openNamePrompt();return false;" style="font-size:11px;color:var(--muted);text-decoration:none;">Изменить имя</a> · <a href="#" onclick="openPinPrompt();return false;" style="font-size:11px;color:var(--muted);text-decoration:none;">Сменить PIN</a></div>
 </header>
 
 <main>
@@ -218,9 +230,21 @@
 <div class="receipt" id="receipt">
   <div class="receipt-panel">
     <div class="receipt-body" id="receiptBody"></div>
+    <div class="receipt-qr" id="receiptQrBlock"></div>
     <div class="receipt-actions">
       <button class="btn-close" onclick="closeReceipt()">Закрыть</button>
+      <button class="btn-download" onclick="downloadReceiptFile(currentReceipt)">Скачать</button>
       <button class="btn-print" onclick="window.print()">Печать</button>
+    </div>
+    <div class="receipt-share">
+      <a class="share-btn wa" id="shareWa" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><path d="M16 3C9.1 3 3.5 8.6 3.5 15.5c0 2.5.7 4.8 1.9 6.8L3 29l6.9-2.3c1.9 1 4.1 1.6 6.1 1.6 6.9 0 12.5-5.6 12.5-12.5S22.9 3 16 3z" fill="#25D366"/><path d="M22.4 19.1c-.3-.2-1.9-1-2.2-1.1-.3-.1-.5-.2-.7.2s-.8 1.1-1 1.3-.4.2-.7.1c-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-2-1.8-2.3-.2-.3 0-.5.1-.6.1-.1.3-.4.5-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.6s-.7-1.7-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.2.2 2 3.1 4.9 4.2 2.8 1.1 2.8.8 3.3.7.5-.1 1.6-.7 1.8-1.3.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.6-.4z" fill="#fff"/></svg>
+        WhatsApp
+      </a>
+      <a class="share-btn tg" id="shareTg" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" fill="#29A9EA"/><path d="M8.5 15.8l13-5c.6-.2 1.2.2.9.9l-2.2 10.4c-.2.8-.7.9-1.3.6l-3.6-2.7-1.7 1.6c-.2.2-.4.3-.7.3l.2-3.6 6.6-6c.3-.2-.1-.4-.4-.2l-8.1 5.1-3.5-1.1c-.8-.2-.8-.8.1-1.2z" fill="#fff"/></svg>
+        Telegram
+      </a>
     </div>
   </div>
 </div>
@@ -306,18 +330,37 @@ function showLock(err){
 }
 function hideLock(){ document.getElementById('lock').style.display = 'none'; }
 
-function showNameLock(){ document.getElementById('nameLock').style.display = 'flex'; }
+function showNameLock(){
+  document.getElementById('nameInput').value = staffName || "";
+  document.getElementById('nameLock').style.display = 'flex';
+}
 function hideNameLock(){ document.getElementById('nameLock').style.display = 'none'; }
+function openNamePrompt(){ showNameLock(); }
 function submitName(){
   const name = document.getElementById('nameInput').value.trim();
   if(!name) return;
   staffName = name;
-  socket.send(JSON.stringify({type:"set_staff_name", staffId, name}));
+  if(staffId){
+    socket.send(JSON.stringify({type:"set_staff_name", staffId, name}));
+  } else {
+    localStorage.setItem('gopub_display_name_'+ROLE, name);
+    socket.send(JSON.stringify({type:"set_display_name", name}));
+  }
   hideNameLock();
   updateStaffNameTag();
 }
 function updateStaffNameTag(){
-  document.getElementById('staffNameTag').textContent = staffName ? "— " + staffName : "";
+  document.getElementById('staffNameTag').textContent = staffName ? "— " + staffName : "— указать имя";
+}
+
+let lastPinAttempt = null;
+function openPinPrompt(){
+  const p1 = prompt("Новый PIN для входа (4-6 цифр):");
+  if(p1 === null) return;
+  const clean = p1.trim();
+  if(!/^\d{4,6}$/.test(clean)){ alert("PIN должен состоять из 4-6 цифр"); return; }
+  lastPinAttempt = clean;
+  socket.send(JSON.stringify({type:"change_pin", role:ROLE, newPin:clean}));
 }
 
 function connect(){
@@ -334,10 +377,29 @@ function connect(){
   socket.onerror = () => socket.close();
   socket.onmessage = (evt) => {
     const msg = JSON.parse(evt.data);
-    if(msg.type === "auth_ok"){ hideLock(); }
+    if(msg.type === "auth_ok"){
+      hideLock();
+      if(!staffId){
+        const cached = localStorage.getItem('gopub_display_name_'+ROLE);
+        if(cached){ staffName = cached; socket.send(JSON.stringify({type:"set_display_name", name:cached})); updateStaffNameTag(); }
+        else updateStaffNameTag();
+      }
+    }
     if(msg.type === "auth_error"){
-      if(!staffId) sessionStorage.removeItem("gopub_pin_"+ROLE);
-      showLock(staffId ? "" : "Неверный PIN");
+      if(!staffId){
+        sessionStorage.removeItem("gopub_pin_"+ROLE);
+        showLock("Неверный PIN");
+      } else if(msg.reason === "unknown_staff"){
+        localStorage.removeItem('gopub_staff_id_'+ROLE);
+        localStorage.removeItem('gopub_staff_name_'+ROLE);
+        staffId = null;
+        document.getElementById('lockMsg').textContent = "Вы не являетесь официантом. Обратитесь к менеджеру, чтобы вас добавили.";
+        document.getElementById('pinInput').style.display = 'none';
+        document.getElementById('pinBtn').style.display = 'none';
+        document.getElementById('lock').style.display = 'flex';
+      } else {
+        showLock("");
+      }
     }
     if(msg.type === "state"){
       allOrders = msg.orders;
@@ -350,6 +412,7 @@ function connect(){
         if(me){
           staffName = me.name || "";
           updateStaffNameTag();
+          if(staffName) localStorage.setItem('gopub_staff_name_'+ROLE, staffName);
           if(!staffName) showNameLock(); else hideNameLock();
         }
       }
@@ -359,6 +422,11 @@ function connect(){
       renderBoard();
       if(mode === 'history') renderHistory();
     }
+    if(msg.type === "pin_changed"){
+      if(!staffId) setPin(lastPinAttempt);
+      alert("PIN обновлён. Запомните новый PIN — он понадобится при следующем входе.");
+    }
+    if(msg.type === "pin_change_error"){ alert("Не удалось изменить PIN — используйте 4-6 цифр."); }
     if(msg.type === "items_removed"){
       alert("Эти позиции только что стали недоступны и не попали в заказ: " + msg.names.join(", "));
     }
@@ -636,7 +704,10 @@ function closeTable(t){
   socket.send(JSON.stringify({type:"close_table", table:t}));
 }
 
+let currentReceipt = null;
+
 function showReceipt(r){
+  currentReceipt = r;
   const body = document.getElementById('receiptBody');
   let html = `<h2>GO pub</h2>
     <div class="sub">Стол ${r.table}</div>
@@ -652,10 +723,37 @@ function showReceipt(r){
     <div class="receipt-row"><span>Обслуживание (10%)</span><span>${r.service.toLocaleString('ru-RU')} тг</span></div>
     <div class="receipt-total"><span>Итого</span><span>${r.total.toLocaleString('ru-RU')} тг</span></div>`;
   body.innerHTML = html;
+
+  const shareUrl = location.origin + '/receipt.html?id=' + r.id;
+  document.getElementById('receiptQrBlock').innerHTML = `
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(shareUrl)}">
+    <div class="qr-note">Гость может отсканировать этот QR, чтобы открыть и скачать чек на своём телефоне.</div>`;
+  const text = encodeURIComponent(`Чек GO pub — стол ${r.table}, итого ${r.total.toLocaleString('ru-RU')} тг: `);
+  document.getElementById('shareWa').href = `https://wa.me/?text=${text}${encodeURIComponent(shareUrl)}`;
+  document.getElementById('shareTg').href = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${text}`;
+
   document.getElementById('receipt').classList.add('open');
 }
 function closeReceipt(){
   document.getElementById('receipt').classList.remove('open');
+}
+function downloadReceiptFile(r){
+  if(!r) return;
+  let text = `GO pub — чек\nСтол ${r.table}\nОткрыт: ${new Date(r.openedAt).toLocaleString('ru-RU')}\nЗакрыт: ${new Date(r.closedAt).toLocaleString('ru-RU')}\n\n`;
+  r.items.forEach(i => {
+    const price = parseInt(String(i.price).replace(/[^\d]/g,''),10) || 0;
+    text += `${i.qty} x ${i.name} — ${(price*i.qty).toLocaleString('ru-RU')} тг\n`;
+  });
+  text += `\nСумма: ${r.subtotal.toLocaleString('ru-RU')} тг\nОбслуживание (10%): ${r.service.toLocaleString('ru-RU')} тг\nИтого: ${r.total.toLocaleString('ru-RU')} тг\n`;
+  const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `chek-stol-${r.table}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 function cancelOrder(id){
