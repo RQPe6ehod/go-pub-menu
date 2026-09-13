@@ -92,6 +92,11 @@
   .ticket .line small{ color:var(--muted); }
   .serve-btn{ margin-top:8px; width:100%; padding:10px; border:none; border-radius:10px; background:var(--green); color:#0E1D17; font-weight:700; }
   .empty{ color:var(--muted); font-size:13px; text-align:center; padding:20px 0; }
+  .day-header{ font-family:'Fraunces',serif; color:var(--gold); font-size:15px; margin:18px 0 8px; padding-bottom:6px; border-bottom:1px solid var(--line); }
+  .day-header:first-child{ margin-top:0; }
+  .hist-ticket{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .hist-ticket .top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .hist-ticket .time{ font-size:11px; color:var(--muted); }
 
   .lock{ position:fixed; inset:0; background:var(--bg-deep); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px; }
   .lock-box{ width:100%; max-width:300px; text-align:center; }
@@ -179,6 +184,7 @@
   <div class="tabs">
     <button class="active" onclick="setMode('order')">Новый заказ</button>
     <button onclick="setMode('board')">Столы</button>
+    <button onclick="setMode('history')">История</button>
   </div>
 
   <div id="orderView">
@@ -187,6 +193,7 @@
     <div id="catList"></div>
   </div>
   <div id="boardView" style="display:none"></div>
+  <div id="historyView" style="display:none"></div>
 </main>
 
 <div class="cart-bar hidden" id="cartBar" onclick="openReview()">
@@ -257,6 +264,7 @@ let activeDest = "kitchen";
 let openCat = null;
 let cart = {}; // key: "kitchen|Название" -> {name, qty, dest, price}
 let allOrders = [];
+let allHistory = [];
 let openTables = {};
 let tableCount = 20;
 let staffId = null;
@@ -333,6 +341,7 @@ function connect(){
     }
     if(msg.type === "state"){
       allOrders = msg.orders;
+      allHistory = msg.history || [];
       openTables = msg.openTables || {};
       tableCount = msg.tableCount || 20;
       unavailable = msg.unavailable || {};
@@ -348,6 +357,7 @@ function connect(){
       renderChips();
       renderMenu();
       renderBoard();
+      if(mode === 'history') renderHistory();
     }
     if(msg.type === "items_removed"){
       alert("Эти позиции только что стали недоступны и не попали в заказ: " + msg.names.join(", "));
@@ -387,10 +397,13 @@ function renderTables(){
 
 function setMode(m){
   mode = m;
-  document.querySelectorAll('.tabs button').forEach((b,i)=>b.classList.toggle('active', (i===0)===(m==='order')));
+  const idx = {order:0, board:1, history:2}[m];
+  document.querySelectorAll('.tabs button').forEach((b,i)=>b.classList.toggle('active', i===idx));
   document.getElementById('orderView').style.display = m==='order' ? '' : 'none';
   document.getElementById('boardView').style.display = m==='board' ? '' : 'none';
+  document.getElementById('historyView').style.display = m==='history' ? '' : 'none';
   if(m==='board') renderBoard();
+  if(m==='history') renderHistory();
 }
 
 function catCount(dest, cat){
@@ -589,6 +602,33 @@ function renderBoard(){
 function timeAgo(ts){
   const m = Math.floor((Date.now()-ts)/60000);
   return m<1 ? "только что" : m+" мин назад";
+}
+
+function dayLabel(ts){
+  const d = new Date(ts);
+  const today = new Date();
+  const yesterday = new Date(); yesterday.setDate(today.getDate()-1);
+  if(d.toDateString()===today.toDateString()) return "Сегодня";
+  if(d.toDateString()===yesterday.toDateString()) return "Вчера";
+  return d.toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'});
+}
+
+function renderHistory(){
+  const el = document.getElementById('historyView');
+  const mine = allHistory.filter(o => o.waiterName === staffName).sort((a,b)=>b.servedAt-a.servedAt);
+  if(mine.length===0){ el.innerHTML = `<div class="empty">Пока нет поданных заказов</div>`; return; }
+  let html = "";
+  let lastDay = null;
+  mine.forEach(o => {
+    const day = dayLabel(o.servedAt);
+    if(day !== lastDay){ html += `<div class="day-header">${day}</div>`; lastDay = day; }
+    html += `<div class="hist-ticket">
+      <div class="top"><span class="table-badge">Стол ${o.table}</span><span class="time">${new Date(o.servedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span></div>`;
+    o.kitchenItems.forEach(i => html += `<div class="line">${i.name} <small>× ${i.qty}</small>${i.note?` <em style="color:var(--gold);font-style:normal;">— ${i.note}</em>`:''}</div>`);
+    o.barItems.forEach(i => html += `<div class="line">${i.name} <small>× ${i.qty}</small>${i.note?` <em style="color:var(--gold);font-style:normal;">— ${i.note}</em>`:''}</div>`);
+    html += `</div>`;
+  });
+  el.innerHTML = html;
 }
 
 function closeTable(t){

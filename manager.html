@@ -28,9 +28,16 @@
   .stat .lbl{ font-size:11px; color:var(--muted); margin-top:2px; }
 
   h2{ font-family:'Fraunces',serif; font-size:17px; color:var(--gold); margin:22px 0 10px; }
-  .mgr-tabs{ display:flex; gap:6px; margin-bottom:16px; }
-  .mgr-tabs button{ flex:1; padding:9px 0; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-weight:600; font-size:13px; }
+  .mgr-tabs{ display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+  .mgr-tabs button{ flex:1 1 auto; min-width:120px; padding:9px 0; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-weight:600; font-size:13px; }
   .mgr-tabs button.active{ background:var(--gold); border-color:var(--gold); color:var(--bg-deep); }
+  .day-header{ font-family:'Fraunces',serif; color:var(--gold); font-size:16px; margin:22px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--line); }
+  .day-header:first-child{ margin-top:0; }
+  .staff-day-group{ margin-bottom:6px; }
+  .staff-day-group h3{ font-family:'Fraunces',serif; font-size:14px; color:var(--cream); margin:14px 0 8px; }
+  .staff-stat-row{ display:flex; justify-content:space-between; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:8px; font-size:13.5px; }
+  .staff-stat-row .n{ font-weight:600; }
+  .staff-stat-row .v{ color:var(--gold); font-family:'Fraunces',serif; font-weight:700; }
   .badge-count{ background:var(--red); color:#fff; font-size:10px; font-weight:700; border-radius:999px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 4px; }
 
   .unavail-row{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
@@ -110,6 +117,7 @@
     <button class="active" onclick="setMgrMode('overview')">Обзор</button>
     <button onclick="setMgrMode('staff')">Сотрудники</button>
     <button onclick="setMgrMode('unavail')" style="position:relative;">Недоступные блюда<span class="badge-count" id="unavailBadge" style="display:none;position:absolute;top:-6px;right:-6px;">0</span></button>
+    <button onclick="setMgrMode('history')">История</button>
   </div>
 
   <div id="overviewView">
@@ -166,6 +174,8 @@
     <h2>Бар</h2>
     <div id="unavailBar"></div>
   </div>
+
+  <div id="historyView2" style="display:none"></div>
 </main>
 
 <div class="qr-overlay" id="qrOverlay">
@@ -218,6 +228,7 @@ function connect(){
       render();
       renderStaff();
       renderUnavailable();
+      if(mgrMode === 'history') renderStaffHistory();
     }
   };
 }
@@ -323,11 +334,86 @@ setInterval(render, 1000);
 
 function setMgrMode(m){
   mgrMode = m;
-  document.querySelectorAll('.mgr-tabs button').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.mgr-tabs button')[m==='overview'?0:(m==='staff'?1:2)].classList.add('active');
+  const idx = {overview:0, staff:1, unavail:2, history:3}[m];
+  document.querySelectorAll('.mgr-tabs button').forEach((b,i) => b.classList.toggle('active', i===idx));
   document.getElementById('overviewView').style.display = m==='overview' ? '' : 'none';
   document.getElementById('staffView').style.display = m==='staff' ? '' : 'none';
   document.getElementById('unavailView').style.display = m==='unavail' ? '' : 'none';
+  document.getElementById('historyView2').style.display = m==='history' ? '' : 'none';
+  if(m==='history') renderStaffHistory();
+}
+
+function dayLabel(ts){
+  const d = new Date(ts);
+  const today = new Date();
+  const yesterday = new Date(); yesterday.setDate(today.getDate()-1);
+  if(d.toDateString()===today.toDateString()) return "Сегодня";
+  if(d.toDateString()===yesterday.toDateString()) return "Вчера";
+  return d.toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'});
+}
+function dayKey(ts){ return new Date(ts).toDateString(); }
+
+function renderStaffHistory(){
+  const el = document.getElementById('historyView2');
+  if(allHistory.length===0 && closedTables.length===0){ el.innerHTML = `<div class="empty">Пока нет данных за какой-либо день</div>`; return; }
+
+  const days = new Set();
+  allHistory.forEach(o => days.add(dayKey(o.servedAt)));
+  closedTables.forEach(c => days.add(dayKey(c.closedAt)));
+  const sortedDays = Array.from(days).sort((a,b) => new Date(b) - new Date(a));
+
+  let html = "";
+  sortedDays.forEach(dk => {
+    const dayHistory = allHistory.filter(o => dayKey(o.servedAt)===dk);
+    const dayClosed = closedTables.filter(c => dayKey(c.closedAt)===dk);
+    const label = dayLabel(new Date(dk).getTime());
+
+    const waiters = {}; // name -> {tables, revenue}
+    dayClosed.forEach(c => {
+      const name = c.closedBy || "Без имени";
+      if(!waiters[name]) waiters[name] = {tables:0, revenue:0};
+      waiters[name].tables++;
+      waiters[name].revenue += c.total || 0;
+    });
+    const cooks = {}; // name -> ticket count
+    const bartenders = {};
+    dayHistory.forEach(o => {
+      if(o.kitchenItems.length && o.cookName){
+        cooks[o.cookName] = (cooks[o.cookName]||0) + 1;
+      }
+      if(o.barItems.length && o.bartenderName){
+        bartenders[o.bartenderName] = (bartenders[o.bartenderName]||0) + 1;
+      }
+    });
+
+    html += `<div class="day-header">${label}</div>`;
+
+    if(Object.keys(waiters).length){
+      html += `<div class="staff-day-group"><h3>Официанты</h3>`;
+      Object.entries(waiters).forEach(([name, s]) => {
+        html += `<div class="staff-stat-row"><span class="n">${name}</span><span>Столов: ${s.tables} · <span class="v">${s.revenue.toLocaleString('ru-RU')} тг</span></span></div>`;
+      });
+      html += `</div>`;
+    }
+    if(Object.keys(cooks).length){
+      html += `<div class="staff-day-group"><h3>Повара</h3>`;
+      Object.entries(cooks).forEach(([name, n]) => {
+        html += `<div class="staff-stat-row"><span class="n">${name}</span><span class="v">${n} заказ${n===1?'':(n<5?'а':'ов')}</span></div>`;
+      });
+      html += `</div>`;
+    }
+    if(Object.keys(bartenders).length){
+      html += `<div class="staff-day-group"><h3>Бармены</h3>`;
+      Object.entries(bartenders).forEach(([name, n]) => {
+        html += `<div class="staff-stat-row"><span class="n">${name}</span><span class="v">${n} заказ${n===1?'':(n<5?'а':'ов')}</span></div>`;
+      });
+      html += `</div>`;
+    }
+    if(!Object.keys(waiters).length && !Object.keys(cooks).length && !Object.keys(bartenders).length){
+      html += `<div class="empty">Нет именованных сотрудников за этот день</div>`;
+    }
+  });
+  el.innerHTML = html;
 }
 
 function renderUnavailable(){
