@@ -184,6 +184,7 @@
     <button class="active" onclick="setMgrMode('overview')">Обзор</button>
     <button onclick="setMgrMode('staff')">Сотрудники</button>
     <button onclick="setMgrMode('unavail')" style="position:relative;">Недоступные блюда<span class="badge-count" id="unavailBadge" style="display:none;position:absolute;top:-6px;right:-6px;">0</span></button>
+    <button onclick="setMgrMode('stock')" style="position:relative;">Склад<span class="badge-count" id="lowStockBadge" style="display:none;position:absolute;top:-6px;right:-6px;">0</span></button>
     <button onclick="setMgrMode('history')">История</button>
     <button onclick="setMgrMode('analytics')">Аналитика</button>
   </div>
@@ -244,6 +245,13 @@
     <div id="unavailKitchen"></div>
     <h2>Бар</h2>
     <div id="unavailBar"></div>
+  </div>
+
+  <div id="stockView" style="display:none">
+    <h2>Склад — кухня</h2>
+    <div id="stockKitchen"></div>
+    <h2>Склад — бар</h2>
+    <div id="stockBar"></div>
   </div>
 
   <div id="historyView2" style="display:none"></div>
@@ -309,6 +317,7 @@
 const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
 const ROLE = "manager";
 let socket, allOrders = [], allHistory = [], openTables = {}, closedTables = [], staff = [], tableCount = 20, unavailable = {};
+let inventory = {kitchen:{}, bar:{}};
 let mgrMode = 'overview';
 let staffName = "";
 
@@ -379,6 +388,7 @@ function connect(){
       allOrders = msg.orders; allHistory = msg.history || []; openTables = msg.openTables || {};
       closedTables = msg.closedTables || []; staff = msg.staff || []; tableCount = msg.tableCount || 20;
       unavailable = msg.unavailable || {};
+      inventory = msg.inventory || {kitchen:{}, bar:{}};
       if(pendingTableCount === null || pendingTableCount === tableCount){
         document.getElementById('tableCountVal').textContent = tableCount;
         document.getElementById('confirmTableCountBtn').disabled = true;
@@ -387,6 +397,7 @@ function connect(){
       render();
       renderStaff();
       renderUnavailable();
+      renderStock();
       if(mgrMode === 'history') renderStaffHistory();
       if(mgrMode === 'analytics') renderAnalytics();
     }
@@ -494,11 +505,12 @@ setInterval(render, 1000);
 
 function setMgrMode(m){
   mgrMode = m;
-  const idx = {overview:0, staff:1, unavail:2, history:3, analytics:4}[m];
+  const idx = {overview:0, staff:1, unavail:2, stock:3, history:4, analytics:5}[m];
   document.querySelectorAll('#mainTabs button').forEach((b,i) => b.classList.toggle('active', i===idx));
   document.getElementById('overviewView').style.display = m==='overview' ? '' : 'none';
   document.getElementById('staffView').style.display = m==='staff' ? '' : 'none';
   document.getElementById('unavailView').style.display = m==='unavail' ? '' : 'none';
+  document.getElementById('stockView').style.display = m==='stock' ? '' : 'none';
   document.getElementById('historyView2').style.display = m==='history' ? '' : 'none';
   document.getElementById('analyticsView').style.display = m==='analytics' ? '' : 'none';
   if(m==='history') renderStaffHistory();
@@ -735,6 +747,32 @@ function renderUnavailable(){
   };
   renderGroup('unavailKitchen', kitchenKeys, 'kitchen|'.length);
   renderGroup('unavailBar', barKeys, 'bar|'.length);
+}
+
+function renderStock(){
+  const kitchen = inventory.kitchen || {};
+  const bar = inventory.bar || {};
+  const lowCount = Object.values(kitchen).filter(s=>s.qty<=s.threshold).length + Object.values(bar).filter(s=>s.qty<=s.threshold).length;
+  const badge = document.getElementById('lowStockBadge');
+  if(lowCount>0){ badge.style.display='flex'; badge.textContent = lowCount; } else { badge.style.display='none'; }
+
+  const renderGroup = (elId, dict) => {
+    const el = document.getElementById(elId);
+    const names = Object.keys(dict);
+    if(names.length===0){ el.innerHTML = `<div class="empty">Остатки не отслеживаются</div>`; return; }
+    let html = "";
+    names.sort((a,b) => (dict[a].qty<=dict[a].threshold ? -1:1) - (dict[b].qty<=dict[b].threshold ? -1:1)).forEach(name => {
+      const s = dict[name];
+      const low = s.qty <= s.threshold;
+      html += `<div class="unavail-row" style="${low?'border-color:var(--red);':''}">
+        <div class="name" style="${low?'color:var(--red);':''}">${name}</div>
+        <div class="meta">Остаток: ${s.qty} · порог уведомления: ${s.threshold}${low?' · <span style="color:var(--red);">заканчивается</span>':''}</div>
+      </div>`;
+    });
+    el.innerHTML = html;
+  };
+  renderGroup('stockKitchen', kitchen);
+  renderGroup('stockBar', bar);
 }
 
 let pendingTableCount = null;

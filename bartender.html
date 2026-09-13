@@ -117,6 +117,9 @@
     <button onclick="openDisableSheet()">Убрать из меню</button>
     <button onclick="openEnableSheet()">Вернуть в меню<span class="badge-count" id="unavailCount" style="display:none">0</span></button>
   </div>
+  <div class="nav-row">
+    <button onclick="openStockSheet()">Склад<span class="badge-count" id="lowStockCount" style="display:none">0</span></button>
+  </div>
   <div class="tabs">
     <button class="active" onclick="setBoardMode('active')">Заказы</button>
     <button onclick="setBoardMode('history')">История</button>
@@ -124,6 +127,16 @@
   <div class="grid" id="board"></div>
   <div id="historyView" style="display:none"></div>
 </main>
+
+<div class="sheet" id="stockSheet">
+  <div class="sheet-panel">
+    <div class="sheet-head"><h2>Склад — бар</h2><p>Укажите остаток и порог, при котором прислать напоминание. Пусто = не отслеживать.</p></div>
+    <div class="sheet-body" id="stockBody"></div>
+    <div class="sheet-actions">
+      <button class="cancel" onclick="closeSheet('stockSheet')">Готово</button>
+    </div>
+  </div>
+</div>
 
 <div class="sheet" id="disableSheet">
   <div class="sheet-panel">
@@ -156,6 +169,7 @@ let boardMode = 'active';
 let staffId = null;
 let staffName = "";
 let unavailable = {};
+let inventory = {};
 let pickerSelection = {}; // name -> comment (for disable sheet)
 let enableSelection = new Set(); // names selected to restore
 
@@ -282,7 +296,9 @@ function connect(){
       allOrders = msg.orders;
       allHistory = msg.history || [];
       unavailable = msg.unavailable || {};
+      inventory = (msg.inventory && msg.inventory[DEST]) || {};
       updateUnavailBadge();
+      updateLowStockBadge();
       if(staffId){
         const me = (msg.staff || []).find(s => s.id === staffId);
         if(me){
@@ -304,6 +320,16 @@ function setConn(on){
   el.className = "conn " + (on?"on":"off");
 }
 function ding(msg){
+  if(msg.kind === "low_stock"){
+    try{ new Audio("data:audio/wav;base64,UklGRhwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=").play(); }catch(e){}
+    if(navigator.vibrate) navigator.vibrate([120,60,120]);
+    if("Notification" in window && Notification.permission === "granted"){
+      new Notification("Заканчивается: " + msg.name + " (осталось " + msg.qty + ")");
+    } else {
+      alert("Заканчивается: " + msg.name + " — осталось " + msg.qty);
+    }
+    return;
+  }
   if(msg.cancelled) return;
   try{ new Audio("data:audio/wav;base64,UklGRhwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=").play(); }catch(e){}
   if(navigator.vibrate) navigator.vibrate([250,100,250,100,250]);
@@ -386,6 +412,48 @@ function tickTimers(){
 }
 function acceptBarOrder(id){ socket.send(JSON.stringify({type:"bar_accept", orderId:id})); }
 function markBarReady(id){ socket.send(JSON.stringify({type:"bar_ready", orderId:id})); }
+
+function updateLowStockBadge(){
+  const count = Object.values(inventory).filter(s => s.qty <= s.threshold).length;
+  const el = document.getElementById('lowStockCount');
+  if(count>0){ el.style.display='flex'; el.textContent = count; } else { el.style.display='none'; }
+}
+
+function openStockSheet(){
+  const body = document.getElementById('stockBody');
+  let html = "";
+  BAR_MENU.forEach(cat => {
+    html += `<div class="sheet-cat">${cat.title}</div>`;
+    cat.items.forEach(([name]) => {
+      const s = inventory[name];
+      const safe = name.replace(/'/g,"\\'");
+      const low = s && s.qty <= s.threshold;
+      html += `<div class="pick-item" style="display:block;">
+        <div class="name" style="margin-bottom:6px;${low?'color:var(--red);':''}">${name}${s ? ` <small style="color:${low?'var(--red)':'var(--muted)'};">— остаток: ${s.qty}</small>` : ''}</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="number" min="0" placeholder="Остаток" value="${s?s.qty:''}" id="qty-${cssSafe(name)}" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg-deep);color:var(--cream);">
+          <input type="number" min="0" placeholder="Порог" value="${s?s.threshold:''}" id="thr-${cssSafe(name)}" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg-deep);color:var(--cream);">
+          <button onclick="saveStock('${safe}')" style="padding:8px 12px;border-radius:8px;border:none;background:var(--gold);color:var(--bg-deep);font-weight:700;">✓</button>
+          ${s ? `<button onclick="clearStockRow('${safe}')" style="padding:8px 10px;border-radius:8px;border:1px solid var(--red);background:transparent;color:var(--red);">✕</button>` : ''}
+        </div>
+      </div>`;
+    });
+  });
+  body.innerHTML = html;
+  document.getElementById('stockSheet').classList.add('open');
+}
+
+function saveStock(name){
+  const qtyEl = document.getElementById('qty-'+cssSafe(name));
+  const thrEl = document.getElementById('thr-'+cssSafe(name));
+  const qty = qtyEl.value.trim();
+  const threshold = thrEl.value.trim();
+  if(qty === ''){ alert("Укажите остаток (или нажмите ✕, чтобы убрать отслеживание)"); return; }
+  socket.send(JSON.stringify({type:"set_stock", name, qty: parseInt(qty,10)||0, threshold: parseInt(threshold,10)||0}));
+}
+function clearStockRow(name){
+  socket.send(JSON.stringify({type:"clear_stock", name}));
+}
 
 function updateUnavailBadge(){
   const count = Object.keys(unavailable).filter(k => k.startsWith(DEST+"|")).length;
