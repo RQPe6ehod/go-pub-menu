@@ -211,7 +211,7 @@
 <header>
   <h1>GO pub · Официант <span id="staffNameTag" onclick="openNamePrompt()" style="color:var(--gold); font-weight:600; cursor:pointer;"></span></h1>
   <div class="conn off" id="conn">подключение…</div>
-  <div class="settings-links"><a href="#" onclick="openNamePrompt();return false;">Изменить имя</a><a href="#" onclick="installApp();return false;">На экран</a></div>
+  <div class="settings-links"><a href="#" onclick="openNamePrompt();return false;">Изменить имя</a><a href="#" onclick="installApp();return false;">На экран</a><a href="#" onclick="logoutDevice();return false;">Выйти</a></div>
 </header>
 
 <main>
@@ -788,6 +788,13 @@ function installApp(){
   } else {
     alert("Откройте меню браузера и выберите «Добавить на главный экран» / «Установить приложение».");
   }
+}
+
+function logoutDevice(){
+  if(!confirm("Выйти с этого устройства? Чтобы снова войти, понадобится QR-ссылка от менеджера.")) return;
+  localStorage.removeItem('gopub_staff_id_'+ROLE);
+  localStorage.removeItem('gopub_staff_name_'+ROLE);
+  location.reload();
 }
 
 function urlBase64ToUint8Array(base64String){

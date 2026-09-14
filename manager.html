@@ -212,7 +212,7 @@
 <header>
   <h1>GO pub · Менеджер <span id="staffNameTag" onclick="openNamePrompt()" style="color:var(--gold); font-weight:600; cursor:pointer;"></span></h1>
   <div class="conn off" id="conn">подключение…</div>
-  <div class="settings-links"><a href="#" onclick="openNamePrompt();return false;">Изменить имя</a><a href="#" onclick="openPinPrompt();return false;">Сменить PIN</a><a href="#" onclick="installApp();return false;">На экран</a></div>
+  <div class="settings-links"><a href="#" onclick="openNamePrompt();return false;">Изменить имя</a><a href="#" onclick="openPinPrompt();return false;">Сменить PIN</a><a href="#" onclick="installApp();return false;">На экран</a><a href="#" onclick="logoutDevice();return false;">Выйти</a></div>
 </header>
 
 <main>
@@ -380,6 +380,11 @@ let staffName = "";
 
 function getPin(){ return sessionStorage.getItem("gopub_pin_"+ROLE); }
 function setPin(p){ sessionStorage.setItem("gopub_pin_"+ROLE, p); }
+function logoutDevice(){
+  if(!confirm("Выйти? Понадобится заново ввести PIN директора.")) return;
+  sessionStorage.removeItem("gopub_pin_"+ROLE);
+  location.reload();
+}
 function tryPin(){
   const p = document.getElementById('pinInput').value.trim();
   if(!p) return;
