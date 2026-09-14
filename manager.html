@@ -64,6 +64,9 @@
   .unavail-row .comment{ font-size:12.5px; color:var(--gold); margin-top:4px; }
 
   .settings-row{ display:flex; align-items:center; justify-content:space-between; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:18px; }
+  .close-table-btn{ margin-top:10px; width:100%; padding:11px; border:none; border-radius:10px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:13px; }
+  .receipts-toggle-btn{ margin-top:8px; padding:6px 12px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--gold); font-size:11.5px; font-weight:600; }
+  .receipts-list{ margin-top:8px; }
   .room-card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
   .room-card .row1{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
   .room-card input[type="text"]{ flex:1; padding:9px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:14px; font-family:'Fraunces',serif; font-weight:600; }
@@ -446,6 +449,11 @@ function connect(){
     if(msg.type === "auth_error"){ sessionStorage.removeItem("gopub_pin_"+ROLE); showLock("Неверный PIN"); }
     if(msg.type === "pin_changed"){ setPin(lastPinAttempt); alert("PIN обновлён. Запомните новый PIN — он понадобится при следующем входе."); }
     if(msg.type === "pin_change_error"){ alert("Не удалось изменить PIN — используйте 4-6 цифр."); }
+    if(msg.type === "table_closed"){ showReceiptFromData(msg.receipt); }
+    if(msg.type === "close_error"){
+      if(msg.reason === "pending_items") alert("У стола ещё есть неподанные позиции — сначала их нужно выдать гостю.");
+      else alert("Не удалось закрыть стол.");
+    }
     if(msg.type === "state"){
       allOrders = msg.orders; allHistory = msg.history || []; openTables = msg.openTables || {};
       closedTables = msg.closedTables || []; staff = msg.staff || []; rooms = msg.rooms || rooms;
@@ -519,7 +527,11 @@ function render(){
       const s = openTables[t];
       const activeCount = allOrders.filter(o => o.table === t).length;
       thtml += `<div class="ticket"><div class="top"><span class="table-badge">Стол ${tableLabel(t)}</span><span class="time">открыт ${timeAgo(s.openedAt)}</span></div>
-        <div class="line">${activeCount>0 ? `В работе тикетов: ${activeCount}` : 'Всё подано, ждёт закрытия'}</div></div>`;
+        <div class="line">${activeCount>0 ? `В работе тикетов: ${activeCount}` : 'Всё подано, ждёт закрытия'}</div>
+        ${activeCount>0
+          ? `<button class="close-table-btn" disabled style="opacity:.4;cursor:not-allowed;" title="Есть неподанные позиции">Закрыть стол</button>`
+          : `<button class="close-table-btn" onclick="closeTableAsManager(${t})">Закрыть стол — сформировать чек</button>`
+        }</div>`;
     });
     tablesEl.innerHTML = thtml;
   }
@@ -728,6 +740,21 @@ function dayLabel(ts){
 }
 function dayKey(ts){ return new Date(ts).toDateString(); }
 
+function toggleWaiterReceipts(dk, name, btn){
+  const listEl = btn.nextElementSibling;
+  const isOpen = listEl.style.display !== 'none';
+  if(isOpen){ listEl.style.display = 'none'; btn.textContent = 'Чеки'; return; }
+
+  const receipts = closedTables.filter(c => dayKey(c.closedAt)===dk && (c.closedBy||"Без имени")===name).sort((a,b)=>b.closedAt-a.closedAt);
+  let html = "";
+  receipts.forEach(c => {
+    html += `<div class="hist-row" onclick="openReceiptViewer('${c.id}')"><span class="t">Стол ${tableLabel(c.table)} · ${new Date(c.closedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span><span class="p">${c.total.toLocaleString('ru-RU')} тг</span></div>`;
+  });
+  listEl.innerHTML = html || `<div class="empty">Чеков нет</div>`;
+  listEl.style.display = 'block';
+  btn.textContent = 'Скрыть чеки';
+}
+
 function renderStaffHistory(){
   const el = document.getElementById('historyView2');
   if(allHistory.length===0 && closedTables.length===0){ el.innerHTML = `<div class="empty">Пока нет данных за какой-либо день</div>`; return; }
@@ -766,7 +793,15 @@ function renderStaffHistory(){
     if(Object.keys(waiters).length){
       html += `<div class="staff-day-group"><h3>Официанты</h3>`;
       Object.entries(waiters).forEach(([name, s]) => {
-        html += `<div class="staff-stat-row"><span class="n">${name}</span><span>Столов: ${s.tables} · <span class="v">${s.revenue.toLocaleString('ru-RU')} тг</span></span></div>`;
+        const safeName = name.replace(/'/g,"\\'");
+        html += `<div class="staff-stat-row" style="display:block;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="n">${name}</span>
+            <span>Столов: ${s.tables} · <span class="v">${s.revenue.toLocaleString('ru-RU')} тг</span></span>
+          </div>
+          <button class="receipts-toggle-btn" onclick="toggleWaiterReceipts('${dk}','${safeName}', this)">Чеки</button>
+          <div class="receipts-list" style="display:none;"></div>
+        </div>`;
       });
       html += `</div>`;
     }
@@ -788,13 +823,6 @@ function renderStaffHistory(){
       html += `<div class="empty">Нет именованных сотрудников за этот день</div>`;
     }
 
-    if(dayClosed.length){
-      html += `<div class="staff-day-group"><h3>Чеки</h3>`;
-      dayClosed.slice().sort((a,b)=>b.closedAt-a.closedAt).forEach(c => {
-        html += `<div class="hist-row" onclick="openReceiptViewer('${c.id}')"><span class="t">Стол ${tableLabel(c.table)} · ${new Date(c.closedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}${c.closedBy?' · '+c.closedBy:''}</span><span class="p">${c.total.toLocaleString('ru-RU')} тг</span></div>`;
-      });
-      html += `</div>`;
-    }
   });
   el.innerHTML = html;
 }
@@ -1121,6 +1149,10 @@ let currentReceipt = null;
 function openReceiptViewer(id){
   const r = closedTables.find(c => c.id === id);
   if(!r) return;
+  showReceiptFromData(r);
+}
+
+function showReceiptFromData(r){
   currentReceipt = r;
   const body = document.getElementById('receiptBody');
   let html = `<h2>GO pub</h2>
@@ -1140,6 +1172,11 @@ function openReceiptViewer(id){
   body.innerHTML = html;
 
   document.getElementById('receiptOverlay').classList.add('open');
+}
+
+function closeTableAsManager(t){
+  if(!confirm(`Закрыть стол ${tableLabel(t)} и сформировать чек? Обычно это делает официант — используйте, только если он сам не может.`)) return;
+  socket.send(JSON.stringify({type:"close_table", table:t}));
 }
 
 function showReceiptQr(kind){
