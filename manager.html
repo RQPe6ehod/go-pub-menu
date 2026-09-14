@@ -34,6 +34,8 @@
   .mgr-tabs{ display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
   .mgr-tabs button{ flex:1 1 auto; min-width:120px; padding:9px 0; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-weight:600; font-size:13px; }
   .mgr-tabs button.active{ background:var(--gold); border-color:var(--gold); color:var(--bg-deep); }
+  #mainTabs{ gap:8px; margin-bottom:20px; }
+  #mainTabs button{ min-width:100px; padding:13px 6px; font-size:13.5px; }
   .header-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
   .install-btn{
     flex-shrink:0; display:flex; align-items:center; gap:6px;
@@ -236,14 +238,10 @@
 <main>
   <div class="mgr-tabs" id="mainTabs">
     <button class="active" onclick="setMgrMode('overview')">Обзор</button>
-    <button onclick="setMgrMode('config')">Конфигурация</button>
-    <button onclick="setMgrMode('staff')">Сотрудники</button>
     <button onclick="setMgrMode('unavail')" style="position:relative;">Недоступные блюда<span class="badge-count" id="unavailBadge" style="display:none;position:absolute;top:-6px;right:-6px;">0</span></button>
     <button onclick="setMgrMode('stock')" style="position:relative;">Склад<span class="badge-count" id="lowStockBadge" style="display:none;position:absolute;top:-6px;right:-6px;">0</span></button>
-    <button onclick="setMgrMode('history')">История</button>
-    <button onclick="setMgrMode('analytics')">Аналитика</button>
-    <button onclick="setMgrMode('menu')">Меню</button>
-    <button onclick="setMgrMode('log')">Журнал действий</button>
+    <button onclick="setMgrMode('reports')">Отчёты</button>
+    <button onclick="setMgrMode('settings')">Настройки</button>
   </div>
 
   <div id="overviewView">
@@ -268,46 +266,6 @@
     <div id="history"></div>
   </div>
 
-  <div id="configView" style="display:none">
-    <h2>Залы и столы</h2>
-    <div id="roomsList"></div>
-    <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="addRoom()">+ Добавить зал</button>
-
-    <h2>QR-коды столов</h2>
-    <p style="font-size:12px;color:var(--muted);margin:-6px 0 12px;">Напечатанные QR ничего не знают о номере стола сами по себе — отсканируйте каждый здесь и привяжите к залу и номеру. Позже можно переназначить.</p>
-    <div id="qrList"></div>
-    <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="openQrScanner()">+ Сканировать QR</button>
-  </div>
-
-  <div id="menuView" style="display:none">
-    <div class="mgr-tabs" id="menuDestTabs">
-      <button class="active" onclick="setMenuDest('kitchen')">Кухня</button>
-      <button onclick="setMenuDest('bar')">Бар</button>
-    </div>
-    <div id="menuCatsList"></div>
-    <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="addMenuCategory()">+ Добавить раздел</button>
-  </div>
-
-  <div id="staffView" style="display:none">
-    <h2>Добавить сотрудника</h2>
-    <div class="role-buttons">
-      <button onclick="createStaff('waiter')">+ Официант</button>
-      <button onclick="createStaff('cook')">+ Повар</button>
-      <button onclick="createStaff('bartender')">+ Бармен</button>
-    </div>
-
-    <h2 id="hWaiter">Официанты</h2>
-    <div id="staffWaiter"></div>
-    <h2 id="hCook">Повара</h2>
-    <div id="staffCook"></div>
-    <h2 id="hBartender">Бармены</h2>
-    <div id="staffBartender"></div>
-  </div>
-
-  <div id="logView" style="display:none">
-    <div id="actionLogList"></div>
-  </div>
-
   <div id="unavailView" style="display:none">
     <h2>Кухня</h2>
     <div id="unavailKitchen"></div>
@@ -322,31 +280,87 @@
     <div id="stockBar"></div>
   </div>
 
-  <div id="historyView2" style="display:none"></div>
-
-  <div id="analyticsView" style="display:none">
-    <div class="stats small">
-      <div class="stat"><div class="num" id="anTotalOrders">0</div><div class="lbl">заказов всего</div></div>
-      <div class="stat"><div class="num" id="anTotalRevenue">0</div><div class="lbl">выручка всего, тг</div></div>
-      <div class="stat"><div class="num" id="anAvgCheck">0</div><div class="lbl">средний чек, тг</div></div>
+  <div id="reportsView" style="display:none">
+    <div class="mgr-tabs" id="reportsSubTabs">
+      <button class="active" onclick="setReportsSub('history')">История</button>
+      <button onclick="setReportsSub('analytics')">Аналитика</button>
+      <button onclick="setReportsSub('log')">Журнал действий</button>
     </div>
 
-    <h2>Динамика</h2>
-    <div class="mgr-tabs" id="granTabs">
-      <button class="active" onclick="setGranularity('day')">По дням</button>
-      <button onclick="setGranularity('week')">По неделям</button>
-      <button onclick="setGranularity('month')">По месяцам</button>
-    </div>
-    <div id="anTimeline"></div>
+    <div id="historyView2" style="display:none"></div>
 
-    <h2>Разбивка</h2>
-    <div class="mgr-tabs" id="groupTabs">
-      <button class="active" onclick="setGroupBy('waiter')">Официанты</button>
-      <button onclick="setGroupBy('cook')">Повара</button>
+    <div id="analyticsView" style="display:none">
+      <div class="stats small">
+        <div class="stat"><div class="num" id="anTotalOrders">0</div><div class="lbl">заказов всего</div></div>
+        <div class="stat"><div class="num" id="anTotalRevenue">0</div><div class="lbl">выручка всего, тг</div></div>
+        <div class="stat"><div class="num" id="anAvgCheck">0</div><div class="lbl">средний чек, тг</div></div>
+      </div>
+
+      <h2>Динамика</h2>
+      <div class="mgr-tabs" id="granTabs">
+        <button class="active" onclick="setGranularity('day')">По дням</button>
+        <button onclick="setGranularity('week')">По неделям</button>
+        <button onclick="setGranularity('month')">По месяцам</button>
+      </div>
+      <div id="anTimeline"></div>
+
+      <h2>Разбивка</h2>
+      <div class="mgr-tabs" id="groupTabs">
+        <button class="active" onclick="setGroupBy('waiter')">Официанты</button>
+        <button onclick="setGroupBy('cook')">Повара</button>
       <button onclick="setGroupBy('bartender')">Бармены</button>
       <button onclick="setGroupBy('dish')">Блюда</button>
     </div>
     <div id="anBreakdown"></div>
+    </div>
+
+    <div id="logView" style="display:none">
+      <div id="actionLogList"></div>
+    </div>
+  </div>
+
+  <div id="settingsView" style="display:none">
+    <div class="mgr-tabs" id="settingsSubTabs">
+      <button class="active" onclick="setSettingsSub('config')">Конфигурация</button>
+      <button onclick="setSettingsSub('staff')">Сотрудники</button>
+      <button onclick="setSettingsSub('menu')">Меню</button>
+    </div>
+
+    <div id="configView" style="display:none">
+      <h2>Залы и столы</h2>
+      <div id="roomsList"></div>
+      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="addRoom()">+ Добавить зал</button>
+
+      <h2>QR-коды столов</h2>
+      <p style="font-size:12px;color:var(--muted);margin:-6px 0 12px;">Напечатанные QR ничего не знают о номере стола сами по себе — отсканируйте каждый здесь и привяжите к залу и номеру. Позже можно переназначить.</p>
+      <div id="qrList"></div>
+      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="openQrScanner()">+ Сканировать QR</button>
+    </div>
+
+    <div id="staffView" style="display:none">
+      <h2>Добавить сотрудника</h2>
+      <div class="role-buttons">
+        <button onclick="createStaff('waiter')">+ Официант</button>
+        <button onclick="createStaff('cook')">+ Повар</button>
+        <button onclick="createStaff('bartender')">+ Бармен</button>
+      </div>
+
+      <h2 id="hWaiter">Официанты</h2>
+      <div id="staffWaiter"></div>
+      <h2 id="hCook">Повара</h2>
+      <div id="staffCook"></div>
+      <h2 id="hBartender">Бармены</h2>
+      <div id="staffBartender"></div>
+    </div>
+
+    <div id="menuView" style="display:none">
+      <div class="mgr-tabs" id="menuDestTabs">
+        <button class="active" onclick="setMenuDest('kitchen')">Кухня</button>
+        <button onclick="setMenuDest('bar')">Бар</button>
+      </div>
+      <div id="menuCatsList"></div>
+      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="addMenuCategory()">+ Добавить раздел</button>
+    </div>
   </div>
 </main>
 
@@ -523,7 +537,7 @@ function connect(){
       actionLog = msg.actionLog || [];
       menu = msg.menu || menu;
       qrAssignments = msg.qrAssignments || qrAssignments;
-      if(mgrMode === 'menu') renderMenuEditor();
+      if(mgrMode === 'settings' && settingsSub === 'menu') renderMenuEditor();
       vapidPublicKey = msg.vapidPublicKey || vapidPublicKey;
       if(vapidPublicKey && !pushSetupDone){ pushSetupDone = true; setupPush(); }
       renderRooms();
@@ -532,9 +546,9 @@ function connect(){
       renderStaff();
       renderUnavailable();
       renderStock();
-      if(mgrMode === 'history') renderStaffHistory();
-      if(mgrMode === 'analytics') renderAnalytics();
-      if(mgrMode === 'log') renderActionLog();
+      if(mgrMode === 'reports' && reportsSub === 'history') renderStaffHistory();
+      if(mgrMode === 'reports' && reportsSub === 'analytics') renderAnalytics();
+      if(mgrMode === 'reports' && reportsSub === 'log') renderActionLog();
     }
   };
 }
@@ -642,23 +656,40 @@ function timeAgo(ts){
 connect();
 setInterval(render, 1000);
 
+let reportsSub = 'history';
+let settingsSub = 'config';
+
 function setMgrMode(m){
   mgrMode = m;
-  const idx = {overview:0, config:1, staff:2, unavail:3, stock:4, history:5, analytics:6, menu:7, log:8}[m];
+  const idx = {overview:0, unavail:1, stock:2, reports:3, settings:4}[m];
   document.querySelectorAll('#mainTabs button').forEach((b,i) => b.classList.toggle('active', i===idx));
   document.getElementById('overviewView').style.display = m==='overview' ? '' : 'none';
-  document.getElementById('configView').style.display = m==='config' ? '' : 'none';
-  document.getElementById('staffView').style.display = m==='staff' ? '' : 'none';
   document.getElementById('unavailView').style.display = m==='unavail' ? '' : 'none';
   document.getElementById('stockView').style.display = m==='stock' ? '' : 'none';
-  document.getElementById('historyView2').style.display = m==='history' ? '' : 'none';
-  document.getElementById('analyticsView').style.display = m==='analytics' ? '' : 'none';
-  document.getElementById('menuView').style.display = m==='menu' ? '' : 'none';
-  document.getElementById('logView').style.display = m==='log' ? '' : 'none';
-  if(m==='history') renderStaffHistory();
-  if(m==='analytics') renderAnalytics();
-  if(m==='menu') renderMenuEditor();
-  if(m==='log') renderActionLog();
+  document.getElementById('reportsView').style.display = m==='reports' ? '' : 'none';
+  document.getElementById('settingsView').style.display = m==='settings' ? '' : 'none';
+  if(m==='reports') setReportsSub(reportsSub);
+  if(m==='settings') setSettingsSub(settingsSub);
+}
+
+function setReportsSub(sub){
+  reportsSub = sub;
+  document.querySelectorAll('#reportsSubTabs button').forEach((b,i) => b.classList.toggle('active', ['history','analytics','log'][i]===sub));
+  document.getElementById('historyView2').style.display = sub==='history' ? '' : 'none';
+  document.getElementById('analyticsView').style.display = sub==='analytics' ? '' : 'none';
+  document.getElementById('logView').style.display = sub==='log' ? '' : 'none';
+  if(sub==='history') renderStaffHistory();
+  if(sub==='analytics') renderAnalytics();
+  if(sub==='log') renderActionLog();
+}
+
+function setSettingsSub(sub){
+  settingsSub = sub;
+  document.querySelectorAll('#settingsSubTabs button').forEach((b,i) => b.classList.toggle('active', ['config','staff','menu'][i]===sub));
+  document.getElementById('configView').style.display = sub==='config' ? '' : 'none';
+  document.getElementById('staffView').style.display = sub==='staff' ? '' : 'none';
+  document.getElementById('menuView').style.display = sub==='menu' ? '' : 'none';
+  if(sub==='menu') renderMenuEditor();
 }
 
 let granularity = 'day';
