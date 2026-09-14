@@ -155,6 +155,50 @@
   }
   footer.foot .gold{ color: var(--gold); font-family:'Fraunces', serif; font-size:15px; }
 
+  .call-bar{
+    position: fixed; left:0; right:0; bottom:0; z-index: 60;
+    display:flex; gap:10px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: linear-gradient(0deg, var(--bg-deep) 60%, transparent);
+  }
+  .call-waiter-btn{
+    flex:1; display:flex; align-items:center; justify-content:center; gap:8px;
+    background: #E0B84C; color:#241a05; border:none; border-radius: 999px;
+    padding: 14px 16px; font-family:'Inter', sans-serif; font-weight:700; font-size: 14.5px;
+    box-shadow: 0 10px 30px rgba(224,184,76,.35);
+  }
+  .call-waiter-btn:disabled{ opacity:.6; }
+  .call-bill-btn{
+    flex:0 0 auto; display:flex; align-items:center; gap:6px;
+    background: var(--panel); color: var(--cream); border:1px solid var(--gold);
+    border-radius: 999px; padding: 14px 18px; font-family:'Inter', sans-serif; font-weight:700; font-size: 13.5px;
+  }
+
+  .bill-overlay{
+    position: fixed; inset:0; background: rgba(0,0,0,.55); z-index: 90;
+    display:flex; align-items:flex-end; justify-content:center;
+    opacity:0; pointer-events:none; transition: opacity .25s ease;
+  }
+  .bill-overlay.open{ opacity:1; pointer-events:auto; }
+  .bill-panel{
+    width:100%; max-width: 480px; background:#fff; color:#1b1b1b;
+    border-radius: 20px 20px 0 0; max-height: 82vh; overflow-y:auto;
+    transform: translateY(30px); transition: transform .25s ease;
+  }
+  .bill-overlay.open .bill-panel{ transform: translateY(0); }
+  .bill-body{ padding: 24px 24px 8px; }
+  .bill-body h2{ font-family:'Fraunces', serif; font-size:22px; margin:0 0 4px; text-align:center; }
+  .bill-body .sub{ text-align:center; font-size:12px; color:#777; margin-bottom:16px; }
+  .bill-line{ display:flex; justify-content:space-between; font-size:14px; padding:6px 0; border-bottom:1px dashed #ddd; }
+  .bill-line .n{ flex:1; padding-right:10px; }
+  .bill-total-row{ display:flex; justify-content:space-between; font-size:13px; padding:6px 0; color:#555; }
+  .bill-total{ display:flex; justify-content:space-between; font-family:'Fraunces', serif; font-weight:700; font-size:19px; margin-top:8px; }
+  .bill-actions{ display:flex; gap:10px; padding:16px 24px 24px; border-top:1px solid #eee; }
+  .bill-actions button{ flex:1; padding:13px; border-radius:12px; border:none; font-weight:700; font-size:13.5px; }
+  .bill-close{ background:#eee; color:#333; }
+  .bill-request{ background: var(--gold); color:#1b1206; }
+  .bill-request:disabled{ opacity:.55; }
+  .bill-empty{ text-align:center; color:#888; font-size:14px; padding: 30px 10px; }
+
   @media (min-width: 720px){
     header.top{ padding-left: calc(50% - 320px); padding-right: calc(50% - 320px); }
   }
@@ -207,6 +251,27 @@
   <span id="enjoyText">Приятного аппетита!</span><br>
   <span id="scanNoteText">Отсканируйте QR‑код у столика, чтобы вернуться к меню в любой момент.</span>
 </footer>
+
+<div class="call-bar" id="callBar" style="display:none;">
+  <button class="call-waiter-btn" id="callWaiterBtn" onclick="callWaiter()">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+    <span id="callWaiterLabel">Позвать официанта</span>
+  </button>
+  <button class="call-bill-btn" id="callBillBtn" onclick="openBill()" style="display:none;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12a1 1 0 0 1 1 1v18l-3-2-3 2-3-2-3 2-3-2V3a1 1 0 0 1 1-1z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/></svg>
+    Чек
+  </button>
+</div>
+
+<div class="bill-overlay" id="billOverlay">
+  <div class="bill-panel">
+    <div class="bill-body" id="billBody"></div>
+    <div class="bill-actions">
+      <button class="bill-close" onclick="closeBill()" id="billCloseText">Закрыть</button>
+      <button class="bill-request" onclick="requestBillFromModal()" id="billRequestBtn">Попросить расчёт</button>
+    </div>
+  </div>
+</div>
 
 <script>
 let MENU = { food: [], bar: [] }; // populated live from the server's shared menu
@@ -361,10 +426,19 @@ setupObserver();
 // staff system, so a dish the kitchen/bar marks unavailable greys out
 // here automatically, without editing this page. ---
 const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
+const TABLE = new URLSearchParams(location.search).get('table');
+let liveSocket = null;
+let callCooldown = false;
+let currentBill = null;
+
 function connectLive(){
   let socket;
   try{ socket = new WebSocket(WS_URL); }catch(e){ return; }
-  socket.onopen = () => socket.send(JSON.stringify({type:"hello", role:"guest"}));
+  liveSocket = socket;
+  socket.onopen = () => {
+    socket.send(JSON.stringify({type:"hello", role:"guest"}));
+    if(TABLE) pollBill();
+  };
   socket.onmessage = (evt) => {
     let msg;
     try{ msg = JSON.parse(evt.data); }catch(e){ return; }
@@ -376,11 +450,90 @@ function connectLive(){
       onSearch();
       setupObserver();
     }
+    if(msg.type === "table_bill" && String(msg.table) === String(TABLE)){
+      currentBill = msg;
+      document.getElementById('callBillBtn').style.display = msg.hasOrders ? 'flex' : 'none';
+      if(document.getElementById('billOverlay').classList.contains('open')) renderBill();
+    }
   };
   socket.onclose = () => setTimeout(connectLive, 3000);
   socket.onerror = () => socket.close();
 }
 connectLive();
+
+function pollBill(){
+  if(!TABLE) return;
+  if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
+    liveSocket.send(JSON.stringify({type:"get_table_bill", table: TABLE}));
+  }
+  setTimeout(pollBill, 15000);
+}
+
+if(TABLE){
+  document.getElementById('callBar').style.display = 'flex';
+  document.body.style.paddingBottom = '96px';
+}
+
+function callWaiter(){
+  if(callCooldown || !TABLE) return;
+  if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
+    liveSocket.send(JSON.stringify({type:"call_waiter", table: TABLE}));
+  }
+  callCooldown = true;
+  const btn = document.getElementById('callWaiterBtn');
+  const label = document.getElementById('callWaiterLabel');
+  btn.disabled = true;
+  let seconds = 20;
+  label.textContent = 'Официант уже идёт…';
+  const tick = setInterval(() => {
+    seconds--;
+    if(seconds <= 0){
+      clearInterval(tick);
+      callCooldown = false;
+      btn.disabled = false;
+      label.textContent = 'Позвать официанта';
+    }
+  }, 1000);
+}
+
+function openBill(){
+  document.getElementById('billOverlay').classList.add('open');
+  renderBill();
+  if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
+    liveSocket.send(JSON.stringify({type:"get_table_bill", table: TABLE}));
+  }
+}
+function closeBill(){
+  document.getElementById('billOverlay').classList.remove('open');
+}
+
+function renderBill(){
+  const body = document.getElementById('billBody');
+  if(!currentBill || !currentBill.hasOrders){
+    body.innerHTML = `<div class="bill-empty">Пока нет заказанных позиций</div>`;
+    return;
+  }
+  let html = `<h2>GO pub</h2><div class="sub">Стол ${TABLE}</div>`;
+  currentBill.items.forEach(i => {
+    const price = parseInt(String(i.price).replace(/[^\d]/g,''),10) || 0;
+    html += `<div class="bill-line"><span class="n">${i.qty} × ${i.name}</span><span>${(price*i.qty).toLocaleString('ru-RU')}</span></div>`;
+  });
+  html += `<div class="bill-total-row"><span>Сумма</span><span>${currentBill.subtotal.toLocaleString('ru-RU')} тг</span></div>
+    <div class="bill-total-row"><span>Обслуживание (10%)</span><span>${currentBill.service.toLocaleString('ru-RU')} тг</span></div>
+    <div class="bill-total"><span>Итого</span><span>${currentBill.total.toLocaleString('ru-RU')} тг</span></div>`;
+  body.innerHTML = html;
+}
+
+function requestBillFromModal(){
+  if(!TABLE) return;
+  if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
+    liveSocket.send(JSON.stringify({type:"request_bill", table: TABLE}));
+  }
+  const btn = document.getElementById('billRequestBtn');
+  btn.disabled = true;
+  btn.textContent = 'Официант уже несёт счёт…';
+  setTimeout(() => { btn.disabled = false; btn.textContent = 'Попросить расчёт'; }, 30000);
+}
 </script>
 </body>
 </html>

@@ -413,6 +413,17 @@ function connect(){
 }
 
 function alertReady(msg){
+  if(msg.kind === "call_waiter" || msg.kind === "request_bill"){
+    try{ new Audio("data:audio/wav;base64,UklGRhwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=").play(); }catch(e){}
+    if(navigator.vibrate) navigator.vibrate([150,60,150,60,150]);
+    const text = msg.kind === "call_waiter" ? "Стол " + tableLabel(msg.table) + " зовёт официанта" : "Стол " + tableLabel(msg.table) + " просит счёт";
+    if("Notification" in window && Notification.permission === "granted"){
+      new Notification(text);
+    } else {
+      alert(text);
+    }
+    return;
+  }
   try{ new Audio("data:audio/wav;base64,UklGRhwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=").play(); }catch(e){}
   if(navigator.vibrate) navigator.vibrate([200,80,200]);
   if("Notification" in window && Notification.permission === "granted"){
