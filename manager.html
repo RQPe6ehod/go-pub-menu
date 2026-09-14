@@ -395,6 +395,17 @@ let pushSetupDone = false;
 let mgrMode = 'overview';
 let staffName = "";
 
+function takeAuthFromHash(){
+  const raw = (location.hash || "").replace(/^#/, "");
+  if(!raw) return;
+  const params = new URLSearchParams(raw);
+  const pin = (params.get("auth") || "").trim();
+  if(!pin) return;
+  sessionStorage.setItem("gopub_pin_"+ROLE, pin);
+  if(params.get("stay") === "1") localStorage.setItem("gopub_pin_"+ROLE, pin);
+  history.replaceState(null, "", location.pathname + location.search);
+}
+takeAuthFromHash();
 function getPin(){ return sessionStorage.getItem("gopub_pin_"+ROLE) || localStorage.getItem("gopub_pin_"+ROLE); }
 function setPin(p){
   sessionStorage.setItem("gopub_pin_"+ROLE, p);
