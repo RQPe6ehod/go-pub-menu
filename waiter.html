@@ -284,32 +284,7 @@
 // ---- EDIT THIS after you deploy the Worker ----
 const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
 
-const MENU = {
-  kitchen: [
-    { title:"Салаты", items:[["Пекинский","3 690"],["Греческий","3 590"],["Хрустящие баклажаны","3 890"],["Теплый из требухи с овощами","3 890"],["Салат GO","3 890"]]},
-    { title:"Холодные закуски", items:[["Ассорти под водочку","3 990"],["Соленья","3 790"],["Кавказская нарезка","3 890"],["Мясная нарезка","6 590"],["Холодец по-домашнему","3 650"],["Мужская закуска","6 590"],["Баклажаны в панировке","3 790"]]},
-    { title:"Горячие закуски", items:[["Крылья BBQ","3 590"],["Сырные палочки","3 190"],["Нагетсы","2 890"],["Луковые кольца","2 690"],["Гренки","1 990"],["Бараньи семечки","3 950"],["Жареные пельмени","3 290"],["Мини чебуречки","2 690"],["Печень с курдючком","3 790"]]},
-    { title:"Супы", items:[["Пельмени домашние","2 790"],["Лапша домашняя","2 290"],["Солянка","2 690"],["Том-Ям","3 590"],["Рамён","2 990"]]},
-    { title:"Море Go", items:[["Креветки пивные","4 290"],["Жаренные карасики с картофелем","3 590"],["Мойва","3 690"],["Сазан на компанию","16 590"]]},
-    { title:"Street food", items:[["Beef Burger","3 890"],["Chicken Burger","3 690"],["Шаурма с курицей","3 590"],["Куриный пирог GO","5 390"],["Баскет с фри","9 290"]]},
-    { title:"Пицца", items:[["Курица с грибами","3 890"],["Мексикано","3 990"],["Пицца 4 сезона","3 890"],["Маргарита","3 190"],["Пепперони","3 890"],["Сырная","3 990"]]},
-    { title:"Паста", items:[["Альфредо с фетучини","3 790"],["Болоньезе","3 790"]]},
-    { title:"Шашлык", items:[["Баранина","5 000"],["Телятина","5 000"],["Утка","4 590"],["Крылышки","3 990"],["Куриное филе","3 750"],["Грибы","3 750"],["Картофельный","2 450"],["Овощи гриль","2 890"]]},
-    { title:"Горячие блюда", items:[["Стейк Рибай","7 390"],["Стейк Ти-бон","7 390"],["Микс на жаровне","4 490"],["Мясо по-мексикански","4 890"],["Медальоны в сливочно-грибном соусе","5 290"],["Куырдак","5 290"],["Курица с грибами в сливочном соусе с пюре","4 190"],["Говядина с шампиньонами и рисом","4 790"]]},
-    { title:"Гарнир", items:[["Рис","1 450"],["Картофельный фри","1 500"],["Картофельные дольки","1 550"],["Картошка по-домашнему","2 790"],["Соусы","800"]]},
-    { title:"Дессерт", items:[["Фруктовая нарезка","7 990"],["Сладкий десерт","2 190"],["Мороженое","1 990"],["Лимон","890"],["Хлебная корзина","800"]]},
-  ],
-  bar: [
-    { title:"Бутылочное пиво", items:[["Heineken 0.5","2 250"],["Corona Extra 0.35L","3 550"],["Krusovice Svetle 0.45L","1 590"],["Krusovice Cerne 0.45L","1 590"]]},
-    { title:"Разливное пиво (0.5л)", items:[["Пражское","1 450"],["Баварское нефильтрованное","1 750"],["Budweiser Budvar","3 590"],["Guinness","3 990"]]},
-    { title:"Закуски к пиву", items:[["Арахис соленый","1 690"],["Чечил","1 990"],["Чипсы","2 190"],["Фисташки соленые","2 390"],["Курт","1 990"]]},
-    { title:"Водка (50мл)", items:[["Хортица","950"],["Absolut Blue","1 950"],["Tito's","2 790"],["Grey Goose","3 700"],["Belvedere","4 100"]]},
-    { title:"Виски (50мл)", items:[["Ballantine's","2 350"],["Jameson","2 600"],["Jack Daniels","3 500"],["Chivas 12 y.o.","4 100"]]},
-    { title:"Коктейли", items:[["Aperol Spritz","3 190"],["Gin Tonic","2 790"],["Long Island","3 290"],["Cuba Libre","2 590"],["Mimosa","2 490"],["Mojito","2 690"]]},
-    { title:"Безалкогольные", items:[["Coca-Cola","1 990"],["Минеральная вода","1 150"],["Сок","2 390"],["Red Bull","2 450"],["Лимонады","2 790"]]},
-    { title:"Чай/Кофе", items:[["Чай в ассортименте","800"],["Jacobs кофе","1 300"]]},
-  ]
-};
+let MENU = { kitchen: [], bar: [] }; // populated from the server's shared menu (see state handler)
 
 const ROLE = "waiter";
 let socket = null;
@@ -395,6 +370,7 @@ function connect(){
       vapidPublicKey = msg.vapidPublicKey || vapidPublicKey;
       if(vapidPublicKey && !pushSetupDone){ pushSetupDone = true; setupPush(); }
       unavailable = msg.unavailable || {};
+      if(msg.menu) MENU = msg.menu;
       if(staffId){
         const me = (msg.staff || []).find(s => s.id === staffId);
         if(me){
@@ -485,7 +461,7 @@ function setMode(m){
 }
 
 function catCount(dest, cat){
-  return cat.items.reduce((s,[name]) => s + (cart[dest+"|"+name] ? cart[dest+"|"+name].qty : 0), 0);
+  return cat.items.reduce((s,item) => s + (cart[dest+"|"+item.name.ru] ? cart[dest+"|"+item.name.ru].qty : 0), 0);
 }
 
 function renderDestTabs(){
@@ -507,11 +483,12 @@ function renderChips(){
   const el = document.getElementById('catChips');
   el.innerHTML = "";
   MENU[activeDest].forEach(cat => {
+    const title = cat.title.ru;
     const b = document.createElement('button');
     const n = catCount(activeDest, cat);
-    b.textContent = cat.title + (n>0 ? ` (${n})` : '');
-    b.className = (openCat===cat.title ? 'active' : (n>0 ? 'has-items' : ''));
-    b.onclick = () => selectCategory(cat.title);
+    b.textContent = title + (n>0 ? ` (${n})` : '');
+    b.className = (openCat===title ? 'active' : (n>0 ? 'has-items' : ''));
+    b.onclick = () => selectCategory(title);
     el.appendChild(b);
   });
 }
@@ -532,15 +509,18 @@ function renderMenu(){
   const el = document.getElementById('catList');
   let html = "";
   MENU[activeDest].forEach(cat => {
-    const isOpen = openCat === cat.title;
+    const title = cat.title.ru;
+    const isOpen = openCat === title;
     const n = catCount(activeDest, cat);
-    html += `<div class="accordion-cat" id="acc-${cssSafe(cat.title)}">
-      <div class="accordion-head ${isOpen?'open':''}" onclick="selectCategory('${cat.title.replace(/'/g,"\\'")}')">
-        <h3>${cat.title} ${n>0?`<span class="count">${n}</span>`:''}</h3>
+    html += `<div class="accordion-cat" id="acc-${cssSafe(title)}">
+      <div class="accordion-head ${isOpen?'open':''}" onclick="selectCategory('${title.replace(/'/g,"\\'")}')">
+        <h3>${title} ${n>0?`<span class="count">${n}</span>`:''}</h3>
         <span class="chevron">▾</span>
       </div>
       <div class="accordion-body ${isOpen?'open':''}">`;
-    cat.items.forEach(([name, price]) => {
+    cat.items.forEach(it => {
+      const name = it.name.ru;
+      const price = it.price;
       const key = activeDest+"|"+name;
       const qty = cart[key] ? cart[key].qty : 0;
       const unavail = unavailable[key];
