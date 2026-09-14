@@ -787,6 +787,14 @@ function renderStaffHistory(){
     if(!Object.keys(waiters).length && !Object.keys(cooks).length && !Object.keys(bartenders).length){
       html += `<div class="empty">Нет именованных сотрудников за этот день</div>`;
     }
+
+    if(dayClosed.length){
+      html += `<div class="staff-day-group"><h3>Чеки</h3>`;
+      dayClosed.slice().sort((a,b)=>b.closedAt-a.closedAt).forEach(c => {
+        html += `<div class="hist-row" onclick="openReceiptViewer('${c.id}')"><span class="t">Стол ${tableLabel(c.table)} · ${new Date(c.closedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}${c.closedBy?' · '+c.closedBy:''}</span><span class="p">${c.total.toLocaleString('ru-RU')} тг</span></div>`;
+      });
+      html += `</div>`;
+    }
   });
   el.innerHTML = html;
 }
