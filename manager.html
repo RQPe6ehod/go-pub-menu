@@ -395,11 +395,15 @@ let pushSetupDone = false;
 let mgrMode = 'overview';
 let staffName = "";
 
-function getPin(){ return sessionStorage.getItem("gopub_pin_"+ROLE); }
-function setPin(p){ sessionStorage.setItem("gopub_pin_"+ROLE, p); }
+function getPin(){ return sessionStorage.getItem("gopub_pin_"+ROLE) || localStorage.getItem("gopub_pin_"+ROLE); }
+function setPin(p){
+  sessionStorage.setItem("gopub_pin_"+ROLE, p);
+  if(localStorage.getItem("gopub_pin_"+ROLE) !== null) localStorage.setItem("gopub_pin_"+ROLE, p);
+}
 function logoutDevice(){
   if(!confirm("Выйти? Понадобится заново ввести PIN директора.")) return;
   sessionStorage.removeItem("gopub_pin_"+ROLE);
+  localStorage.removeItem("gopub_pin_"+ROLE);
   location.reload();
 }
 function tryPin(){
