@@ -170,7 +170,8 @@
   .call-bill-btn{
     flex:0 0 auto; display:flex; align-items:center; gap:6px;
     background: var(--panel); color: var(--cream); border:1px solid var(--gold);
-    border-radius: 999px; padding: 14px 18px; font-family:'Inter', sans-serif; font-weight:700; font-size: 13.5px;
+    border-radius: 999px; padding: 14px 14px; font-family:'Inter', sans-serif; font-weight:700; font-size: 12px;
+    white-space:nowrap;
   }
 
   .bill-overlay{
@@ -259,7 +260,7 @@
   </button>
   <button class="call-bill-btn" id="callBillBtn" onclick="openBill()" style="display:none;">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12a1 1 0 0 1 1 1v18l-3-2-3 2-3-2-3 2-3-2V3a1 1 0 0 1 1-1z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/></svg>
-    Чек
+    Предварительный чек
   </button>
 </div>
 
@@ -426,7 +427,8 @@ setupObserver();
 // staff system, so a dish the kitchen/bar marks unavailable greys out
 // here automatically, without editing this page. ---
 const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
-const TABLE = new URLSearchParams(location.search).get('table');
+const QR_ID = new URLSearchParams(location.search).get('qr');
+let TABLE = new URLSearchParams(location.search).get('table'); // may also arrive asynchronously via resolve_qr
 let liveSocket = null;
 let callCooldown = false;
 let currentBill = null;
@@ -437,7 +439,8 @@ function connectLive(){
   liveSocket = socket;
   socket.onopen = () => {
     socket.send(JSON.stringify({type:"hello", role:"guest"}));
-    if(TABLE) pollBill();
+    if(TABLE) activateTableUI();
+    else if(QR_ID) socket.send(JSON.stringify({type:"resolve_qr", qrId: QR_ID}));
   };
   socket.onmessage = (evt) => {
     let msg;
@@ -449,6 +452,9 @@ function connectLive(){
       renderMain();
       onSearch();
       setupObserver();
+    }
+    if(msg.type === "qr_table" && msg.qrId === QR_ID){
+      if(msg.table){ TABLE = msg.table; activateTableUI(); }
     }
     if(msg.type === "table_bill" && String(msg.table) === String(TABLE)){
       currentBill = msg;
@@ -469,9 +475,13 @@ function pollBill(){
   setTimeout(pollBill, 15000);
 }
 
-if(TABLE){
+let tableUIActive = false;
+function activateTableUI(){
+  if(tableUIActive) return;
+  tableUIActive = true;
   document.getElementById('callBar').style.display = 'flex';
   document.body.style.paddingBottom = '96px';
+  pollBill();
 }
 
 function callWaiter(){
@@ -510,10 +520,10 @@ function closeBill(){
 function renderBill(){
   const body = document.getElementById('billBody');
   if(!currentBill || !currentBill.hasOrders){
-    body.innerHTML = `<div class="bill-empty">Пока нет заказанных позиций</div>`;
+    body.innerHTML = `<h2>Предварительный чек</h2><div class="bill-empty">Пока нет заказанных позиций</div>`;
     return;
   }
-  let html = `<h2>GO pub</h2><div class="sub">Стол ${TABLE}</div>`;
+  let html = `<h2>Предварительный чек</h2><div class="sub">GO pub · Стол ${TABLE}</div><div class="sub" style="margin-top:-10px;">Не является фискальным чеком</div>`;
   currentBill.items.forEach(i => {
     const price = parseInt(String(i.price).replace(/[^\d]/g,''),10) || 0;
     html += `<div class="bill-line"><span class="n">${i.qty} × ${i.name}</span><span>${(price*i.qty).toLocaleString('ru-RU')}</span></div>`;

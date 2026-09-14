@@ -190,6 +190,7 @@
   .lock-box button{ width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; }
   .lock-box .err{ color:var(--red); font-size:12.5px; margin-top:10px; min-height:16px; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 </head>
 <body>
 
@@ -271,6 +272,11 @@
     <h2>Залы и столы</h2>
     <div id="roomsList"></div>
     <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="addRoom()">+ Добавить зал</button>
+
+    <h2>QR-коды столов</h2>
+    <p style="font-size:12px;color:var(--muted);margin:-6px 0 12px;">Напечатанные QR ничего не знают о номере стола сами по себе — отсканируйте каждый здесь и привяжите к залу и номеру. Позже можно переназначить.</p>
+    <div id="qrList"></div>
+    <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="openQrScanner()">+ Сканировать QR</button>
   </div>
 
   <div id="menuView" style="display:none">
@@ -353,6 +359,31 @@
   </div>
 </div>
 
+<div class="qr-overlay" id="qrScanOverlay">
+  <div class="qr-box" style="max-width:360px;">
+    <div class="role">Наведите камеру на QR на столе</div>
+    <video id="qrVideo" playsinline autoplay muted style="width:100%; border-radius:12px; background:#000; margin-bottom:14px;"></video>
+    <div class="link" id="qrScanStatus" style="min-height:16px;"></div>
+    <button onclick="closeQrScanner()">Отмена</button>
+  </div>
+</div>
+
+<div class="qr-overlay" id="qrAssignOverlay">
+  <div class="qr-box" style="max-width:360px; text-align:left;">
+    <div class="role" style="text-align:center; margin-bottom:14px;">QR найден — привяжите к столу</div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px; color:#777; display:block; margin-bottom:5px;">Зал</label>
+      <select id="qrAssignRoom" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:14px;"></select>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:12px; color:#777; display:block; margin-bottom:5px;">Номер стола в зале</label>
+      <input type="number" min="1" id="qrAssignLocal" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:14px;">
+    </div>
+    <button onclick="confirmAssignQr()" style="margin-bottom:8px;">Привязать</button>
+    <button onclick="closeQrAssign()" style="background:#eee; color:#333;">Отмена</button>
+  </div>
+</div>
+
 <div class="receipt-overlay" id="receiptOverlay">
   <div class="receipt-panel">
     <div class="receipt-body" id="receiptBody"></div>
@@ -389,6 +420,7 @@ let socket, allOrders = [], allHistory = [], openTables = {}, closedTables = [],
 let inventory = {kitchen:{}, bar:{}};
 let actionLog = [];
 let menu = {kitchen:[], bar:[]};
+let qrAssignments = {};
 let menuDest = 'kitchen';
 let vapidPublicKey = null;
 let pushSetupDone = false;
@@ -490,10 +522,12 @@ function connect(){
       inventory = msg.inventory || {kitchen:{}, bar:{}};
       actionLog = msg.actionLog || [];
       menu = msg.menu || menu;
+      qrAssignments = msg.qrAssignments || qrAssignments;
       if(mgrMode === 'menu') renderMenuEditor();
       vapidPublicKey = msg.vapidPublicKey || vapidPublicKey;
       if(vapidPublicKey && !pushSetupDone){ pushSetupDone = true; setupPush(); }
       renderRooms();
+      renderQrList();
       render();
       renderStaff();
       renderUnavailable();
@@ -937,6 +971,10 @@ function actionText(e){
     case "delete_room": return `${who} удалил зал «${d.name || ''}»`;
     case "set_name": return `${who} задал имя: ${d.name}`;
     case "change_pin": return `${who} сменил PIN (${ROLE_LABELS_LOG[d.role]||d.role})`;
+    case "assign_qr": return `${who} привязал QR к столу ${tableLabel(d.table)}`;
+    case "unassign_qr": return `${who} отвязал QR-код`;
+    case "call_waiter": return `Стол ${tableLabel(d.table)} позвал официанта`;
+    case "request_bill": return `Стол ${tableLabel(d.table)} попросил расчёт`;
     default: return `${who}: ${e.action}`;
   }
 }
@@ -1034,6 +1072,116 @@ function editMenuItemPrompt(categoryId, itemId, currentName, currentPrice, curre
 function deleteMenuItemPrompt(categoryId, itemId, name){
   if(!confirm(`Удалить «${name}» из меню?`)) return;
   socket.send(JSON.stringify({type:"delete_menu_item", dest:menuDest, categoryId, itemId}));
+}
+
+// --- QR codes: printed stickers are anonymous (?qr=<id>), so they get
+// bound to a room+table here after scanning, rather than baked in.
+function resolveRoomAndLocal(globalNum){
+  let offset = 0;
+  for(const room of rooms){
+    if(globalNum <= offset + room.tableCount) return { roomId: room.id, local: globalNum - offset };
+    offset += room.tableCount;
+  }
+  return null;
+}
+
+function renderQrList(){
+  const el = document.getElementById('qrList');
+  if(!el) return;
+  const entries = Object.entries(qrAssignments);
+  if(entries.length===0){ el.innerHTML = `<div class="empty">Пока ни один QR не привязан</div>`; return; }
+  let html = "";
+  entries.sort((a,b) => a[1]-b[1]).forEach(([qrId, table]) => {
+    html += `<div class="staff-row">
+      <div class="info"><span class="name">${tableLabel(table)}</span></div>
+      <div class="actions">
+        <button onclick="openQrScanner()">Переснять</button>
+        <button class="danger" onclick="unassignQr('${qrId}')">Забыть</button>
+      </div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+let qrStream = null;
+let qrScanRAF = null;
+function openQrScanner(){
+  document.getElementById('qrScanStatus').textContent = '';
+  document.getElementById('qrScanOverlay').classList.add('open');
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+    .then(stream => {
+      qrStream = stream;
+      const video = document.getElementById('qrVideo');
+      video.srcObject = stream;
+      video.play();
+      qrScanLoop();
+    })
+    .catch(() => {
+      document.getElementById('qrScanStatus').textContent = 'Нет доступа к камере — разрешите доступ в браузере.';
+    });
+}
+function qrScanLoop(){
+  const video = document.getElementById('qrVideo');
+  if(video.readyState === video.HAVE_ENOUGH_DATA){
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+    if(code && code.data){
+      try{
+        const url = new URL(code.data);
+        const qrId = url.searchParams.get('qr');
+        if(qrId){
+          closeQrScanner();
+          openQrAssign(qrId);
+          return;
+        }
+      }catch(e){ /* not a valid URL, keep scanning */ }
+    }
+  }
+  qrScanRAF = requestAnimationFrame(qrScanLoop);
+}
+function closeQrScanner(){
+  document.getElementById('qrScanOverlay').classList.remove('open');
+  if(qrScanRAF) cancelAnimationFrame(qrScanRAF);
+  if(qrStream){ qrStream.getTracks().forEach(t => t.stop()); qrStream = null; }
+}
+
+let pendingQrId = null;
+function openQrAssign(qrId){
+  pendingQrId = qrId;
+  const sel = document.getElementById('qrAssignRoom');
+  sel.innerHTML = rooms.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+  const existingTable = qrAssignments[qrId];
+  if(existingTable){
+    const loc = resolveRoomAndLocal(existingTable);
+    if(loc){ sel.value = loc.roomId; document.getElementById('qrAssignLocal').value = loc.local; }
+  } else {
+    document.getElementById('qrAssignLocal').value = 1;
+  }
+  document.getElementById('qrAssignOverlay').classList.add('open');
+}
+function closeQrAssign(){
+  document.getElementById('qrAssignOverlay').classList.remove('open');
+  pendingQrId = null;
+}
+function confirmAssignQr(){
+  const roomId = document.getElementById('qrAssignRoom').value;
+  const local = parseInt(document.getElementById('qrAssignLocal').value, 10);
+  const room = rooms.find(r => r.id === roomId);
+  if(!room || !local || local < 1 || local > room.tableCount){ alert('Укажите корректный номер стола для этого зала.'); return; }
+  let offset = 0;
+  for(const r of rooms){ if(r.id === roomId) break; offset += r.tableCount; }
+  const globalTable = offset + local;
+  socket.send(JSON.stringify({type:"assign_qr", qrId: pendingQrId, table: globalTable}));
+  closeQrAssign();
+}
+function unassignQr(qrId){
+  if(!confirm('Забыть привязку этого QR? Гости по нему перестанут видеть кнопки "Позвать официанта"/"Чек", пока вы не привяжете его заново.')) return;
+  socket.send(JSON.stringify({type:"unassign_qr", qrId}));
 }
 
 function renderRooms(){
