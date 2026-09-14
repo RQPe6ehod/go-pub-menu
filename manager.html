@@ -64,6 +64,14 @@
   .unavail-row .comment{ font-size:12.5px; color:var(--gold); margin-top:4px; }
 
   .settings-row{ display:flex; align-items:center; justify-content:space-between; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:18px; }
+  .room-card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .room-card .row1{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .room-card input[type="text"]{ flex:1; padding:9px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:14px; font-family:'Fraunces',serif; font-weight:600; }
+  .room-card .row2{ display:flex; align-items:center; justify-content:space-between; }
+  .room-card .stepper{ display:flex; align-items:center; gap:10px; }
+  .room-card .stepper button{ width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:16px; }
+  .room-card .stepper span{ min-width:26px; text-align:center; font-weight:700; font-family:'Fraunces',serif; font-size:16px; }
+  .room-card .del-btn{ padding:7px 10px; border-radius:8px; border:1px solid var(--red); background:transparent; color:var(--red); font-size:12px; }
   .settings-row .label{ font-size:13.5px; }
   .settings-row .stepper{ display:flex; align-items:center; gap:10px; }
   .settings-row .stepper button{ width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:16px; }
@@ -122,14 +130,19 @@
   .receipt-overlay .receipt-share .share-btn{ flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:11px 6px; border-radius:12px; font-weight:700; font-size:12.5px; text-decoration:none; border:none; cursor:pointer; font-family:inherit; }
   .receipt-overlay .wa{ background:#eafaf0; color:#1b7a45; }
   .receipt-overlay .tg{ background:#eaf6fd; color:#1478b0; }
-  .receipt-overlay .receipt-qr{ display:flex; align-items:center; gap:12px; padding:0 24px 4px; }
-  .receipt-overlay .receipt-qr img{ width:70px; height:70px; border-radius:8px; border:1px solid #ddd; flex-shrink:0; }
-  .receipt-overlay .qr-note{ font-size:11.5px; color:#888; line-height:1.4; }
+  .qr-popup{ position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:200; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .25s ease; }
+  .qr-popup.open{ opacity:1; pointer-events:auto; }
+  .qr-popup-card{ background:#fff; border-radius:20px; padding:28px; text-align:center; max-width:340px; width:88%; transform:scale(.8); transition:transform .25s ease; }
+  .qr-popup.open .qr-popup-card{ transform:scale(1); }
+  .qr-popup-card img{ width:140px; height:140px; border-radius:10px; margin-bottom:16px; }
+  .qr-popup-card .qr-note{ font-size:13px; color:#666; line-height:1.4; margin-bottom:18px; }
+  .qr-popup-card button{ width:100%; padding:12px; border:none; border-radius:10px; background:var(--gold); color:#1b1b1b; font-weight:700; }
   @media print{
     body *{ visibility:hidden; }
     .receipt-overlay .receipt-panel, .receipt-overlay .receipt-panel *{ visibility:visible; }
     .receipt-overlay .receipt-panel{ position:fixed; inset:0; max-height:none; border-radius:0; }
-    .receipt-overlay .receipt-actions, .receipt-overlay .receipt-share, .receipt-overlay .receipt-qr{ display:none; }
+    .receipt-overlay .receipt-actions, .receipt-overlay .receipt-share{ display:none; }
+    .qr-popup{ display:none; }
   }
   .ticket{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
   .ticket .top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
@@ -193,11 +206,13 @@
 <main>
   <div class="mgr-tabs" id="mainTabs">
     <button class="active" onclick="setMgrMode('overview')">Обзор</button>
+    <button onclick="setMgrMode('config')">Конфигурация</button>
     <button onclick="setMgrMode('staff')">Сотрудники</button>
     <button onclick="setMgrMode('unavail')" style="position:relative;">Недоступные блюда<span class="badge-count" id="unavailBadge" style="display:none;position:absolute;top:-6px;right:-6px;">0</span></button>
     <button onclick="setMgrMode('stock')" style="position:relative;">Склад<span class="badge-count" id="lowStockBadge" style="display:none;position:absolute;top:-6px;right:-6px;">0</span></button>
     <button onclick="setMgrMode('history')">История</button>
     <button onclick="setMgrMode('analytics')">Аналитика</button>
+    <button onclick="setMgrMode('log')">Журнал действий</button>
   </div>
 
   <div id="overviewView">
@@ -222,20 +237,13 @@
     <div id="history"></div>
   </div>
 
-  <div id="staffView" style="display:none">
-    <h2>Количество столов</h2>
-    <div class="settings-row">
-      <span class="label">Доступно столов у официанта</span>
-      <div class="stepper">
-        <button onclick="changeTableCount(-1)">−</button>
-        <span id="tableCountVal">20</span>
-        <button onclick="changeTableCount(1)">+</button>
-        <button id="confirmTableCountBtn" class="confirm-check" onclick="confirmTableCount()" disabled title="Утвердить">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-        </button>
-      </div>
-    </div>
+  <div id="configView" style="display:none">
+    <h2>Залы и столы</h2>
+    <div id="roomsList"></div>
+    <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="addRoom()">+ Добавить зал</button>
+  </div>
 
+  <div id="staffView" style="display:none">
     <h2>Добавить сотрудника</h2>
     <div class="role-buttons">
       <button onclick="createStaff('waiter')">+ Официант</button>
@@ -249,6 +257,10 @@
     <div id="staffCook"></div>
     <h2 id="hBartender">Бармены</h2>
     <div id="staffBartender"></div>
+  </div>
+
+  <div id="logView" style="display:none">
+    <div id="actionLogList"></div>
   </div>
 
   <div id="unavailView" style="display:none">
@@ -305,7 +317,6 @@
 <div class="receipt-overlay" id="receiptOverlay">
   <div class="receipt-panel">
     <div class="receipt-body" id="receiptBody"></div>
-    <div class="receipt-qr" id="receiptQrBlock" style="display:none;"></div>
     <div class="receipt-actions">
       <button class="btn-close" onclick="closeReceiptViewer()">Закрыть</button>
       <button class="btn-download" onclick="showReceiptQr('download')">Скачать</button>
@@ -324,11 +335,20 @@
   </div>
 </div>
 
+<div class="qr-popup" id="qrPopup" onclick="if(event.target===this) closeQrPopup()">
+  <div class="qr-popup-card">
+    <img id="qrPopupImg" src="">
+    <div class="qr-note" id="qrPopupNote"></div>
+    <button onclick="closeQrPopup()">Закрыть</button>
+  </div>
+</div>
+
 <script>
 const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
 const ROLE = "manager";
-let socket, allOrders = [], allHistory = [], openTables = {}, closedTables = [], staff = [], tableCount = 20, unavailable = {};
+let socket, allOrders = [], allHistory = [], openTables = {}, closedTables = [], staff = [], rooms = [], unavailable = {};
 let inventory = {kitchen:{}, bar:{}};
+let actionLog = [];
 let vapidPublicKey = null;
 let pushSetupDone = false;
 let mgrMode = 'overview';
@@ -399,22 +419,20 @@ function connect(){
     if(msg.type === "pin_change_error"){ alert("Не удалось изменить PIN — используйте 4-6 цифр."); }
     if(msg.type === "state"){
       allOrders = msg.orders; allHistory = msg.history || []; openTables = msg.openTables || {};
-      closedTables = msg.closedTables || []; staff = msg.staff || []; tableCount = msg.tableCount || 20;
+      closedTables = msg.closedTables || []; staff = msg.staff || []; rooms = msg.rooms || rooms;
       unavailable = msg.unavailable || {};
       inventory = msg.inventory || {kitchen:{}, bar:{}};
+      actionLog = msg.actionLog || [];
       vapidPublicKey = msg.vapidPublicKey || vapidPublicKey;
       if(vapidPublicKey && !pushSetupDone){ pushSetupDone = true; setupPush(); }
-      if(pendingTableCount === null || pendingTableCount === tableCount){
-        document.getElementById('tableCountVal').textContent = tableCount;
-        document.getElementById('confirmTableCountBtn').disabled = true;
-        pendingTableCount = null;
-      }
+      renderRooms();
       render();
       renderStaff();
       renderUnavailable();
       renderStock();
       if(mgrMode === 'history') renderStaffHistory();
       if(mgrMode === 'analytics') renderAnalytics();
+      if(mgrMode === 'log') renderActionLog();
     }
   };
 }
@@ -469,7 +487,7 @@ function render(){
     tableNums.forEach(t => {
       const s = openTables[t];
       const activeCount = allOrders.filter(o => o.table === t).length;
-      thtml += `<div class="ticket"><div class="top"><span class="table-badge">Стол ${t}</span><span class="time">открыт ${timeAgo(s.openedAt)}</span></div>
+      thtml += `<div class="ticket"><div class="top"><span class="table-badge">Стол ${tableLabel(t)}</span><span class="time">открыт ${timeAgo(s.openedAt)}</span></div>
         <div class="line">${activeCount>0 ? `В работе тикетов: ${activeCount}` : 'Всё подано, ждёт закрытия'}</div></div>`;
     });
     tablesEl.innerHTML = thtml;
@@ -480,7 +498,7 @@ function render(){
   else {
     let html = "";
     allOrders.slice().sort((a,b)=>b.createdAt-a.createdAt).forEach(o => {
-      html += `<div class="ticket"><div class="top"><span class="table-badge">Стол ${o.table}</span><span class="time">${timeAgo(o.createdAt)}</span></div><div class="badges">`;
+      html += `<div class="ticket"><div class="top"><span class="table-badge">Стол ${tableLabel(o.table)}</span><span class="time">${timeAgo(o.createdAt)}</span></div><div class="badges">`;
       if(o.kitchenItems.length) html += `<span class="badge ${o.kitchenStatus==='ready'?'ready':'pending'}">Кухня: ${o.kitchenStatus==='ready'?'готово':(o.kitchenStatus==='accepted'?'готовит':'в очереди')}</span>`;
       if(o.barItems.length) html += `<span class="badge ${o.barStatus==='ready'?'ready':'pending'}">Бар: ${o.barStatus==='ready'?'готово':(o.barStatus==='accepted'?'готовит':'в очереди')}</span>`;
       html += `</div>`;
@@ -506,7 +524,7 @@ function render(){
   if(closedToday.length===0){ histEl.innerHTML = `<div class="empty">Сегодня ещё не закрывали столы</div>`; return; }
   let hhtml = "";
   closedToday.slice().sort((a,b)=>b.closedAt-a.closedAt).forEach(c => {
-    hhtml += `<div class="hist-row" onclick="openReceiptViewer('${c.id}')"><span class="t">Стол ${c.table} · ${new Date(c.closedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span><span class="p">${c.total.toLocaleString('ru-RU')} тг</span></div>`;
+    hhtml += `<div class="hist-row" onclick="openReceiptViewer('${c.id}')"><span class="t">Стол ${tableLabel(c.table)} · ${new Date(c.closedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span><span class="p">${c.total.toLocaleString('ru-RU')} тг</span></div>`;
   });
   histEl.innerHTML = hhtml;
 }
@@ -520,16 +538,19 @@ setInterval(render, 1000);
 
 function setMgrMode(m){
   mgrMode = m;
-  const idx = {overview:0, staff:1, unavail:2, stock:3, history:4, analytics:5}[m];
+  const idx = {overview:0, config:1, staff:2, unavail:3, stock:4, history:5, analytics:6, log:7}[m];
   document.querySelectorAll('#mainTabs button').forEach((b,i) => b.classList.toggle('active', i===idx));
   document.getElementById('overviewView').style.display = m==='overview' ? '' : 'none';
+  document.getElementById('configView').style.display = m==='config' ? '' : 'none';
   document.getElementById('staffView').style.display = m==='staff' ? '' : 'none';
   document.getElementById('unavailView').style.display = m==='unavail' ? '' : 'none';
   document.getElementById('stockView').style.display = m==='stock' ? '' : 'none';
   document.getElementById('historyView2').style.display = m==='history' ? '' : 'none';
   document.getElementById('analyticsView').style.display = m==='analytics' ? '' : 'none';
+  document.getElementById('logView').style.display = m==='log' ? '' : 'none';
   if(m==='history') renderStaffHistory();
   if(m==='analytics') renderAnalytics();
+  if(m==='log') renderActionLog();
 }
 
 let granularity = 'day';
@@ -790,18 +811,119 @@ function renderStock(){
   renderGroup('stockBar', bar);
 }
 
-let pendingTableCount = null;
-function changeTableCount(delta){
-  const base = pendingTableCount !== null ? pendingTableCount : tableCount;
-  const next = Math.max(1, base + delta);
-  pendingTableCount = next;
-  document.getElementById('tableCountVal').textContent = next;
-  document.getElementById('confirmTableCountBtn').disabled = (next === tableCount);
+let pendingRoomCounts = {}; // roomId -> pending tableCount not yet confirmed
+
+const ROLE_LABELS_LOG = { waiter: "Официант", cook: "Повар", bartender: "Бармен", manager: "Менеджер" };
+
+function actionText(e){
+  const d = e.details || {};
+  const who = e.staffName || ROLE_LABELS_LOG[e.role] || "Кто-то";
+  switch(e.action){
+    case "new_order": return `${who} создал заказ — стол ${tableLabel(d.table)} (кухня: ${d.kitchenCount}, бар: ${d.barCount})`;
+    case "kitchen_accept": return `${who} принял в работу — стол ${tableLabel(d.table)} (кухня)`;
+    case "bar_accept": return `${who} принял в работу — стол ${tableLabel(d.table)} (бар)`;
+    case "kitchen_ready": return `${who} отметил готово — стол ${tableLabel(d.table)} (кухня)`;
+    case "bar_ready": return `${who} отметил готово — стол ${tableLabel(d.table)} (бар)`;
+    case "cancel_order": return `${who} отменил заказ — стол ${tableLabel(d.table)}`;
+    case "served": return `${who} выдал заказ гостю — стол ${tableLabel(d.table)}`;
+    case "close_table": return `${who} закрыл стол ${tableLabel(d.table)} — ${(d.total||0).toLocaleString('ru-RU')} тг`;
+    case "disable_items": return `${who} убрал из меню (${d.dest==='kitchen'?'кухня':'бар'}): ${(d.names||[]).join(', ')}`;
+    case "enable_items": return `${who} вернул в меню (${d.dest==='kitchen'?'кухня':'бар'}): ${(d.names||[]).join(', ')}`;
+    case "set_stock": return `${who} обновил склад (${d.dest==='kitchen'?'кухня':'бар'}): ${d.name} — остаток ${d.qty}, порог ${d.threshold}`;
+    case "clear_stock": return `${who} снял отслеживание склада: ${d.name}`;
+    case "create_staff": return `${who} добавил сотрудника: ${ROLE_LABELS_LOG[d.role]||d.role}`;
+    case "delete_staff": return `${who} удалил сотрудника: ${d.name || ROLE_LABELS_LOG[d.role] || ''}`;
+    case "reassign_staff": return `${who} переназначил устройство сотрудника: ${d.name || ROLE_LABELS_LOG[d.role] || ''}`;
+    case "create_room": return `${who} создал зал «${d.name}»`;
+    case "update_room": return `${who} изменил зал «${d.name}» (столов: ${d.tableCount})`;
+    case "delete_room": return `${who} удалил зал «${d.name || ''}»`;
+    case "set_name": return `${who} задал имя: ${d.name}`;
+    case "change_pin": return `${who} сменил PIN (${ROLE_LABELS_LOG[d.role]||d.role})`;
+    default: return `${who}: ${e.action}`;
+  }
 }
-function confirmTableCount(){
-  if(pendingTableCount === null) return;
-  socket.send(JSON.stringify({type:"set_table_count", count: pendingTableCount}));
-  document.getElementById('confirmTableCountBtn').disabled = true;
+
+function renderActionLog(){
+  const el = document.getElementById('actionLogList');
+  if(actionLog.length===0){ el.innerHTML = `<div class="empty">Пока нет записей</div>`; return; }
+  let html = "";
+  let lastDay = null;
+  actionLog.slice().sort((a,b)=>b.ts-a.ts).forEach(e => {
+    const day = dayLabel(e.ts);
+    if(day !== lastDay){ html += `<div class="day-header">${day}</div>`; lastDay = day; }
+    html += `<div class="staff-stat-row" style="display:block;">
+      <div style="font-size:13px;">${actionText(e)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">${new Date(e.ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})} · ${ROLE_LABELS_LOG[e.role]||e.role||''}</div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function tableLabel(globalNum){
+  if(rooms.length <= 1) return String(globalNum);
+  let offset = 0;
+  for(const room of rooms){
+    if(globalNum <= offset + room.tableCount) return `${room.name} · ${globalNum - offset}`;
+    offset += room.tableCount;
+  }
+  return String(globalNum);
+}
+
+function renderRooms(){
+  const el = document.getElementById('roomsList');
+  let html = "";
+  rooms.forEach(room => {
+    const pending = pendingRoomCounts[room.id];
+    const shown = pending !== undefined ? pending : room.tableCount;
+    const dirty = shown !== room.tableCount;
+    html += `<div class="room-card">
+      <div class="row1">
+        <input type="text" id="roomName-${room.id}" value="${room.name.replace(/"/g,'&quot;')}" onchange="renameRoom('${room.id}', this.value)">
+        ${rooms.length > 1 ? `<button class="del-btn" onclick="removeRoom('${room.id}')">Удалить</button>` : ''}
+      </div>
+      <div class="row2">
+        <span class="label" style="font-size:12px;color:var(--muted);">Столов в зале</span>
+        <div class="stepper">
+          <button onclick="changeRoomCount('${room.id}',-1)">−</button>
+          <span id="roomCount-${room.id}">${shown}</span>
+          <button onclick="changeRoomCount('${room.id}',1)">+</button>
+          <button class="confirm-check" ${dirty?'':'disabled'} onclick="confirmRoomCount('${room.id}')" title="Утвердить">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function changeRoomCount(roomId, delta){
+  const room = rooms.find(r => r.id === roomId);
+  if(!room) return;
+  const base = pendingRoomCounts[roomId] !== undefined ? pendingRoomCounts[roomId] : room.tableCount;
+  pendingRoomCounts[roomId] = Math.max(1, base + delta);
+  renderRooms();
+}
+function confirmRoomCount(roomId){
+  const val = pendingRoomCounts[roomId];
+  if(val === undefined) return;
+  socket.send(JSON.stringify({type:"update_room", roomId, tableCount: val}));
+  delete pendingRoomCounts[roomId];
+}
+function renameRoom(roomId, name){
+  name = name.trim();
+  if(!name) return;
+  socket.send(JSON.stringify({type:"update_room", roomId, name}));
+}
+function addRoom(){
+  const name = prompt("Название зала:", "Новый зал");
+  if(name === null || !name.trim()) return;
+  socket.send(JSON.stringify({type:"create_room", name: name.trim()}));
+}
+function removeRoom(roomId){
+  const room = rooms.find(r => r.id === roomId);
+  if(!confirm(`Удалить зал «${room ? room.name : ''}»? Столы в нём станут недоступны официанту.`)) return;
+  socket.send(JSON.stringify({type:"delete_room", roomId}));
 }
 
 function createStaff(role){
@@ -892,7 +1014,7 @@ function openReceiptViewer(id){
   currentReceipt = r;
   const body = document.getElementById('receiptBody');
   let html = `<h2>GO pub</h2>
-    <div class="sub">Стол ${r.table}</div>
+    <div class="sub">Стол ${tableLabel(r.table)}</div>
     <div class="receipt-row"><span>Открыт</span><span>${new Date(r.openedAt).toLocaleString('ru-RU')}</span></div>
     <div class="receipt-row"><span>Закрыт</span><span>${new Date(r.closedAt).toLocaleString('ru-RU')}</span></div>
     ${r.closedBy ? `<div class="receipt-row"><span>Официант</span><span>${r.closedBy}</span></div>` : ''}
@@ -907,10 +1029,6 @@ function openReceiptViewer(id){
     <div class="receipt-total"><span>Итого</span><span>${r.total.toLocaleString('ru-RU')} тг</span></div>`;
   body.innerHTML = html;
 
-  const qrBlock = document.getElementById('receiptQrBlock');
-  qrBlock.style.display = 'none';
-  qrBlock.innerHTML = '';
-
   document.getElementById('receiptOverlay').classList.add('open');
 }
 
@@ -918,7 +1036,7 @@ function showReceiptQr(kind){
   const r = currentReceipt;
   if(!r) return;
   const shareUrl = location.origin + '/receipt.html?id=' + r.id;
-  const text = encodeURIComponent(`Чек GO pub — стол ${r.table}, итого ${r.total.toLocaleString('ru-RU')} тг: `);
+  const text = encodeURIComponent(`Чек GO pub — стол ${tableLabel(r.table)}, итого ${r.total.toLocaleString('ru-RU')} тг: `);
   let targetUrl, note;
   if(kind === 'whatsapp'){
     targetUrl = `https://wa.me/?text=${text}${encodeURIComponent(shareUrl)}`;
@@ -930,11 +1048,12 @@ function showReceiptQr(kind){
     targetUrl = shareUrl;
     note = 'Отсканируйте камерой телефона, чтобы открыть и скачать чек.';
   }
-  const qrBlock = document.getElementById('receiptQrBlock');
-  qrBlock.innerHTML = `
-    <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(targetUrl)}">
-    <div class="qr-note">${note}</div>`;
-  qrBlock.style.display = 'flex';
+  document.getElementById('qrPopupImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(targetUrl)}`;
+  document.getElementById('qrPopupNote').textContent = note;
+  document.getElementById('qrPopup').classList.add('open');
+}
+function closeQrPopup(){
+  document.getElementById('qrPopup').classList.remove('open');
 }
 function closeReceiptViewer(){
   document.getElementById('receiptOverlay').classList.remove('open');

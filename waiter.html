@@ -38,6 +38,8 @@
     border-radius:50%; background:var(--green);
   }
   .table-row button.occupied.active::after{ background:var(--bg-deep); }
+  .room-group{ margin-bottom:10px; }
+  .room-label{ font-family:'Fraunces',serif; color:var(--gold); font-size:13px; margin-bottom:6px; }
 
   .tabs{ display:flex; gap:6px; margin-bottom:12px; }
   .tabs button{ flex:1; padding:9px 0; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-weight:600; font-size:13px; }
@@ -149,14 +151,19 @@
   }
   .receipt-share .wa{ background:#eafaf0; color:#1b7a45; }
   .receipt-share .tg{ background:#eaf6fd; color:#1478b0; }
-  .receipt-qr{ display:flex; align-items:center; gap:12px; padding:0 24px 4px; }
-  .receipt-qr img{ width:70px; height:70px; border-radius:8px; border:1px solid #ddd; flex-shrink:0; }
-  .receipt-qr .qr-note{ font-size:11.5px; color:#888; line-height:1.4; }
+  .qr-popup{ position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:200; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .25s ease; }
+  .qr-popup.open{ opacity:1; pointer-events:auto; }
+  .qr-popup-card{ background:#fff; border-radius:20px; padding:28px; text-align:center; max-width:340px; width:88%; transform:scale(.8); transition:transform .25s ease; }
+  .qr-popup.open .qr-popup-card{ transform:scale(1); }
+  .qr-popup-card img{ width:140px; height:140px; border-radius:10px; margin-bottom:16px; }
+  .qr-popup-card .qr-note{ font-size:13px; color:#666; line-height:1.4; margin-bottom:18px; }
+  .qr-popup-card button{ width:100%; padding:12px; border:none; border-radius:10px; background:var(--gold); color:#1b1b1b; font-weight:700; }
   @media print{
     body *{ visibility:hidden; }
     .receipt-panel, .receipt-panel *{ visibility:visible; }
     .receipt-panel{ position:fixed; inset:0; max-height:none; border-radius:0; }
-    .receipt-actions, .receipt-share, .receipt-qr{ display:none; }
+    .receipt-actions, .receipt-share{ display:none; }
+    .qr-popup{ display:none; }
   }
 
   .review{ position:fixed; inset:0; background:rgba(14,29,23,.92); z-index:90; display:none; align-items:flex-end; justify-content:center; }
@@ -208,7 +215,7 @@
 </header>
 
 <main>
-  <div class="table-row" id="tables"></div>
+  <div id="tables"></div>
 
   <div class="tabs">
     <button class="active" onclick="setMode('order')">Новый заказ</button>
@@ -247,7 +254,6 @@
 <div class="receipt" id="receipt">
   <div class="receipt-panel">
     <div class="receipt-body" id="receiptBody"></div>
-    <div class="receipt-qr" id="receiptQrBlock" style="display:none;"></div>
     <div class="receipt-actions">
       <button class="btn-close" onclick="closeReceipt()">Закрыть</button>
       <button class="btn-download" onclick="showReceiptQr('download')">Скачать</button>
@@ -263,6 +269,14 @@
         Telegram
       </button>
     </div>
+  </div>
+</div>
+
+<div class="qr-popup" id="qrPopup" onclick="if(event.target===this) closeQrPopup()">
+  <div class="qr-popup-card">
+    <img id="qrPopupImg" src="">
+    <div class="qr-note" id="qrPopupNote"></div>
+    <button onclick="closeQrPopup()">Закрыть</button>
   </div>
 </div>
 
@@ -307,7 +321,7 @@ let cart = {}; // key: "kitchen|Название" -> {name, qty, dest, price}
 let allOrders = [];
 let allHistory = [];
 let openTables = {};
-let tableCount = 20;
+let rooms = [{id:"default", name:"Зал", tableCount:20}];
 let staffId = null;
 let staffName = "";
 let unavailable = {};
@@ -377,7 +391,7 @@ function connect(){
       allOrders = msg.orders;
       allHistory = msg.history || [];
       openTables = msg.openTables || {};
-      tableCount = msg.tableCount || 20;
+      rooms = msg.rooms || rooms;
       vapidPublicKey = msg.vapidPublicKey || vapidPublicKey;
       if(vapidPublicKey && !pushSetupDone){ pushSetupDone = true; setupPush(); }
       unavailable = msg.unavailable || {};
@@ -420,16 +434,43 @@ function alertReady(msg){
 function renderTables(){
   const el = document.getElementById('tables');
   el.innerHTML = "";
-  for(let i=1;i<=tableCount;i++){
-    const b = document.createElement('button');
-    b.textContent = i;
-    b.onclick = () => { currentTable = i; renderTables(); updateCartBar(); };
-    let cls = [];
-    if(currentTable===i) cls.push('active');
-    if(openTables[i]) cls.push('occupied');
-    b.className = cls.join(' ');
-    el.appendChild(b);
+  let offset = 0;
+  rooms.forEach(room => {
+    const group = document.createElement('div');
+    group.className = 'room-group';
+    if(rooms.length > 1){
+      const label = document.createElement('div');
+      label.className = 'room-label';
+      label.textContent = room.name;
+      group.appendChild(label);
+    }
+    const row = document.createElement('div');
+    row.className = 'table-row';
+    for(let local=1; local<=room.tableCount; local++){
+      const globalNum = offset + local;
+      const b = document.createElement('button');
+      b.textContent = local;
+      b.onclick = () => { currentTable = globalNum; renderTables(); updateCartBar(); };
+      let cls = [];
+      if(currentTable===globalNum) cls.push('active');
+      if(openTables[globalNum]) cls.push('occupied');
+      b.className = cls.join(' ');
+      row.appendChild(b);
+    }
+    group.appendChild(row);
+    el.appendChild(group);
+    offset += room.tableCount;
+  });
+}
+
+function tableLabel(globalNum){
+  if(rooms.length <= 1) return String(globalNum);
+  let offset = 0;
+  for(const room of rooms){
+    if(globalNum <= offset + room.tableCount) return `${room.name} · ${globalNum - offset}`;
+    offset += room.tableCount;
   }
+  return String(globalNum);
 }
 
 function setMode(m){
@@ -562,12 +603,12 @@ function updateCartBar(){
   if(keys.length===0 || !currentTable){ bar.classList.add('hidden'); return; }
   bar.classList.remove('hidden');
   const totalItems = keys.reduce((s,k)=>s+cart[k].qty,0);
-  document.getElementById('cartSummary').textContent = `Стол ${currentTable} · ${totalItems} поз.`;
+  document.getElementById('cartSummary').textContent = `Стол ${tableLabel(currentTable)} · ${totalItems} поз.`;
 }
 
 function openReview(){
   if(!currentTable){ alert("Сначала выберите стол"); return; }
-  document.getElementById('reviewTable').textContent = currentTable;
+  document.getElementById('reviewTable').textContent = tableLabel(currentTable);
   const body = document.getElementById('reviewBody');
   let html = "";
   ["kitchen","bar"].forEach(dest => {
@@ -607,7 +648,7 @@ function renderBoard(){
     const session = openTables[t];
     const ordersForTable = allOrders.filter(o => o.table === t).sort((a,b)=>a.createdAt-b.createdAt);
     html += `<div class="table-card">
-      <div class="head"><span class="num">Стол ${t}</span><span class="meta">открыт ${timeAgo(session.openedAt)}</span></div>`;
+      <div class="head"><span class="num">Стол ${tableLabel(t)}</span><span class="meta">открыт ${timeAgo(session.openedAt)}</span></div>`;
     if(ordersForTable.length===0){
       html += `<div class="all-served">Все поданные позиции выданы гостю ✓</div>`;
     } else {
@@ -660,7 +701,7 @@ function renderHistory(){
     const day = dayLabel(o.servedAt);
     if(day !== lastDay){ html += `<div class="day-header">${day}</div>`; lastDay = day; }
     html += `<div class="hist-ticket">
-      <div class="top"><span class="table-badge">Стол ${o.table}</span><span class="time">${new Date(o.servedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span></div>`;
+      <div class="top"><span class="table-badge">Стол ${tableLabel(o.table)}</span><span class="time">${new Date(o.servedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span></div>`;
     o.kitchenItems.forEach(i => html += `<div class="line">${i.name} <small>× ${i.qty}</small>${i.note?` <em style="color:var(--gold);font-style:normal;">— ${i.note}</em>`:''}</div>`);
     o.barItems.forEach(i => html += `<div class="line">${i.name} <small>× ${i.qty}</small>${i.note?` <em style="color:var(--gold);font-style:normal;">— ${i.note}</em>`:''}</div>`);
     html += `</div>`;
@@ -669,7 +710,7 @@ function renderHistory(){
 }
 
 function closeTable(t){
-  if(!confirm("Закрыть стол " + t + " и сформировать чек?")) return;
+  if(!confirm("Закрыть стол " + tableLabel(t) + " и сформировать чек?")) return;
   socket.send(JSON.stringify({type:"close_table", table:t}));
 }
 
@@ -679,7 +720,7 @@ function showReceipt(r){
   currentReceipt = r;
   const body = document.getElementById('receiptBody');
   let html = `<h2>GO pub</h2>
-    <div class="sub">Стол ${r.table}</div>
+    <div class="sub">Стол ${tableLabel(r.table)}</div>
     <div class="receipt-row"><span>Открыт</span><span>${new Date(r.openedAt).toLocaleString('ru-RU')}</span></div>
     <div class="receipt-row"><span>Закрыт</span><span>${new Date(r.closedAt).toLocaleString('ru-RU')}</span></div>
     <div class="receipt-hr"></div>`;
@@ -693,10 +734,6 @@ function showReceipt(r){
     <div class="receipt-total"><span>Итого</span><span>${r.total.toLocaleString('ru-RU')} тг</span></div>`;
   body.innerHTML = html;
 
-  const qrBlock = document.getElementById('receiptQrBlock');
-  qrBlock.style.display = 'none';
-  qrBlock.innerHTML = '';
-
   document.getElementById('receipt').classList.add('open');
 }
 
@@ -704,7 +741,7 @@ function showReceiptQr(kind){
   const r = currentReceipt;
   if(!r) return;
   const shareUrl = location.origin + '/receipt.html?id=' + r.id;
-  const text = encodeURIComponent(`Чек GO pub — стол ${r.table}, итого ${r.total.toLocaleString('ru-RU')} тг: `);
+  const text = encodeURIComponent(`Чек GO pub — стол ${tableLabel(r.table)}, итого ${r.total.toLocaleString('ru-RU')} тг: `);
   let targetUrl, note;
   if(kind === 'whatsapp'){
     targetUrl = `https://wa.me/?text=${text}${encodeURIComponent(shareUrl)}`;
@@ -716,11 +753,12 @@ function showReceiptQr(kind){
     targetUrl = shareUrl;
     note = 'Отсканируйте камерой телефона, чтобы открыть и скачать чек.';
   }
-  const qrBlock = document.getElementById('receiptQrBlock');
-  qrBlock.innerHTML = `
-    <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(targetUrl)}">
-    <div class="qr-note">${note}</div>`;
-  qrBlock.style.display = 'flex';
+  document.getElementById('qrPopupImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(targetUrl)}`;
+  document.getElementById('qrPopupNote').textContent = note;
+  document.getElementById('qrPopup').classList.add('open');
+}
+function closeQrPopup(){
+  document.getElementById('qrPopup').classList.remove('open');
 }
 function closeReceipt(){
   document.getElementById('receipt').classList.remove('open');
