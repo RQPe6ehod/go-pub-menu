@@ -970,6 +970,7 @@ function actionText(e){
     case "update_room": return `${who} изменил зал «${d.name}» (столов: ${d.tableCount})`;
     case "delete_room": return `${who} удалил зал «${d.name || ''}»`;
     case "set_name": return `${who} задал имя: ${d.name}`;
+    case "set_staff_pin": return `${who} сменил свой личный PIN`;
     case "change_pin": return `${who} сменил PIN (${ROLE_LABELS_LOG[d.role]||d.role})`;
     case "assign_qr": return `${who} привязал QR к столу ${tableLabel(d.table)}`;
     case "unassign_qr": return `${who} отвязал QR-код`;

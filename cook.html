@@ -102,6 +102,9 @@
   <div class="lock-box">
     <h2>GO pub · Кухня</h2>
     <p id="lockMsg">У вас нет доступа. Обратитесь к менеджеру, чтобы получить персональную QR-ссылку.</p>
+    <input id="unlockPinInput" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" style="display:none;">
+    <button id="unlockBtn" onclick="submitUnlockPin()" style="display:none;">Войти</button>
+    <button id="backToStaffBtn" onclick="location.href='/staff.html'" style="display:none; background:var(--panel); color:var(--cream); border:1px solid var(--line); margin-top:10px;">Вернуться к выбору</button>
     <div class="err" id="pinErr"></div>
   </div>
 </div>
@@ -132,7 +135,7 @@
     </button>
   </div>
   <div class="conn off" id="conn">подключение…</div>
-  <div class="settings-links"><a href="#" onclick="openNamePrompt();return false;">Изменить имя</a><a href="#" onclick="logoutDevice();return false;">Выйти</a></div>
+  <div class="settings-links"><a href="#" onclick="openNamePrompt();return false;">Изменить имя</a><a href="#" onclick="openStaffPinPrompt();return false;">Изменить PIN</a><a href="staff.html">Сменить роль</a><a href="#" onclick="logoutDevice();return false;">Выйти</a></div>
 </header>
 
 <main>
@@ -212,11 +215,39 @@ const DEST = "kitchen";
   staffId = localStorage.getItem('gopub_staff_id_'+ROLE);
 })();
 
+function getStaffPin(){ return localStorage.getItem('gopub_staff_pin_'+ROLE); }
+function setStaffPin(p){ localStorage.setItem('gopub_staff_pin_'+ROLE, p); }
+function clearStaffPin(){ localStorage.removeItem('gopub_staff_pin_'+ROLE); }
+
+let triedDefaultPin = false;
+let locked = false;
+
 function showLock(){
   document.getElementById('lockMsg').textContent = "У вас нет доступа. Обратитесь к менеджеру, чтобы получить персональную QR-ссылку.";
+  document.getElementById('unlockPinInput').style.display = 'none';
+  document.getElementById('unlockBtn').style.display = 'none';
+  document.getElementById('backToStaffBtn').style.display = 'block';
+  document.getElementById('lock').style.display = 'flex';
+}
+function showUnlockScreen(err){
+  locked = true;
+  document.getElementById('lockMsg').textContent = "Сессия заперта. Введите свой PIN, чтобы продолжить работу.";
+  document.getElementById('unlockPinInput').style.display = 'block';
+  document.getElementById('unlockBtn').style.display = 'block';
+  document.getElementById('backToStaffBtn').style.display = 'none';
+  document.getElementById('pinErr').textContent = err || "";
+  document.getElementById('unlockPinInput').value = "";
   document.getElementById('lock').style.display = 'flex';
 }
 function hideLock(){ document.getElementById('lock').style.display = 'none'; }
+function submitUnlockPin(){
+  const p = document.getElementById('unlockPinInput').value.trim();
+  if(!/^\d{4,6}$/.test(p)) return;
+  locked = false;
+  setStaffPin(p);
+  document.getElementById('pinErr').textContent = "";
+  connect();
+}
 function showNameLock(){
   document.getElementById('nameInput').value = staffName || "";
   document.getElementById('nameLock').style.display = 'flex';
@@ -234,30 +265,59 @@ function submitName(){
 function updateStaffNameTag(){
   document.getElementById('staffNameTag').textContent = staffName ? "— " + staffName : "— указать имя";
 }
+function openStaffPinPrompt(){
+  const p1 = prompt("Новый PIN (4-6 цифр) — понадобится после каждого выхода:");
+  if(p1 === null) return;
+  const clean = p1.trim();
+  if(!/^\d{4,6}$/.test(clean)){ alert("PIN должен состоять из 4-6 цифр"); return; }
+  socket.send(JSON.stringify({type:"set_staff_pin", staffId, newPin: clean}));
+  setStaffPin(clean);
+}
 
 function connect(){
   if(!staffId){ showLock(); return; }
+  let pin = getStaffPin();
+  let usedDefaultGuess = false;
+  if(!pin){
+    if(!triedDefaultPin){
+      triedDefaultPin = true;
+      usedDefaultGuess = true;
+      pin = "1111";
+    } else {
+      showUnlockScreen();
+      return;
+    }
+  }
   socket = new WebSocket(WS_URL);
   socket.onopen = () => {
     setConn(true);
-    socket.send(JSON.stringify({type:"hello", role:ROLE, staffId}));
+    socket.send(JSON.stringify({type:"hello", role:ROLE, staffId, pin}));
   };
-  socket.onclose = () => { setConn(false); setTimeout(connect, 2000); };
+  socket.onclose = () => { setConn(false); if(!locked) setTimeout(connect, 2000); };
   socket.onerror = () => socket.close();
   socket.onmessage = (evt) => {
     const msg = JSON.parse(evt.data);
-    if(msg.type === "auth_ok"){ hideLock(); }
+    if(msg.type === "auth_ok"){ hideLock(); setStaffPin(pin); }
     if(msg.type === "auth_error"){
       if(msg.reason === "unknown_staff"){
         localStorage.removeItem('gopub_staff_id_'+ROLE);
         localStorage.removeItem('gopub_staff_name_'+ROLE);
+        clearStaffPin();
         staffId = null;
         document.getElementById('lockMsg').textContent = "Вы не являетесь поваром. Обратитесь к менеджеру, чтобы вас добавили.";
+        document.getElementById('unlockPinInput').style.display = 'none';
+        document.getElementById('unlockBtn').style.display = 'none';
+        document.getElementById('backToStaffBtn').style.display = 'block';
         document.getElementById('lock').style.display = 'flex';
+      } else if(msg.reason === "wrong_pin"){
+        clearStaffPin();
+        showUnlockScreen(usedDefaultGuess ? "" : "Неверный PIN");
       } else {
         showLock();
       }
     }
+    if(msg.type === "staff_pin_changed"){ alert("PIN обновлён."); }
+    if(msg.type === "staff_pin_change_error"){ alert("Не удалось сменить PIN — используйте 4-6 цифр."); }
     if(msg.type === "state"){
       allOrders = msg.orders;
       allHistory = msg.history || [];
@@ -521,10 +581,27 @@ function installApp(){
 }
 
 function logoutDevice(){
-  if(!confirm("Выйти с этого устройства? Чтобы снова войти, понадобится QR-ссылка от менеджера.")) return;
-  localStorage.removeItem('gopub_staff_id_'+ROLE);
-  localStorage.removeItem('gopub_staff_name_'+ROLE);
-  location.reload();
+  if(!confirm("Выйти? Вы перестанете получать уведомления, пока не введёте свой PIN снова.")) return;
+  unregisterPush();
+  pushSetupDone = false;
+  clearStaffPin();
+  if(socket) socket.close();
+  showUnlockScreen();
+}
+async function unregisterPush(){
+  try{
+    if(!('serviceWorker' in navigator)) return;
+    const reg = await navigator.serviceWorker.getRegistration();
+    if(!reg) return;
+    const sub = await reg.pushManager.getSubscription();
+    if(sub){
+      const pushId = localStorage.getItem('gopub_push_id_'+ROLE);
+      if(pushId && socket && socket.readyState === WebSocket.OPEN){
+        socket.send(JSON.stringify({type:'unregister_push', pushId}));
+      }
+      await sub.unsubscribe();
+    }
+  }catch(e){ /* best-effort */ }
 }
 
 function urlBase64ToUint8Array(base64String){
