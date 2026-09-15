@@ -17,7 +17,7 @@ self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim(
 self.addEventListener('fetch', () => {});
 
 self.addEventListener('push', (event) => {
-  let data = { title: 'GO pub', body: 'Новое уведомление' };
+  let data = { title: 'GO pub', body: 'Новое уведомление', url: '/' };
   try { if (event.data) data = event.data.json(); } catch (e) {}
 
   const options = {
@@ -25,18 +25,25 @@ self.addEventListener('push', (event) => {
     tag: 'gopub-notify-' + Date.now(),
     vibrate: [200, 100, 200],
     requireInteraction: false,
+    data: { url: data.url || '/' },
   };
   event.waitUntil(self.registration.showNotification(data.title || 'GO pub', options));
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const targetUrl = new URL((event.notification.data && event.notification.data.url) || '/', self.location.origin).href;
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       for (const client of windowClients) {
-        if ('focus' in client) return client.focus();
+        if ('focus' in client) {
+          if ('navigate' in client) {
+            try { client.navigate(targetUrl); } catch (e) { /* some browsers restrict cross-page navigate — fall through to focus anyway */ }
+          }
+          return client.focus();
+        }
       }
-      if (self.clients.openWindow) return self.clients.openWindow('/');
+      if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
     })
   );
 });
