@@ -363,8 +363,8 @@
 
   <div id="settingsView" style="display:none">
     <div class="mgr-tabs" id="settingsSubTabs">
-      <button class="active" onclick="setSettingsSub('config')">Конфигурация</button>
-      <button onclick="setSettingsSub('staff')">Сотрудники</button>
+      <button class="active" onclick="setSettingsSub('staff')">Сотрудники</button>
+      <button onclick="setSettingsSub('config')">Конфигурация</button>
       <button onclick="setSettingsSub('menu')">Меню</button>
     </div>
 
@@ -494,6 +494,8 @@ let menuDest = 'kitchen';
 let vapidPublicKey = null;
 let pushSetupDone = false;
 let mgrMode = 'overview';
+let qrStream = null;
+let qrScanRAF = null;
 let staffName = "";
 
 function isKnownDevice(){ return !!localStorage.getItem("gopub_manager_device_id"); }
@@ -743,7 +745,7 @@ connect();
 setInterval(render, 1000);
 
 let reportsSub = 'history';
-let settingsSub = 'config';
+let settingsSub = 'staff';
 
 function setMgrMode(m){
   mgrMode = m;
@@ -781,7 +783,7 @@ function setSettingsSub(sub){
     menuUnlockedThisSession = true;
   }
   settingsSub = sub;
-  document.querySelectorAll('#settingsSubTabs button').forEach((b,i) => b.classList.toggle('active', ['config','staff','menu'][i]===sub));
+  document.querySelectorAll('#settingsSubTabs button').forEach((b,i) => b.classList.toggle('active', ['staff','config','menu'][i]===sub));
   document.getElementById('configView').style.display = sub==='config' ? '' : 'none';
   document.getElementById('staffView').style.display = sub==='staff' ? '' : 'none';
   document.getElementById('menuView').style.display = sub==='menu' ? '' : 'none';
@@ -1237,8 +1239,6 @@ function renderQrList(){
   el.innerHTML = html;
 }
 
-let qrStream = null;
-let qrScanRAF = null;
 function openQrScanner(){
   document.getElementById('qrScanStatus').textContent = '';
   document.getElementById('qrScanOverlay').classList.add('open');
@@ -1662,7 +1662,7 @@ async function setupPush(){
   }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
 }
 
-const APP_VERSION = "5";
+const APP_VERSION = "6";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
