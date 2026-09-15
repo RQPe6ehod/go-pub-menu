@@ -53,10 +53,10 @@
   .item.disabled{ opacity:.55; }
   .item.disabled .name{ text-decoration:line-through; }
   .unavail-tag{ font-size:10.5px; color:var(--red); border:1px solid var(--red); border-radius:999px; padding:1px 7px; margin-left:6px; }
-  .note-btn{ width:28px; height:28px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--muted); font-size:13px; margin-right:4px; }
+  .note-btn{ width:32px; height:32px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--muted); font-size:14px; margin-right:4px; }
   .note-btn.has-note{ border-color:var(--gold); color:var(--gold); }
   .qty{ display:flex; align-items:center; gap:8px; }
-  .qty button{ width:28px; height:28px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:16px; }
+  .qty button{ width:32px; height:32px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:17px; }
   .qty span{ min-width:16px; text-align:center; font-weight:600; }
 
   .dest-tabs{ display:flex; gap:6px; margin-bottom:12px; }
@@ -314,6 +314,7 @@ let allOrders = [];
 let allHistory = [];
 let openTables = {};
 let rooms = [{id:"default", name:"Зал", tableCount:20}];
+let cancelRequests = [];
 let staffId = null;
 let staffName = "";
 let unavailable = {};
@@ -339,7 +340,16 @@ function clearStaffPin(){ localStorage.removeItem('gopub_staff_pin_'+ROLE); }
 let triedDefaultPin = false;
 let locked = false;
 
+function closeAnyOpenOverlays(){
+  const qrPopup = document.getElementById('qrPopup');
+  if(qrPopup) qrPopup.classList.remove('open');
+  const receipt = document.getElementById('receipt');
+  if(receipt) receipt.classList.remove('open');
+  const review = document.getElementById('review');
+  if(review) review.classList.remove('open');
+}
 function showLock(){
+  closeAnyOpenOverlays();
   document.getElementById('lockMsg').textContent = "У вас нет доступа. Обратитесь к менеджеру, чтобы получить персональную QR-ссылку.";
   document.getElementById('unlockPinInput').style.display = 'none';
   document.getElementById('unlockBtn').style.display = 'none';
@@ -347,6 +357,7 @@ function showLock(){
   document.getElementById('lock').style.display = 'flex';
 }
 function showUnlockScreen(err){
+  closeAnyOpenOverlays();
   locked = true;
   document.getElementById('lockMsg').textContent = "Сессия заперта. Введите свой PIN, чтобы продолжить работу.";
   document.getElementById('unlockPinInput').style.display = 'block';
@@ -443,6 +454,7 @@ function connect(){
       allHistory = msg.history || [];
       openTables = msg.openTables || {};
       rooms = msg.rooms || rooms;
+      cancelRequests = msg.cancelRequests || [];
       vapidPublicKey = msg.vapidPublicKey || vapidPublicKey;
       if(vapidPublicKey && !pushSetupDone){ pushSetupDone = true; setupPush(); }
       unavailable = msg.unavailable || {};
@@ -479,6 +491,20 @@ function alertReady(msg){
     try{ new Audio("data:audio/wav;base64,UklGRhwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=").play(); }catch(e){}
     if(navigator.vibrate) navigator.vibrate([150,60,150,60,150]);
     const text = msg.kind === "call_waiter" ? "Стол " + tableLabel(msg.table) + " зовёт официанта" : "Стол " + tableLabel(msg.table) + " просит счёт";
+    if("Notification" in window && Notification.permission === "granted"){
+      new Notification(text);
+    } else {
+      alert(text);
+    }
+    return;
+  }
+  if(msg.kind === "cancel_approved" || msg.kind === "cancel_rejected" || msg.kind === "cancel_already_resolved"){
+    try{ new Audio("data:audio/wav;base64,UklGRhwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=").play(); }catch(e){}
+    if(navigator.vibrate) navigator.vibrate([150,60,150]);
+    let text;
+    if(msg.kind === "cancel_approved") text = "Менеджер подтвердил отмену — стол " + tableLabel(msg.table);
+    else if(msg.kind === "cancel_rejected") text = "Менеджер отклонил отмену — стол " + tableLabel(msg.table) + ", заказ остаётся в работе";
+    else text = "Стол " + tableLabel(msg.table) + " — заказ уже выдан гостю, отменять нечего";
     if("Notification" in window && Notification.permission === "granted"){
       new Notification(text);
     } else {
@@ -734,7 +760,12 @@ function renderBoard(){
         if(kReady && bReady){
           html += `<button class="serve-btn" onclick="serveOrder('${o.id}')">Выдано гостю</button>`;
         } else {
-          html += `<button class="cancel-btn" onclick="cancelOrder('${o.id}')">Отменить заказ</button>`;
+          const pending = cancelRequests.find(r => r.orderId === o.id);
+          if(pending){
+            html += `<button class="cancel-btn" disabled style="opacity:.6;cursor:not-allowed;">Ожидает решения менеджера…</button>`;
+          } else {
+            html += `<button class="cancel-btn" onclick="cancelOrder('${o.id}')">Запросить отмену</button>`;
+          }
         }
         html += `</div>`;
       });
@@ -850,8 +881,8 @@ function downloadReceiptFile(r){
 }
 
 function cancelOrder(id){
-  if(!confirm("Отменить этот заказ?")) return;
-  socket.send(JSON.stringify({type:"cancel_order", orderId:id}));
+  if(!confirm("Запросить у менеджера отмену этого заказа?")) return;
+  socket.send(JSON.stringify({type:"request_cancel_order", orderId:id}));
 }
 
 function serveOrder(id){

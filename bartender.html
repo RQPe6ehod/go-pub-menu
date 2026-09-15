@@ -233,7 +233,14 @@ function clearStaffPin(){ localStorage.removeItem('gopub_staff_pin_'+ROLE); }
 let triedDefaultPin = false;
 let locked = false;
 
+function closeAnyOpenSheets(){
+  ['stockSheet','disableSheet','enableSheet'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('open');
+  });
+}
 function showLock(){
+  closeAnyOpenSheets();
   document.getElementById('lockMsg').textContent = "У вас нет доступа. Обратитесь к менеджеру, чтобы получить персональную QR-ссылку.";
   document.getElementById('unlockPinInput').style.display = 'none';
   document.getElementById('unlockBtn').style.display = 'none';
@@ -241,6 +248,7 @@ function showLock(){
   document.getElementById('lock').style.display = 'flex';
 }
 function showUnlockScreen(err){
+  closeAnyOpenSheets();
   locked = true;
   document.getElementById('lockMsg').textContent = "Сессия заперта. Введите свой PIN, чтобы продолжить работу.";
   document.getElementById('unlockPinInput').style.display = 'block';

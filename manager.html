@@ -56,6 +56,14 @@
   .staff-day-group{ margin-bottom:6px; }
   .staff-day-group h3{ font-family:'Fraunces',serif; font-size:14px; color:var(--cream); margin:14px 0 8px; }
   .staff-stat-row{ display:flex; justify-content:space-between; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:8px; font-size:13.5px; }
+  .cancel-req-card{ background:var(--panel); border:1px solid var(--red); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .cancel-req-card .top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .cancel-req-card .table{ font-family:'Fraunces',serif; font-weight:700; font-size:15px; color:var(--red); }
+  .cancel-req-card .meta{ font-size:11.5px; color:var(--muted); }
+  .cancel-req-card .actions{ display:flex; gap:8px; }
+  .cancel-req-card .actions button{ flex:1; padding:10px; border-radius:10px; border:none; font-weight:700; font-size:13px; }
+  .cancel-req-card .approve-btn{ background:var(--gold); color:var(--bg-deep); }
+  .cancel-req-card .reject-btn{ background:transparent; border:1px solid var(--red); color:var(--red); }
   .staff-stat-row .n{ font-weight:600; }
   .staff-stat-row .v{ color:var(--gold); font-family:'Fraunces',serif; font-weight:700; }
   .an-row{ display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:8px; }
@@ -256,6 +264,11 @@
       <div class="stat"><div class="num" id="statServed">0</div><div class="lbl">столов закрыто</div></div>
     </div>
 
+    <div id="cancelRequestsSection" style="display:none;">
+      <h2>Запросы на отмену</h2>
+      <div id="cancelRequestsList"></div>
+    </div>
+
     <h2>Занятые столы</h2>
     <div id="tablesBoard"></div>
 
@@ -435,6 +448,7 @@ let inventory = {kitchen:{}, bar:{}};
 let actionLog = [];
 let menu = {kitchen:[], bar:[]};
 let qrAssignments = {};
+let cancelRequests = [];
 let menuDest = 'kitchen';
 let vapidPublicKey = null;
 let pushSetupDone = false;
@@ -471,6 +485,11 @@ function tryPin(){
   connect();
 }
 function showLock(err){
+  document.getElementById('qrPopup').classList.remove('open');
+  document.getElementById('receiptOverlay').classList.remove('open');
+  document.getElementById('qrOverlay').classList.remove('open');
+  document.getElementById('qrAssignOverlay').classList.remove('open');
+  closeQrScanner(); // also stops the camera stream, if one was running
   document.getElementById('lock').style.display = 'flex';
   document.getElementById('pinErr').textContent = err || "";
   document.getElementById('pinInput').value = "";
@@ -525,6 +544,13 @@ function connect(){
     if(msg.type === "pin_changed"){ setPin(lastPinAttempt); alert("PIN обновлён. Запомните новый PIN — он понадобится при следующем входе."); }
     if(msg.type === "pin_change_error"){ alert("Не удалось изменить PIN — используйте 4-6 цифр."); }
     if(msg.type === "table_closed"){ showReceiptFromData(msg.receipt); }
+    if(msg.type === "notify" && msg.kind === "cancel_request"){
+      try{ new Audio("data:audio/wav;base64,UklGRhwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=").play(); }catch(e){}
+      if(navigator.vibrate) navigator.vibrate([200,80,200,80,200]);
+      if("Notification" in window && Notification.permission === "granted"){
+        new Notification("Запрос на отмену — стол " + tableLabel(msg.table));
+      }
+    }
     if(msg.type === "close_error"){
       if(msg.reason === "pending_items") alert("У стола ещё есть неподанные позиции — сначала их нужно выдать гостю.");
       else alert("Не удалось закрыть стол.");
@@ -537,6 +563,8 @@ function connect(){
       actionLog = msg.actionLog || [];
       menu = msg.menu || menu;
       qrAssignments = msg.qrAssignments || qrAssignments;
+      cancelRequests = msg.cancelRequests || [];
+      renderCancelRequests();
       if(mgrMode === 'settings' && settingsSub === 'menu') renderMenuEditor();
       vapidPublicKey = msg.vapidPublicKey || vapidPublicKey;
       if(vapidPublicKey && !pushSetupDone){ pushSetupDone = true; setupPush(); }
@@ -1007,6 +1035,9 @@ function actionText(e){
     case "unassign_qr": return `${who} отвязал QR-код`;
     case "call_waiter": return `Стол ${tableLabel(d.table)} позвал официанта`;
     case "request_bill": return `Стол ${tableLabel(d.table)} попросил расчёт`;
+    case "request_cancel_order": return `${who} запросил отмену заказа — стол ${tableLabel(d.table)}`;
+    case "approve_cancel": return `${who} подтвердил отмену заказа — стол ${tableLabel(d.table)}`;
+    case "reject_cancel": return `${who} отклонил отмену заказа — стол ${tableLabel(d.table)}`;
     default: return `${who}: ${e.action}`;
   }
 }
@@ -1140,6 +1171,14 @@ let qrScanRAF = null;
 function openQrScanner(){
   document.getElementById('qrScanStatus').textContent = '';
   document.getElementById('qrScanOverlay').classList.add('open');
+  if(typeof jsQR === 'undefined'){
+    document.getElementById('qrScanStatus').textContent = 'Не удалось загрузить модуль сканирования. Проверьте интернет и попробуйте снова.';
+    return;
+  }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    document.getElementById('qrScanStatus').textContent = 'Камера недоступна в этом браузере.';
+    return;
+  }
   navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
     .then(stream => {
       qrStream = stream;
@@ -1153,6 +1192,7 @@ function openQrScanner(){
     });
 }
 function qrScanLoop(){
+  if(!qrStream) return; // scanner was closed — stop looping
   const video = document.getElementById('qrVideo');
   if(video.readyState === video.HAVE_ENOUGH_DATA){
     const canvas = document.createElement('canvas');
@@ -1214,6 +1254,41 @@ function confirmAssignQr(){
 function unassignQr(qrId){
   if(!confirm('Забыть привязку этого QR? Гости по нему перестанут видеть кнопки "Позвать официанта"/"Чек", пока вы не привяжете его заново.')) return;
   socket.send(JSON.stringify({type:"unassign_qr", qrId}));
+}
+
+function renderCancelRequests(){
+  const section = document.getElementById('cancelRequestsSection');
+  const el = document.getElementById('cancelRequestsList');
+  if(cancelRequests.length === 0){ section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  let html = "";
+  cancelRequests.slice().sort((a,b)=>a.requestedAt-b.requestedAt).forEach(r => {
+    const order = allOrders.find(o => o.id === r.orderId);
+    html += `<div class="cancel-req-card">
+      <div class="top">
+        <span class="table">Стол ${tableLabel(r.table)}</span>
+        <span class="meta">${r.requestedBy || 'официант'} · ${timeAgo(r.requestedAt)}</span>
+      </div>`;
+    if(order){
+      order.kitchenItems.concat(order.barItems).forEach(i => {
+        html += `<div class="line" style="font-size:12.5px;color:var(--muted);">${i.qty} × ${i.name}</div>`;
+      });
+    }
+    html += `<div class="actions" style="margin-top:10px;">
+        <button class="approve-btn" onclick="approveCancel('${r.id}')">Подтвердить отмену</button>
+        <button class="reject-btn" onclick="rejectCancel('${r.id}')">Отклонить</button>
+      </div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+function approveCancel(requestId){
+  if(!confirm("Подтвердить отмену заказа?")) return;
+  socket.send(JSON.stringify({type:"approve_cancel", requestId}));
+}
+function rejectCancel(requestId){
+  if(!confirm("Отклонить запрос — заказ останется в работе?")) return;
+  socket.send(JSON.stringify({type:"reject_cancel", requestId}));
 }
 
 function renderRooms(){
