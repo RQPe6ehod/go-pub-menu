@@ -107,10 +107,34 @@
   .lock-box p{ color:var(--muted); font-size:13px; margin-bottom:18px; }
   .lock-box input{ width:100%; text-align:center; font-size:24px; letter-spacing:8px; padding:14px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); margin-bottom:12px; }
   .lock-box button{ width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; }
+
+  .confirm-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:210; display:none; align-items:center; justify-content:center; padding:24px; }
+  .confirm-overlay.open{ display:flex; }
+  .confirm-box{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px 22px; max-width:300px; width:100%; text-align:center; }
+  .confirm-brand{ font-family:'Fraunces',serif; color:var(--gold); font-size:12px; font-weight:700; margin-bottom:12px; letter-spacing:.06em; text-transform:uppercase; }
+  .confirm-question{ font-size:16px; font-weight:700; color:var(--cream); margin-bottom:6px; }
+  .confirm-sub{ font-size:12.5px; color:var(--muted); margin-bottom:20px; line-height:1.4; display:none; }
+  .confirm-actions{ display:flex; gap:10px; }
+  .confirm-actions button{ flex:1; padding:11px; border-radius:10px; font-weight:700; font-size:13.5px; border:none; }
+  .confirm-cancel{ background:var(--bg-deep); color:var(--cream); border:1px solid var(--line); }
+  .confirm-ok{ background:var(--gold); color:var(--bg-deep); }
+  .confirm-ok.danger{ background:var(--red); color:#fff; }
   .lock-box .err{ color:var(--red); font-size:12.5px; margin-top:10px; min-height:16px; }
 </style>
 </head>
 <body>
+
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-brand">GO pub</div>
+    <div class="confirm-question" id="confirmQuestion"></div>
+    <div class="confirm-sub" id="confirmSub"></div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" onclick="confirmNo()">Отмена</button>
+      <button class="confirm-ok" id="confirmOkBtn" onclick="confirmYes()">Да</button>
+    </div>
+  </div>
+</div>
 
 <div class="lock" id="lock">
   <div class="lock-box">
@@ -616,13 +640,35 @@ function installApp(){
   }
 }
 
+let pendingConfirmCallback = null;
+function showConfirm(question, sub, onYes, danger){
+  document.getElementById('confirmQuestion').textContent = question;
+  const subEl = document.getElementById('confirmSub');
+  if(sub){ subEl.textContent = sub; subEl.style.display = 'block'; }
+  else { subEl.style.display = 'none'; }
+  document.getElementById('confirmOkBtn').className = 'confirm-ok' + (danger ? ' danger' : '');
+  pendingConfirmCallback = onYes;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function confirmYes(){
+  document.getElementById('confirmOverlay').classList.remove('open');
+  const cb = pendingConfirmCallback;
+  pendingConfirmCallback = null;
+  if(cb) cb();
+}
+function confirmNo(){
+  document.getElementById('confirmOverlay').classList.remove('open');
+  pendingConfirmCallback = null;
+}
+
 function logoutDevice(){
-  if(!confirm("Выйти? Вы перестанете получать уведомления, пока не введёте свой PIN снова.")) return;
-  unregisterPush();
-  pushSetupDone = false;
-  clearStaffPin();
-  if(socket) socket.close();
-  showUnlockScreen();
+  showConfirm("Выйти?", "Уведомления перестанут приходить, пока не введёте PIN снова.", () => {
+    unregisterPush();
+    pushSetupDone = false;
+    clearStaffPin();
+    if(socket) socket.close();
+    showUnlockScreen();
+  });
 }
 async function unregisterPush(){
   try{

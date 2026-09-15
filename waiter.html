@@ -174,6 +174,18 @@
   .qr-popup-card img{ width:140px; height:140px; border-radius:10px; margin-bottom:16px; }
   .qr-popup-card .qr-note{ font-size:13px; color:#666; line-height:1.4; margin-bottom:18px; }
   .qr-popup-card button{ width:100%; padding:12px; border:none; border-radius:10px; background:var(--gold); color:#1b1b1b; font-weight:700; }
+
+  .confirm-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:210; display:none; align-items:center; justify-content:center; padding:24px; }
+  .confirm-overlay.open{ display:flex; }
+  .confirm-box{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px 22px; max-width:300px; width:100%; text-align:center; }
+  .confirm-brand{ font-family:'Fraunces',serif; color:var(--gold); font-size:12px; font-weight:700; margin-bottom:12px; letter-spacing:.06em; text-transform:uppercase; }
+  .confirm-question{ font-size:16px; font-weight:700; color:var(--cream); margin-bottom:6px; }
+  .confirm-sub{ font-size:12.5px; color:var(--muted); margin-bottom:20px; line-height:1.4; display:none; }
+  .confirm-actions{ display:flex; gap:10px; }
+  .confirm-actions button{ flex:1; padding:11px; border-radius:10px; font-weight:700; font-size:13.5px; border:none; }
+  .confirm-cancel{ background:var(--bg-deep); color:var(--cream); border:1px solid var(--line); }
+  .confirm-ok{ background:var(--gold); color:var(--bg-deep); }
+  .confirm-ok.danger{ background:var(--red); color:#fff; }
   @media print{
     body *{ visibility:hidden; }
     .receipt-panel, .receipt-panel *{ visibility:visible; }
@@ -311,6 +323,18 @@
     <img id="qrPopupImg" src="">
     <div class="qr-note" id="qrPopupNote"></div>
     <button onclick="closeQrPopup()">Закрыть</button>
+  </div>
+</div>
+
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-brand">GO pub</div>
+    <div class="confirm-question" id="confirmQuestion"></div>
+    <div class="confirm-sub" id="confirmSub"></div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" onclick="confirmNo()">Отмена</button>
+      <button class="confirm-ok" id="confirmOkBtn" onclick="confirmYes()">Да</button>
+    </div>
   </div>
 </div>
 
@@ -826,8 +850,9 @@ function renderHistory(){
 }
 
 function closeTable(t){
-  if(!confirm("Закрыть стол " + tableLabel(t) + " и сформировать чек?")) return;
-  socket.send(JSON.stringify({type:"close_table", table:t}));
+  showConfirm(`Закрыть стол ${tableLabel(t)}?`, "Сформируется чек.", () => {
+    socket.send(JSON.stringify({type:"close_table", table:t}));
+  });
 }
 
 let currentReceipt = null;
@@ -899,8 +924,9 @@ function downloadReceiptFile(r){
 }
 
 function cancelOrder(id){
-  if(!confirm("Запросить у менеджера отмену этого заказа?")) return;
-  socket.send(JSON.stringify({type:"request_cancel_order", orderId:id}));
+  showConfirm("Запросить отмену?", "Решение примет менеджер.", () => {
+    socket.send(JSON.stringify({type:"request_cancel_order", orderId:id}));
+  });
 }
 
 function serveOrder(id){
@@ -927,12 +953,13 @@ function installApp(){
 }
 
 function logoutDevice(){
-  if(!confirm("Выйти? Вы перестанете получать уведомления, пока не введёте свой PIN снова.")) return;
-  unregisterPush();
-  pushSetupDone = false;
-  clearStaffPin();
-  if(socket) socket.close();
-  showUnlockScreen();
+  showConfirm("Выйти?", "Уведомления перестанут приходить, пока не введёте PIN снова.", () => {
+    unregisterPush();
+    pushSetupDone = false;
+    clearStaffPin();
+    if(socket) socket.close();
+    showUnlockScreen();
+  });
 }
 async function unregisterPush(){
   try{
@@ -979,6 +1006,27 @@ function renderGuestHistoryBanner(history){
   el.className = 'guest-history-banner';
   el.innerHTML = `${label}<div class="items">${items}</div>`;
   el.style.display = 'block';
+}
+
+let pendingConfirmCallback = null;
+function showConfirm(question, sub, onYes, danger){
+  document.getElementById('confirmQuestion').textContent = question;
+  const subEl = document.getElementById('confirmSub');
+  if(sub){ subEl.textContent = sub; subEl.style.display = 'block'; }
+  else { subEl.style.display = 'none'; }
+  document.getElementById('confirmOkBtn').className = 'confirm-ok' + (danger ? ' danger' : '');
+  pendingConfirmCallback = onYes;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function confirmYes(){
+  document.getElementById('confirmOverlay').classList.remove('open');
+  const cb = pendingConfirmCallback;
+  pendingConfirmCallback = null;
+  if(cb) cb();
+}
+function confirmNo(){
+  document.getElementById('confirmOverlay').classList.remove('open');
+  pendingConfirmCallback = null;
 }
 
 function urlBase64ToUint8Array(base64String){

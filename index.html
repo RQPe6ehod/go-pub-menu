@@ -197,6 +197,18 @@
   .bill-actions button{ flex:1; padding:13px; border-radius:12px; border:none; font-weight:700; font-size:13.5px; }
   .bill-close{ background:#eee; color:#333; }
   .bill-request{ background: var(--gold); color:#1b1206; }
+
+  .confirm-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:210; display:none; align-items:center; justify-content:center; padding:24px; }
+  .confirm-overlay.open{ display:flex; }
+  .confirm-box{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px 22px; max-width:300px; width:100%; text-align:center; }
+  .confirm-brand{ font-family:'Fraunces',serif; color:var(--gold); font-size:12px; font-weight:700; margin-bottom:12px; letter-spacing:.06em; text-transform:uppercase; }
+  .confirm-question{ font-size:16px; font-weight:700; color:var(--cream); margin-bottom:6px; }
+  .confirm-sub{ font-size:12.5px; color:var(--muted); margin-bottom:20px; line-height:1.4; display:none; }
+  .confirm-actions{ display:flex; gap:10px; }
+  .confirm-actions button{ flex:1; padding:11px; border-radius:10px; font-weight:700; font-size:13.5px; border:none; }
+  .confirm-cancel{ background:var(--bg-deep); color:var(--cream); border:1px solid var(--line); }
+  .confirm-ok{ background:var(--gold); color:var(--bg-deep); }
+  .confirm-ok.danger{ background:#D9534F; color:#fff; }
   .bill-request:disabled{ opacity:.55; }
   .bill-empty{ text-align:center; color:#888; font-size:14px; padding: 30px 10px; }
 
@@ -270,6 +282,18 @@
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12a1 1 0 0 1 1 1v18l-3-2-3 2-3-2-3 2-3-2V3a1 1 0 0 1 1-1z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/></svg>
     Предварительный чек
   </button>
+</div>
+
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-brand">GO pub</div>
+    <div class="confirm-question" id="confirmQuestion"></div>
+    <div class="confirm-sub" id="confirmSub"></div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" onclick="confirmNo()">Отмена</button>
+      <button class="confirm-ok" id="confirmOkBtn" onclick="confirmYes()">Да</button>
+    </div>
+  </div>
 </div>
 
 <div class="bill-overlay" id="billOverlay">
@@ -507,7 +531,7 @@ function activateTableUI(){
 // disappears for good — a fresh QR scan is needed to bring it back.
 // This is what stops a long-abandoned tab from paging a waiter to an
 // empty table. ---
-const HARD_EXPIRE_MS = 10 * 60 * 60 * 1000;
+const HARD_EXPIRE_MS = 12 * 60 * 60 * 1000;
 const sessionStartedAt = Date.now();
 let sessionExpired = false;
 
@@ -614,16 +638,38 @@ function answerConsent(yes){
   }
 }
 
+let pendingConfirmCallback = null;
+function showConfirm(question, sub, onYes, danger){
+  document.getElementById('confirmQuestion').textContent = question;
+  const subEl = document.getElementById('confirmSub');
+  if(sub){ subEl.textContent = sub; subEl.style.display = 'block'; }
+  else { subEl.style.display = 'none'; }
+  document.getElementById('confirmOkBtn').className = 'confirm-ok' + (danger ? ' danger' : '');
+  pendingConfirmCallback = onYes;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function confirmYes(){
+  document.getElementById('confirmOverlay').classList.remove('open');
+  const cb = pendingConfirmCallback;
+  pendingConfirmCallback = null;
+  if(cb) cb();
+}
+function confirmNo(){
+  document.getElementById('confirmOverlay').classList.remove('open');
+  pendingConfirmCallback = null;
+}
+
 function forgetMe(){
-  if(!confirm('Забыть ваш заказ на этом устройстве? В следующий раз официант снова не будет знать, что вы обычно берёте.')) return;
-  const deviceId = getOrCreateDeviceId();
-  if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
-    liveSocket.send(JSON.stringify({type:"forget_guest", deviceId}));
-  }
-  localStorage.removeItem('gopub_guest_consent');
-  localStorage.removeItem('gopub_device_id'); // rotate to a fresh, unlinked id
-  document.getElementById('forgetMeRow').style.display = 'none';
-  alert('Готово — данные забыты.');
+  showConfirm("Забыть вас?", "В следующий раз официант не будет знать ваш обычный заказ.", () => {
+    const deviceId = getOrCreateDeviceId();
+    if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
+      liveSocket.send(JSON.stringify({type:"forget_guest", deviceId}));
+    }
+    localStorage.removeItem('gopub_guest_consent');
+    localStorage.removeItem('gopub_device_id'); // rotate to a fresh, unlinked id
+    document.getElementById('forgetMeRow').style.display = 'none';
+    alert('Готово — данные забыты.');
+  }, true);
 }
 
 // If this device already opted in on a previous visit, announce its
@@ -639,7 +685,7 @@ function announceReturningGuestIfConsented(){
   }
 }
 
-const APP_VERSION = "1";
+const APP_VERSION = "2";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
