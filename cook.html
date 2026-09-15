@@ -31,6 +31,17 @@
   .table-badge{ font-family:'Fraunces',serif; font-weight:700; font-size:22px; color:var(--gold); }
   .time{ font-size:11px; color:var(--muted); }
   .line{ font-size:16px; padding:6px 0; border-bottom:1px dashed var(--line); }
+  .item-note{
+    display:flex; align-items:flex-start; gap:7px;
+    background:rgba(224,149,74,.18); border:1.5px solid var(--gold); border-radius:9px;
+    padding:7px 10px; margin:2px 0 8px; font-size:14.5px; font-weight:700; color:var(--gold);
+    animation:noteFlash 1.4s ease-in-out 2;
+  }
+  .item-note .ico{ flex-shrink:0; font-size:15px; line-height:1.3; }
+  @keyframes noteFlash{
+    0%,100%{ background:rgba(224,149,74,.18); }
+    50%{ background:rgba(224,149,74,.42); }
+  }
   .line:last-of-type{ border-bottom:none; }
   .line b{ color:var(--gold); }
   .done-btn{ margin-top:14px; width:100%; padding:14px; border:none; border-radius:12px; background:var(--green); color:#0E1D17; font-weight:700; font-size:15px; }
@@ -378,7 +389,10 @@ function render(){
     html += `<div class="ticket ${isNew?'new':''}">
       <div class="top"><span class="table-badge">Стол ${o.table}</span><span class="time">${timeAgo(o.createdAt)}</span></div>`;
     if(o.waiterName) html += `<div class="line" style="font-size:12px;color:var(--muted);border-bottom:none;padding:0 0 6px;">Официант: ${o.waiterName}</div>`;
-    o.kitchenItems.forEach(i => html += `<div class="line"><b>${i.qty}×</b> ${i.name}${i.note?` <span style="color:var(--gold);font-size:13px;">— ${i.note}</span>`:''}</div>`);
+    o.kitchenItems.forEach(i => {
+      html += `<div class="line"><b>${i.qty}×</b> ${i.name}</div>`;
+      if(i.note) html += `<div class="item-note"><span class="ico">💬</span><span>${i.note}</span></div>`;
+    });
     if(o.kitchenStatus === "pending"){
       html += `<div class="status-row"><span class="status-new">Новый</span></div>
         <button class="accept-btn" onclick="acceptOrder('${o.id}')">Принять в работу</button>`;
@@ -425,7 +439,10 @@ function renderHistory(){
     if(day !== lastDay){ html += `<div class="day-header">${day}</div>`; lastDay = day; }
     html += `<div class="ticket">
       <div class="top"><span class="table-badge">Стол ${o.table}</span><span class="time">${new Date(o.servedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span></div>`;
-    o.kitchenItems.forEach(i => html += `<div class="line">${i.qty}× ${i.name}${i.note?` <span style="color:var(--gold);">— ${i.note}</span>`:''}</div>`);
+    o.kitchenItems.forEach(i => {
+      html += `<div class="line">${i.qty}× ${i.name}</div>`;
+      if(i.note) html += `<div class="item-note" style="animation:none;"><span class="ico">💬</span><span>${i.note}</span></div>`;
+    });
     html += `</div>`;
   });
   el.innerHTML = html;
