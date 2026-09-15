@@ -375,7 +375,11 @@ function renderChips(){
     b.textContent = cat.title[LANG] || cat.title.ru;
     b.dataset.idx = i;
     b.onclick = () => {
-      document.getElementById('cat-' + i).scrollIntoView({behavior:'smooth', block:'start'});
+      const node = document.getElementById('cat-' + i);
+      const header = document.querySelector('header.top');
+      const headerHeight = header ? header.getBoundingClientRect().height : 0;
+      const top = node.getBoundingClientRect().top + window.scrollY - headerHeight - 10;
+      window.scrollTo({ top, behavior: 'smooth' });
     };
     chips.appendChild(b);
   });
@@ -442,6 +446,8 @@ let observer;
 function setupObserver(){
   if(observer) observer.disconnect();
   const chips = document.getElementById('chips').children;
+  const header = document.querySelector('header.top');
+  const headerHeight = header ? header.getBoundingClientRect().height : 190;
   observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if(entry.isIntersecting){
@@ -453,7 +459,7 @@ function setupObserver(){
         }
       }
     });
-  }, { rootMargin: '-190px 0px -70% 0px' });
+  }, { rootMargin: `-${Math.ceil(headerHeight+10)}px 0px -70% 0px` });
   document.querySelectorAll('section.category').forEach(sec => observer.observe(sec));
 }
 
@@ -685,7 +691,7 @@ function announceReturningGuestIfConsented(){
   }
 }
 
-const APP_VERSION = "2";
+const APP_VERSION = "3";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
