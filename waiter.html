@@ -224,6 +224,14 @@
   </div>
 </div>
 
+<div id="updateBanner" style="display:none; position:sticky; top:0; z-index:150; background:var(--gold); color:var(--bg-deep); padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; font-weight:700;">
+  <span>Доступна новая версия приложения</span>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <button onclick="applyUpdate()" style="background:var(--bg-deep); color:var(--gold); border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:12px;">Обновить</button>
+    <button onclick="dismissUpdateBanner()" style="background:transparent; border:none; color:var(--bg-deep); font-size:16px; font-weight:700; padding:0 4px;">×</button>
+  </div>
+</div>
+
 <header>
   <div class="header-top">
     <h1>GO pub · Официант <span id="staffNameTag" onclick="openNamePrompt()" style="color:var(--gold); font-weight:600; cursor:pointer;"></span></h1>
@@ -1000,6 +1008,30 @@ async function setupPush(){
 }
 
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
+const APP_VERSION = "1";
+let updateDismissed = false;
+function checkForUpdate(){
+  if(updateDismissed) return;
+  fetch('/version.json', {cache:'no-store'})
+    .then(r => r.json())
+    .then(d => {
+      if(d.version && d.version !== APP_VERSION){
+        document.getElementById('updateBanner').style.display = 'flex';
+      }
+    })
+    .catch(() => {});
+}
+function applyUpdate(){
+  location.href = location.pathname + '?_r=' + Date.now();
+}
+function dismissUpdateBanner(){
+  updateDismissed = true;
+  document.getElementById('updateBanner').style.display = 'none';
+}
+setTimeout(checkForUpdate, 5000);
+setInterval(checkForUpdate, 5 * 60 * 1000);
+document.addEventListener('visibilitychange', () => { if(!document.hidden) checkForUpdate(); });
+
 renderTables();
 renderDestTabs();
 renderChips();
