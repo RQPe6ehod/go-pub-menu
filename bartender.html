@@ -6,7 +6,10 @@
 <title>GO pub — Бар</title>
 <link rel="manifest" href="/manifest-cook.json">
 <meta name="theme-color" content="#E0954A">
-<link rel="apple-touch-icon" href="/icons/icon-cook-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-bartender-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GO Бар">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -646,11 +649,18 @@ function urlBase64ToUint8Array(base64String){
   return outputArray;
 }
 
+let swRegistration = null;
+async function registerServiceWorker(){
+  if(!('serviceWorker' in navigator)) return;
+  try{ swRegistration = await navigator.serviceWorker.register('/sw.js'); }catch(e){ /* not fatal — installability may be degraded, but the app still works */ }
+}
+registerServiceWorker();
+
 async function setupPush(){
   if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
   if(!vapidPublicKey) return;
   try{
-    const reg = await navigator.serviceWorker.register('/sw.js');
+    const reg = swRegistration || await navigator.serviceWorker.register('/sw.js');
     if(Notification.permission === 'default') await Notification.requestPermission();
     if(Notification.permission !== 'granted') return;
     let sub = await reg.pushManager.getSubscription();
@@ -667,7 +677,7 @@ async function setupPush(){
 }
 
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
-const APP_VERSION = "1";
+const APP_VERSION = "3";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
