@@ -129,11 +129,11 @@
   .staff-row .name{ font-weight:600; font-size:14.5px; }
   .staff-row .name.pending{ color:var(--muted); font-weight:400; font-style:italic; }
   .staff-row .role-tag{ font-size:11px; color:var(--muted); }
-  .staff-row .actions{ display:flex; gap:6px; align-items:center; }
-  .staff-row .actions button{ padding:7px 12px; border-radius:8px; font-size:12px; font-weight:600; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); }
+  .staff-row .actions{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .staff-row .actions button{ padding:9px 14px; border-radius:9px; font-size:13px; font-weight:600; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); }
   .staff-row .actions button.danger{ border-color:var(--red); color:var(--red); }
   .icon-btn{
-    width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep);
+    width:40px; height:40px; border-radius:9px; border:1px solid var(--line); background:var(--bg-deep);
     display:flex; align-items:center; justify-content:center; color:var(--cream); flex-shrink:0; padding:0 !important;
   }
   .icon-btn.copied{ border-color:var(--green); color:var(--green); }
@@ -210,10 +210,16 @@
 <div class="lock" id="lock">
   <div class="lock-box">
     <h2>GO pub · Менеджер</h2>
-    <p>Введите PIN-код директора</p>
-    <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••">
-    <button onclick="tryPin()">Войти</button>
-    <div class="err" id="pinErr"></div>
+    <div id="unverifiedDevicePanel" style="display:none;">
+      <p>Это устройство ещё не подтверждено. Войдите один раз через RestoRUN, чтобы продолжить.</p>
+      <a href="https://restorun.kuatov.kz" style="display:block; width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; text-align:center; text-decoration:none; box-sizing:border-box;">Открыть RestoRUN</a>
+    </div>
+    <div id="pinFormPanel" style="display:none;">
+      <p>Введите PIN-код директора</p>
+      <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••">
+      <button onclick="tryPin()">Войти</button>
+      <div class="err" id="pinErr"></div>
+    </div>
   </div>
 </div>
 
@@ -466,6 +472,13 @@ let pushSetupDone = false;
 let mgrMode = 'overview';
 let staffName = "";
 
+function isKnownDevice(){ return !!localStorage.getItem("gopub_manager_device_id"); }
+function markDeviceKnown(){
+  if(!localStorage.getItem("gopub_manager_device_id")){
+    localStorage.setItem("gopub_manager_device_id", (crypto.randomUUID ? crypto.randomUUID() : Date.now()+"-"+Math.random()));
+  }
+}
+
 function takeAuthFromHash(){
   const raw = (location.hash || "").replace(/^#/, "");
   if(!raw) return;
@@ -474,6 +487,7 @@ function takeAuthFromHash(){
   if(!pin) return;
   sessionStorage.setItem("gopub_pin_"+ROLE, pin);
   if(params.get("stay") === "1") localStorage.setItem("gopub_pin_"+ROLE, pin);
+  markDeviceKnown(); // arriving via a valid RestoRUN handoff verifies this device once and for all
   history.replaceState(null, "", location.pathname + location.search);
 }
 takeAuthFromHash();
@@ -501,9 +515,16 @@ function showLock(err){
   document.getElementById('qrOverlay').classList.remove('open');
   document.getElementById('qrAssignOverlay').classList.remove('open');
   closeQrScanner(); // also stops the camera stream, if one was running
+  if(isKnownDevice()){
+    document.getElementById('unverifiedDevicePanel').style.display = 'none';
+    document.getElementById('pinFormPanel').style.display = 'block';
+    document.getElementById('pinErr').textContent = err || "";
+    document.getElementById('pinInput').value = "";
+  } else {
+    document.getElementById('unverifiedDevicePanel').style.display = 'block';
+    document.getElementById('pinFormPanel').style.display = 'none';
+  }
   document.getElementById('lock').style.display = 'flex';
-  document.getElementById('pinErr').textContent = err || "";
-  document.getElementById('pinInput').value = "";
 }
 function hideLock(){ document.getElementById('lock').style.display = 'none'; }
 
@@ -537,6 +558,7 @@ function openPinPrompt(){
 }
 
 function connect(){
+  if(!isKnownDevice()){ showLock(); return; }
   const pin = getPin();
   if(!pin){ showLock(); return; }
   socket = new WebSocket(WS_URL);
@@ -722,7 +744,17 @@ function setReportsSub(sub){
   if(sub==='log') renderActionLog();
 }
 
+let menuUnlockedThisSession = false;
 function setSettingsSub(sub){
+  if(sub === 'menu' && !menuUnlockedThisSession){
+    const entered = prompt("Редактирование меню защищено — введите PIN директора:");
+    if(entered === null) return; // stay on the current tab
+    if(entered.trim() !== getPin()){
+      alert("Неверный PIN.");
+      return;
+    }
+    menuUnlockedThisSession = true;
+  }
   settingsSub = sub;
   document.querySelectorAll('#settingsSubTabs button').forEach((b,i) => b.classList.toggle('active', ['config','staff','menu'][i]===sub));
   document.getElementById('configView').style.display = sub==='config' ? '' : 'none';
@@ -1399,15 +1431,15 @@ function renderStaffGroup(role, elId, headId, label){
       </div>
       <div class="actions">
         <a class="icon-btn wa" href="https://wa.me/?text=${inviteText}${encodedUrl}" target="_blank" rel="noopener" title="Отправить в WhatsApp">
-          <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><path d="M16 3C9.1 3 3.5 8.6 3.5 15.5c0 2.5.7 4.8 1.9 6.8L3 29l6.9-2.3c1.9 1 4.1 1.6 6.1 1.6 6.9 0 12.5-5.6 12.5-12.5S22.9 3 16 3z" fill="#25D366"/><path d="M22.4 19.1c-.3-.2-1.9-1-2.2-1.1-.3-.1-.5-.2-.7.2s-.8 1.1-1 1.3-.4.2-.7.1c-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-2-1.8-2.3-.2-.3 0-.5.1-.6.1-.1.3-.4.5-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.6s-.7-1.7-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.2.2 2 3.1 4.9 4.2 2.8 1.1 2.8.8 3.3.7.5-.1 1.6-.7 1.8-1.3.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.6-.4z" fill="#fff"/></svg>
+          <svg width="21" height="21" viewBox="0 0 32 32" fill="none"><path d="M16 3C9.1 3 3.5 8.6 3.5 15.5c0 2.5.7 4.8 1.9 6.8L3 29l6.9-2.3c1.9 1 4.1 1.6 6.1 1.6 6.9 0 12.5-5.6 12.5-12.5S22.9 3 16 3z" fill="#25D366"/><path d="M22.4 19.1c-.3-.2-1.9-1-2.2-1.1-.3-.1-.5-.2-.7.2s-.8 1.1-1 1.3-.4.2-.7.1c-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-2-1.8-2.3-.2-.3 0-.5.1-.6.1-.1.3-.4.5-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.6s-.7-1.7-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.2.2 2 3.1 4.9 4.2 2.8 1.1 2.8.8 3.3.7.5-.1 1.6-.7 1.8-1.3.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.6-.4z" fill="#fff"/></svg>
         </a>
         <a class="icon-btn tg" href="https://t.me/share/url?url=${encodedUrl}&text=${inviteText}" target="_blank" rel="noopener" title="Отправить в Telegram">
-          <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" fill="#29A9EA"/><path d="M8.5 15.8l13-5c.6-.2 1.2.2.9.9l-2.2 10.4c-.2.8-.7.9-1.3.6l-3.6-2.7-1.7 1.6c-.2.2-.4.3-.7.3l.2-3.6 6.6-6c.3-.2-.1-.4-.4-.2l-8.1 5.1-3.5-1.1c-.8-.2-.8-.8.1-1.2z" fill="#fff"/></svg>
+          <svg width="21" height="21" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" fill="#29A9EA"/><path d="M8.5 15.8l13-5c.6-.2 1.2.2.9.9l-2.2 10.4c-.2.8-.7.9-1.3.6l-3.6-2.7-1.7 1.6c-.2.2-.4.3-.7.3l.2-3.6 6.6-6c.3-.2-.1-.4-.4-.2l-8.1 5.1-3.5-1.1c-.8-.2-.8-.8.1-1.2z" fill="#fff"/></svg>
         </a>
         <button class="icon-btn" onclick="copyStaffLink('${url}', this)" title="Скопировать ссылку">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
         </button>
-        <button onclick="showQr('${role}','${s.id}')">QR</button>
+        <button onclick="showQr('${role}','${s.id}')" style="font-size:14px;">QR</button>
         <button onclick="reassignStaff('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')" title="Переназначить устройство">📱↺</button>
         <button class="danger" onclick="deleteStaff('${s.id}')">Удалить</button>
       </div>
@@ -1575,7 +1607,7 @@ async function setupPush(){
   }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
 }
 
-const APP_VERSION = "3";
+const APP_VERSION = "4";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
