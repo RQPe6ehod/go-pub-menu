@@ -5,6 +5,17 @@
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 
+// No offline caching — and deliberately NOT calling event.respondWith()
+// here. Some browsers (notably Samsung Internet) require *a* fetch
+// listener to be registered before they'll offer a real "Add to Home
+// Screen" install, but actually intercepting every request and re-fetching
+// it ourselves adds a real point of failure (a single flaky network blip
+// during install can surface as "Download failed"). Leaving respondWith()
+// uncalled means every request just falls through to the browser's normal
+// handling, unaffected — the listener's mere presence is what satisfies
+// the installability check.
+self.addEventListener('fetch', () => {});
+
 self.addEventListener('push', (event) => {
   let data = { title: 'GO pub', body: 'Новое уведомление' };
   try { if (event.data) data = event.data.json(); } catch (e) {}
