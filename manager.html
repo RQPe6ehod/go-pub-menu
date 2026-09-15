@@ -1050,6 +1050,7 @@ function actionText(e){
   }
 }
 
+
 function renderActionLog(){
   const el = document.getElementById('actionLogList');
   if(actionLog.length===0){ el.innerHTML = `<div class="empty">Пока нет записей</div>`; return; }
@@ -1568,10 +1569,11 @@ const APP_VERSION = "1";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
-  fetch('/version.json', {cache:'no-store'})
-    .then(r => r.json())
-    .then(d => {
-      if(d.version && d.version !== APP_VERSION){
+  fetch(location.pathname, {cache:'no-store'})
+    .then(r => r.text())
+    .then(html => {
+      const m = html.match(/const APP_VERSION = "([^"]+)"/);
+      if(m && m[1] !== APP_VERSION){
         document.getElementById('updateBanner').style.display = 'flex';
       }
     })
