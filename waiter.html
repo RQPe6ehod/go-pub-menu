@@ -60,6 +60,11 @@
   .qty span{ min-width:16px; text-align:center; font-weight:600; }
 
   .dest-tabs{ display:flex; gap:6px; margin-bottom:12px; }
+  .guest-history-banner{
+    background:rgba(199,154,70,.14); border:1px solid var(--gold); border-radius:12px;
+    padding:11px 14px; margin-bottom:12px; font-size:13px; color:var(--gold); font-weight:600;
+  }
+  .guest-history-banner .items{ font-weight:400; color:var(--cream); margin-top:3px; }
   .dest-tabs button{ flex:1; padding:9px 0; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-weight:600; font-size:13px; }
   .dest-tabs button.active{ background:var(--gold); border-color:var(--gold); color:var(--bg-deep); }
 
@@ -241,6 +246,7 @@
   </div>
 
   <div id="orderView">
+    <div id="guestHistoryBanner" style="display:none;"></div>
     <div class="dest-tabs" id="destTabs"></div>
     <div class="chip-row" id="catChips"></div>
     <div id="catList"></div>
@@ -479,6 +485,7 @@ function connect(){
     }
     if(msg.type === "notify"){ alertReady(msg); }
     if(msg.type === "table_closed"){ showReceipt(msg.receipt); }
+    if(msg.type === "guest_history_result" && msg.table === currentTable){ renderGuestHistoryBanner(msg.history); }
     if(msg.type === "close_error"){
       if(msg.reason === "pending_items") alert("У стола ещё есть неподанные позиции — сначала выдайте их гостю.");
       else alert("Не удалось закрыть стол.");
@@ -539,7 +546,7 @@ function renderTables(){
       const globalNum = offset + local;
       const b = document.createElement('button');
       b.textContent = local;
-      b.onclick = () => { currentTable = globalNum; renderTables(); updateCartBar(); };
+      b.onclick = () => { currentTable = globalNum; renderTables(); updateCartBar(); requestGuestHistory(globalNum); };
       let cls = [];
       if(currentTable===globalNum) cls.push('active');
       if(openTables[globalNum]) cls.push('occupied');
@@ -930,6 +937,37 @@ async function unregisterPush(){
       await sub.unsubscribe();
     }
   }catch(e){ /* best-effort — logging out shouldn't fail because of this */ }
+}
+
+function requestGuestHistory(table){
+  document.getElementById('guestHistoryBanner').style.display = 'none';
+  if(socket && socket.readyState === WebSocket.OPEN){
+    socket.send(JSON.stringify({type:"get_guest_history_for_table", table}));
+  }
+}
+function renderGuestHistoryBanner(history){
+  const el = document.getElementById('guestHistoryBanner');
+  if(!history || history.length===0){ el.style.display = 'none'; return; }
+
+  const fmt = (items) => items.map(i => `${i.qty}× ${i.name}`).join(', ');
+  let label, items;
+  if(history.length >= 2){
+    const nameSet = (h) => h.items.map(i=>i.name).sort().join('|');
+    const allSame = history.every(h => nameSet(h) === nameSet(history[0]));
+    if(allSame){
+      label = 'Постоянный гость — обычно заказывает:';
+      items = fmt(history[history.length-1].items);
+    } else {
+      label = 'Постоянный гость — в прошлый раз:';
+      items = fmt(history[history.length-1].items);
+    }
+  } else {
+    label = 'В прошлый раз этот гость заказывал:';
+    items = fmt(history[0].items);
+  }
+  el.className = 'guest-history-banner';
+  el.innerHTML = `${label}<div class="items">${items}</div>`;
+  el.style.display = 'block';
 }
 
 function urlBase64ToUint8Array(base64String){

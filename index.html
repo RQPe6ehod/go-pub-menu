@@ -271,6 +271,16 @@
       <button class="bill-close" onclick="closeBill()" id="billCloseText">Закрыть</button>
       <button class="bill-request" onclick="requestBillFromModal()" id="billRequestBtn">Попросить расчёт</button>
     </div>
+    <div id="consentAsk" style="display:none; margin:0 24px 20px; padding:14px 16px; background:#f6f3ea; border-radius:12px; text-align:center;">
+      <p style="margin:0 0 10px; font-size:12.5px; color:#555; line-height:1.4;">Запомнить ваш заказ на этом устройстве, чтобы в следующий раз официант знал, что вы обычно берёте?</p>
+      <div style="display:flex; gap:8px;">
+        <button onclick="answerConsent(false)" style="flex:1; padding:9px; border-radius:9px; border:1px solid #ccc; background:#fff; color:#333; font-weight:700; font-size:12.5px;">Нет, спасибо</button>
+        <button onclick="answerConsent(true)" style="flex:1; padding:9px; border-radius:9px; border:none; background:var(--gold); color:#1b1206; font-weight:700; font-size:12.5px;">Да, запомнить</button>
+      </div>
+    </div>
+    <div id="forgetMeRow" style="display:none; text-align:center; margin:0 24px 20px;">
+      <a href="#" onclick="forgetMe();return false;" style="font-size:11.5px; color:#999; text-decoration:underline;">Забыть меня на этом устройстве</a>
+    </div>
   </div>
 </div>
 
@@ -482,6 +492,7 @@ function activateTableUI(){
   document.getElementById('callBar').style.display = 'flex';
   document.body.style.paddingBottom = '128px';
   pollBill();
+  announceReturningGuestIfConsented();
 }
 
 function callWaiter(){
@@ -543,6 +554,61 @@ function requestBillFromModal(){
   btn.disabled = true;
   btn.textContent = 'Официант уже несёт счёт…';
   setTimeout(() => { btn.disabled = false; btn.textContent = 'Попросить расчёт'; }, 30000);
+
+  const consent = localStorage.getItem('gopub_guest_consent');
+  if(consent === null){
+    document.getElementById('consentAsk').style.display = 'block';
+  } else if(consent === 'yes'){
+    sendSaveGuestOrder();
+  }
+}
+
+function getOrCreateDeviceId(){
+  let id = localStorage.getItem('gopub_device_id');
+  if(!id){
+    id = (crypto.randomUUID ? crypto.randomUUID() : (Date.now()+'-'+Math.random()));
+    localStorage.setItem('gopub_device_id', id);
+  }
+  return id;
+}
+
+function sendSaveGuestOrder(){
+  if(!TABLE || !liveSocket || liveSocket.readyState !== WebSocket.OPEN) return;
+  liveSocket.send(JSON.stringify({type:"save_guest_order", deviceId: getOrCreateDeviceId(), table: TABLE}));
+}
+
+function answerConsent(yes){
+  document.getElementById('consentAsk').style.display = 'none';
+  localStorage.setItem('gopub_guest_consent', yes ? 'yes' : 'no');
+  if(yes){
+    sendSaveGuestOrder();
+    document.getElementById('forgetMeRow').style.display = 'block';
+  }
+}
+
+function forgetMe(){
+  if(!confirm('Забыть ваш заказ на этом устройстве? В следующий раз официант снова не будет знать, что вы обычно берёте.')) return;
+  const deviceId = getOrCreateDeviceId();
+  if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
+    liveSocket.send(JSON.stringify({type:"forget_guest", deviceId}));
+  }
+  localStorage.removeItem('gopub_guest_consent');
+  localStorage.removeItem('gopub_device_id'); // rotate to a fresh, unlinked id
+  document.getElementById('forgetMeRow').style.display = 'none';
+  alert('Готово — данные забыты.');
+}
+
+// If this device already opted in on a previous visit, announce its
+// presence at this table as soon as it's known, so the waiter can see
+// "usual order" — brand-new / opted-out devices stay fully anonymous.
+function announceReturningGuestIfConsented(){
+  if(!TABLE) return;
+  if(localStorage.getItem('gopub_guest_consent') === 'yes'){
+    document.getElementById('forgetMeRow').style.display = 'block';
+    if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
+      liveSocket.send(JSON.stringify({type:"guest_at_table", deviceId: getOrCreateDeviceId(), table: TABLE}));
+    }
+  }
 }
 </script>
 </body>
