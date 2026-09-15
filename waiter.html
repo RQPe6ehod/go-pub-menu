@@ -1076,7 +1076,7 @@ async function setupPush(){
 }
 
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
-const APP_VERSION = "5";
+const APP_VERSION = "6";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
@@ -1108,6 +1108,8 @@ function updateChangeRoleLink(){
   if(link) link.style.display = count > 1 ? 'inline' : 'none';
 }
 updateChangeRoleLink();
+
+if(new URLSearchParams(location.search).get('view') === 'board') setMode('board');
 
 renderTables();
 renderDestTabs();
