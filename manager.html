@@ -158,9 +158,9 @@
   .confirm-ok{ background:var(--gold); color:var(--bg-deep); }
   .confirm-ok.danger{ background:var(--red); color:#fff; }
 
-  .receipt-overlay{ position:fixed; inset:0; background:rgba(14,29,23,.92); z-index:96; display:none; align-items:flex-end; justify-content:center; }
+  .receipt-overlay{ position:fixed; inset:0; background:rgba(14,29,23,.92); z-index:96; display:none; align-items:center; justify-content:center; padding:20px; }
   .receipt-overlay.open{ display:flex; }
-  .receipt-overlay .receipt-panel{ width:100%; max-width:400px; background:#fff; color:#111; border-radius:16px 16px 0 0; max-height:90vh; display:flex; flex-direction:column; font-family:'Inter',monospace; overflow-y:auto; }
+  .receipt-overlay .receipt-panel{ width:100%; max-width:400px; background:#fff; color:#111; border-radius:16px; max-height:85vh; display:flex; flex-direction:column; font-family:'Inter',monospace; overflow-y:auto; }
   .receipt-overlay .receipt-body{ padding:22px 24px 6px; }
   .receipt-overlay .receipt-body h2{ text-align:center; font-family:'Fraunces',serif; font-size:22px; margin:0 0 4px; }
   .receipt-overlay .sub{ text-align:center; font-size:12px; color:#666; margin-bottom:16px; }
@@ -605,7 +605,6 @@ function connect(){
     if(msg.type === "pin_change_error"){ alert("Не удалось изменить PIN — используйте 4-6 цифр."); }
     if(msg.type === "table_closed"){ showReceiptFromData(msg.receipt); }
     if(msg.type === "notify" && msg.kind === "cancel_request"){
-      try{ new Audio("data:audio/wav;base64,UklGRhwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=").play(); }catch(e){}
       if(navigator.vibrate) navigator.vibrate([200,80,200,80,200]);
       if("Notification" in window && Notification.permission === "granted"){
         new Notification("Запрос на отмену — стол " + tableLabel(msg.table));
@@ -1662,7 +1661,7 @@ async function setupPush(){
   }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
 }
 
-const APP_VERSION = "7";
+const APP_VERSION = "10";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;

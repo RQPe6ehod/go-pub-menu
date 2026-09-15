@@ -404,7 +404,6 @@ function setConn(on){
 }
 function ding(msg){
   if(msg.kind === "low_stock"){
-    try{ new Audio("data:audio/wav;base64,UklGRhwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=").play(); }catch(e){}
     if(navigator.vibrate) navigator.vibrate([120,60,120]);
     if("Notification" in window && Notification.permission === "granted"){
       new Notification("Заканчивается: " + msg.name + " (осталось " + msg.qty + ")");
@@ -414,7 +413,6 @@ function ding(msg){
     return;
   }
   if(msg.cancelled) return;
-  try{ new Audio("data:audio/wav;base64,UklGRhwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=").play(); }catch(e){}
   if(navigator.vibrate) navigator.vibrate([250,100,250,100,250]);
   if("Notification" in window && Notification.permission === "granted"){
     new Notification("Новый заказ — стол " + msg.table);
@@ -723,7 +721,7 @@ async function setupPush(){
 }
 
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
-const APP_VERSION = "4";
+const APP_VERSION = "6";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
