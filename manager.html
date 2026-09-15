@@ -146,6 +146,18 @@
   .qr-box .link{ font-size:11px; color:#777; word-break:break-all; margin-bottom:16px; }
   .qr-box button{ width:100%; padding:12px; border:none; border-radius:10px; background:var(--gold); color:#1b1b1b; font-weight:700; }
 
+  .confirm-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:210; display:none; align-items:center; justify-content:center; padding:24px; }
+  .confirm-overlay.open{ display:flex; }
+  .confirm-box{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px 22px; max-width:300px; width:100%; text-align:center; }
+  .confirm-brand{ font-family:'Fraunces',serif; color:var(--gold); font-size:12px; font-weight:700; margin-bottom:12px; letter-spacing:.06em; text-transform:uppercase; }
+  .confirm-question{ font-size:16px; font-weight:700; color:var(--cream); margin-bottom:6px; }
+  .confirm-sub{ font-size:12.5px; color:var(--muted); margin-bottom:20px; line-height:1.4; display:none; }
+  .confirm-actions{ display:flex; gap:10px; }
+  .confirm-actions button{ flex:1; padding:11px; border-radius:10px; font-weight:700; font-size:13.5px; border:none; }
+  .confirm-cancel{ background:var(--bg-deep); color:var(--cream); border:1px solid var(--line); }
+  .confirm-ok{ background:var(--gold); color:var(--bg-deep); }
+  .confirm-ok.danger{ background:var(--red); color:#fff; }
+
   .receipt-overlay{ position:fixed; inset:0; background:rgba(14,29,23,.92); z-index:96; display:none; align-items:flex-end; justify-content:center; }
   .receipt-overlay.open{ display:flex; }
   .receipt-overlay .receipt-panel{ width:100%; max-width:400px; background:#fff; color:#111; border-radius:16px 16px 0 0; max-height:90vh; display:flex; flex-direction:column; font-family:'Inter',monospace; overflow-y:auto; }
@@ -428,6 +440,18 @@
   </div>
 </div>
 
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-brand">GO pub</div>
+    <div class="confirm-question" id="confirmQuestion"></div>
+    <div class="confirm-sub" id="confirmSub"></div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" onclick="confirmNo()">Отмена</button>
+      <button class="confirm-ok" id="confirmOkBtn" onclick="confirmYes()">Да</button>
+    </div>
+  </div>
+</div>
+
 <div class="receipt-overlay" id="receiptOverlay">
   <div class="receipt-panel">
     <div class="receipt-body" id="receiptBody"></div>
@@ -497,10 +521,11 @@ function setPin(p){
   if(localStorage.getItem("gopub_pin_"+ROLE) !== null) localStorage.setItem("gopub_pin_"+ROLE, p);
 }
 function logoutDevice(){
-  if(!confirm("Выйти? Понадобится заново ввести PIN директора.")) return;
-  sessionStorage.removeItem("gopub_pin_"+ROLE);
-  localStorage.removeItem("gopub_pin_"+ROLE);
-  location.reload();
+  showConfirm("Выйти?", "Понадобится PIN директора, чтобы войти снова.", () => {
+    sessionStorage.removeItem("gopub_pin_"+ROLE);
+    localStorage.removeItem("gopub_pin_"+ROLE);
+    location.reload();
+  });
 }
 function tryPin(){
   const p = document.getElementById('pinInput').value.trim();
@@ -1156,8 +1181,9 @@ function renameMenuCategoryPrompt(categoryId, current){
   socket.send(JSON.stringify({type:"rename_menu_category", dest:menuDest, categoryId, title:title.trim()}));
 }
 function deleteMenuCategoryPrompt(categoryId, title){
-  if(!confirm(`Удалить раздел «${title}» со всеми позициями в нём?`)) return;
-  socket.send(JSON.stringify({type:"delete_menu_category", dest:menuDest, categoryId}));
+  showConfirm(`Удалить раздел «${title}»?`, "Все позиции внутри тоже удалятся.", () => {
+    socket.send(JSON.stringify({type:"delete_menu_category", dest:menuDest, categoryId}));
+  }, true);
 }
 function addMenuItemPrompt(categoryId){
   const name = prompt("Название позиции:");
@@ -1177,8 +1203,9 @@ function editMenuItemPrompt(categoryId, itemId, currentName, currentPrice, curre
   socket.send(JSON.stringify({type:"update_menu_item", dest:menuDest, categoryId, itemId, name:name.trim(), price:price.trim(), desc:desc.trim()}));
 }
 function deleteMenuItemPrompt(categoryId, itemId, name){
-  if(!confirm(`Удалить «${name}» из меню?`)) return;
-  socket.send(JSON.stringify({type:"delete_menu_item", dest:menuDest, categoryId, itemId}));
+  showConfirm(`Удалить «${name}»?`, "Уберётся из меню совсем.", () => {
+    socket.send(JSON.stringify({type:"delete_menu_item", dest:menuDest, categoryId, itemId}));
+  }, true);
 }
 
 // --- QR codes: printed stickers are anonymous (?qr=<id>), so they get
@@ -1280,6 +1307,27 @@ function openQrAssign(qrId){
   }
   document.getElementById('qrAssignOverlay').classList.add('open');
 }
+let pendingConfirmCallback = null;
+function showConfirm(question, sub, onYes, danger){
+  document.getElementById('confirmQuestion').textContent = question;
+  const subEl = document.getElementById('confirmSub');
+  if(sub){ subEl.textContent = sub; subEl.style.display = 'block'; }
+  else { subEl.style.display = 'none'; }
+  document.getElementById('confirmOkBtn').className = 'confirm-ok' + (danger ? ' danger' : '');
+  pendingConfirmCallback = onYes;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function confirmYes(){
+  document.getElementById('confirmOverlay').classList.remove('open');
+  const cb = pendingConfirmCallback;
+  pendingConfirmCallback = null;
+  if(cb) cb();
+}
+function confirmNo(){
+  document.getElementById('confirmOverlay').classList.remove('open');
+  pendingConfirmCallback = null;
+}
+
 function closeQrAssign(){
   document.getElementById('qrAssignOverlay').classList.remove('open');
   pendingQrId = null;
@@ -1296,8 +1344,9 @@ function confirmAssignQr(){
   closeQrAssign();
 }
 function unassignQr(qrId){
-  if(!confirm('Забыть привязку этого QR? Гости по нему перестанут видеть кнопки "Позвать официанта"/"Чек", пока вы не привяжете его заново.')) return;
-  socket.send(JSON.stringify({type:"unassign_qr", qrId}));
+  showConfirm("Забыть этот QR?", "Кнопки для гостей перестанут работать, пока не привяжете заново.", () => {
+    socket.send(JSON.stringify({type:"unassign_qr", qrId}));
+  }, true);
 }
 
 function renderCancelRequests(){
@@ -1327,12 +1376,14 @@ function renderCancelRequests(){
   el.innerHTML = html;
 }
 function approveCancel(requestId){
-  if(!confirm("Подтвердить отмену заказа?")) return;
-  socket.send(JSON.stringify({type:"approve_cancel", requestId}));
+  showConfirm("Подтвердить отмену?", null, () => {
+    socket.send(JSON.stringify({type:"approve_cancel", requestId}));
+  });
 }
 function rejectCancel(requestId){
-  if(!confirm("Отклонить запрос — заказ останется в работе?")) return;
-  socket.send(JSON.stringify({type:"reject_cancel", requestId}));
+  showConfirm("Отклонить запрос?", "Заказ останется в работе.", () => {
+    socket.send(JSON.stringify({type:"reject_cancel", requestId}));
+  });
 }
 
 function renderRooms(){
@@ -1388,21 +1439,24 @@ function addRoom(){
 }
 function removeRoom(roomId){
   const room = rooms.find(r => r.id === roomId);
-  if(!confirm(`Удалить зал «${room ? room.name : ''}»? Столы в нём станут недоступны официанту.`)) return;
-  socket.send(JSON.stringify({type:"delete_room", roomId}));
+  showConfirm(`Удалить зал «${room ? room.name : ''}»?`, "Официант перестанет видеть эти столы.", () => {
+    socket.send(JSON.stringify({type:"delete_room", roomId}));
+  }, true);
 }
 
 function createStaff(role){
   socket.send(JSON.stringify({type:"create_staff", role}));
 }
 function deleteStaff(id){
-  if(!confirm("Удалить этого сотрудника? Ссылка перестанет работать.")) return;
-  socket.send(JSON.stringify({type:"delete_staff", staffId:id}));
+  showConfirm("Удалить сотрудника?", "Его ссылка перестанет работать.", () => {
+    socket.send(JSON.stringify({type:"delete_staff", staffId:id}));
+  }, true);
 }
 function reassignStaff(id, name){
-  const label = name ? `«${name}»` : "этого сотрудника";
-  if(!confirm(`Старое устройство ${label} перестанет работать, и понадобится показать новый QR на новом телефоне. Продолжить?`)) return;
-  socket.send(JSON.stringify({type:"reassign_staff", staffId:id}));
+  const label = name ? `«${name}»` : "сотрудника";
+  showConfirm(`Переназначить устройство ${label}?`, "Старый телефон перестанет работать — покажите новый QR.", () => {
+    socket.send(JSON.stringify({type:"reassign_staff", staffId:id}));
+  });
 }
 
 const ROLE_LABELS = { waiter: "Официант", cook: "Повар", bartender: "Бармен" };
@@ -1503,8 +1557,9 @@ function showReceiptFromData(r){
 }
 
 function closeTableAsManager(t){
-  if(!confirm(`Закрыть стол ${tableLabel(t)} и сформировать чек? Обычно это делает официант — используйте, только если он сам не может.`)) return;
-  socket.send(JSON.stringify({type:"close_table", table:t}));
+  showConfirm(`Закрыть стол ${tableLabel(t)}?`, "Обычно это делает официант.", () => {
+    socket.send(JSON.stringify({type:"close_table", table:t}));
+  });
 }
 
 function showReceiptQr(kind){
@@ -1607,7 +1662,7 @@ async function setupPush(){
   }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
 }
 
-const APP_VERSION = "4";
+const APP_VERSION = "5";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
