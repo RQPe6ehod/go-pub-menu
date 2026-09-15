@@ -507,7 +507,7 @@ function activateTableUI(){
 // disappears for good — a fresh QR scan is needed to bring it back.
 // This is what stops a long-abandoned tab from paging a waiter to an
 // empty table. ---
-const HARD_EXPIRE_MS = 12 * 60 * 60 * 1000;
+const HARD_EXPIRE_MS = 10 * 60 * 60 * 1000;
 const sessionStartedAt = Date.now();
 let sessionExpired = false;
 
