@@ -487,7 +487,7 @@ function pollBill(){
 
 let tableUIActive = false;
 function activateTableUI(){
-  if(tableUIActive) return;
+  if(tableUIActive || sessionExpired) return;
   tableUIActive = true;
   document.getElementById('callBar').style.display = 'flex';
   document.body.style.paddingBottom = '128px';
@@ -495,8 +495,28 @@ function activateTableUI(){
   announceReturningGuestIfConsented();
 }
 
+// --- if this tab stays open for 12 hours straight, the call button
+// disappears for good — a fresh QR scan is needed to bring it back.
+// This is what stops a long-abandoned tab from paging a waiter to an
+// empty table. ---
+const HARD_EXPIRE_MS = 12 * 60 * 60 * 1000;
+const sessionStartedAt = Date.now();
+let sessionExpired = false;
+
+function expireCallBar(){
+  if(sessionExpired) return;
+  sessionExpired = true;
+  document.getElementById('callBar').style.display = 'none';
+  document.body.style.paddingBottom = '';
+}
+setTimeout(expireCallBar, HARD_EXPIRE_MS);
+
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden && Date.now() - sessionStartedAt >= HARD_EXPIRE_MS) expireCallBar();
+});
+
 function callWaiter(){
-  if(callCooldown || !TABLE) return;
+  if(callCooldown || !TABLE || sessionExpired) return;
   if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
     liveSocket.send(JSON.stringify({type:"call_waiter", table: TABLE}));
   }
@@ -546,7 +566,7 @@ function renderBill(){
 }
 
 function requestBillFromModal(){
-  if(!TABLE) return;
+  if(!TABLE || sessionExpired) return;
   if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
     liveSocket.send(JSON.stringify({type:"request_bill", table: TABLE}));
   }
