@@ -586,7 +586,7 @@ function openPinPrompt(){
 
 function connect(){
   if(!isKnownDevice()){ showLock(); return; }
-  const pin = getPin();
+  const pin = sessionStorage.getItem("gopub_pin_"+ROLE); // NOT getPin() — a remembered localStorage PIN must not skip re-entering it on a fresh visit
   if(!pin){ showLock(); return; }
   socket = new WebSocket(WS_URL);
   socket.onopen = () => { setConn(true); socket.send(JSON.stringify({type:"hello", role:ROLE, pin})); };
@@ -1662,7 +1662,7 @@ async function setupPush(){
   }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
 }
 
-const APP_VERSION = "6";
+const APP_VERSION = "7";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
