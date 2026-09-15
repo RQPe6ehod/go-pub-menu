@@ -261,7 +261,7 @@
     </button>
   </div>
   <div class="conn off" id="conn">подключение…</div>
-  <div class="settings-links"><a href="#" onclick="openNamePrompt();return false;">Изменить имя</a><a href="#" onclick="openStaffPinPrompt();return false;">Изменить PIN</a><a href="staff.html">Сменить роль</a><a href="#" onclick="logoutDevice();return false;">Выйти</a></div>
+  <div class="settings-links"><a href="#" onclick="openNamePrompt();return false;">Изменить имя</a><a href="#" onclick="openStaffPinPrompt();return false;">Изменить PIN</a><a href="staff.html" id="changeRoleLink" style="display:none;">Сменить роль</a><a href="#" onclick="logoutDevice();return false;">Выйти</a></div>
 </header>
 
 <main>
@@ -1076,7 +1076,7 @@ async function setupPush(){
 }
 
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
-const APP_VERSION = "4";
+const APP_VERSION = "5";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
@@ -1100,6 +1100,14 @@ function dismissUpdateBanner(){
 setTimeout(checkForUpdate, 5000);
 setInterval(checkForUpdate, 5 * 60 * 1000);
 document.addEventListener('visibilitychange', () => { if(!document.hidden) checkForUpdate(); });
+
+function updateChangeRoleLink(){
+  const roles = ['waiter','cook','bartender'];
+  const count = roles.filter(r => localStorage.getItem('gopub_staff_id_'+r)).length;
+  const link = document.getElementById('changeRoleLink');
+  if(link) link.style.display = count > 1 ? 'inline' : 'none';
+}
+updateChangeRoleLink();
 
 renderTables();
 renderDestTabs();
