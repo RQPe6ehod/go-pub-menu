@@ -176,13 +176,13 @@
 
   .bill-overlay{
     position: fixed; inset:0; background: rgba(0,0,0,.55); z-index: 90;
-    display:flex; align-items:flex-end; justify-content:center;
+    display:flex; align-items:center; justify-content:center; padding:20px;
     opacity:0; pointer-events:none; transition: opacity .25s ease;
   }
   .bill-overlay.open{ opacity:1; pointer-events:auto; }
   .bill-panel{
     width:100%; max-width: 480px; background:#fff; color:#1b1b1b;
-    border-radius: 20px 20px 0 0; max-height: 82vh; overflow-y:auto;
+    border-radius: 20px; max-height: 82vh; overflow-y:auto;
     transform: translateY(30px); transition: transform .25s ease;
   }
   .bill-overlay.open .bill-panel{ transform: translateY(0); }
@@ -304,7 +304,7 @@
       <button class="bill-request" onclick="requestBillFromModal()" id="billRequestBtn">Попросить расчёт</button>
     </div>
     <div id="consentAsk" style="display:none; margin:0 24px 20px; padding:14px 16px; background:#f6f3ea; border-radius:12px; text-align:center;">
-      <p style="margin:0 0 10px; font-size:12.5px; color:#555; line-height:1.4;">Запомнить ваш заказ на этом устройстве, чтобы в следующий раз официант знал, что вы обычно берёте?</p>
+      <p style="margin:0 0 10px; font-size:12.5px; color:#555; line-height:1.4;">Нам запомнить ваши предпочтения?</p>
       <div style="display:flex; gap:8px;">
         <button onclick="answerConsent(false)" style="flex:1; padding:9px; border-radius:9px; border:1px solid #ccc; background:#fff; color:#333; font-weight:700; font-size:12.5px;">Нет, спасибо</button>
         <button onclick="answerConsent(true)" style="flex:1; padding:9px; border-radius:9px; border:none; background:var(--gold); color:#1b1206; font-weight:700; font-size:12.5px;">Да, запомнить</button>
@@ -340,7 +340,7 @@ const HARD_EXPIRE_MS = 12 * 60 * 60 * 1000;
 const sessionStartedAt = Date.now();
 let sessionExpired = false;
 let pendingConfirmCallback = null;
-const APP_VERSION = "5";
+const APP_VERSION = "6";
 let updateDismissed = false;
 
 function toggleLangMenu(){
