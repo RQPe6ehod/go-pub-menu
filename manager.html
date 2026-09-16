@@ -616,6 +616,12 @@ function connect(){
         new Notification("Стол " + tableLabel(msg.table) + " — заказ готов уже 2 минуты, до сих пор не подан!");
       }
     }
+    if(msg.type === "notify" && msg.kind === "still_no_bill"){
+      if(navigator.vibrate) navigator.vibrate([250,100,250,100,250]);
+      if("Notification" in window && Notification.permission === "granted"){
+        new Notification("Стол " + tableLabel(msg.table) + " — гость уже 2 минуты ждёт счёт!");
+      }
+    }
     if(msg.type === "close_error"){
       if(msg.reason === "pending_items") alert("У стола ещё есть неподанные позиции — сначала их нужно выдать гостю.");
       else alert("Не удалось закрыть стол.");
@@ -1667,7 +1673,7 @@ async function setupPush(){
   }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
 }
 
-const APP_VERSION = "11";
+const APP_VERSION = "12";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
