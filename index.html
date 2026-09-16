@@ -276,7 +276,7 @@
 <div class="call-bar" id="callBar" style="display:none;">
   <button class="call-waiter-btn" id="callWaiterBtn" onclick="callWaiter()">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-    <span id="callWaiterLabel">Позвать официанта</span>
+    <span id="callWaiterLabel">Хочу сделать заказ</span>
   </button>
   <button class="call-bill-btn" id="callBillBtn" onclick="openBill()" style="display:none;">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12a1 1 0 0 1 1 1v18l-3-2-3 2-3-2-3 2-3-2V3a1 1 0 0 1 1-1z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/></svg>
@@ -328,6 +328,20 @@ const STR = {
 
 let currentMode = 'food';
 let LANG = localStorage.getItem('gopub_lang') || 'ru';
+let observer;
+const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
+const QR_ID = new URLSearchParams(location.search).get('qr');
+let TABLE = new URLSearchParams(location.search).get('table'); // may also arrive asynchronously via resolve_qr
+let liveSocket = null;
+let callCooldown = false;
+let currentBill = null;
+let tableUIActive = false;
+const HARD_EXPIRE_MS = 12 * 60 * 60 * 1000;
+const sessionStartedAt = Date.now();
+let sessionExpired = false;
+let pendingConfirmCallback = null;
+const APP_VERSION = "5";
+let updateDismissed = false;
 
 function toggleLangMenu(){
   document.getElementById('langMenu').classList.toggle('open');
@@ -442,7 +456,6 @@ function onSearch(){
   });
 }
 
-let observer;
 function setupObserver(){
   if(observer) observer.disconnect();
   const chips = document.getElementById('chips').children;
@@ -474,12 +487,6 @@ setupObserver();
 // --- live connection: pulls the shared menu + availability from the
 // staff system, so a dish the kitchen/bar marks unavailable greys out
 // here automatically, without editing this page. ---
-const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
-const QR_ID = new URLSearchParams(location.search).get('qr');
-let TABLE = new URLSearchParams(location.search).get('table'); // may also arrive asynchronously via resolve_qr
-let liveSocket = null;
-let callCooldown = false;
-let currentBill = null;
 
 function connectLive(){
   let socket;
@@ -523,7 +530,6 @@ function pollBill(){
   setTimeout(pollBill, 15000);
 }
 
-let tableUIActive = false;
 function activateTableUI(){
   if(tableUIActive || sessionExpired) return;
   tableUIActive = true;
@@ -537,9 +543,6 @@ function activateTableUI(){
 // disappears for good — a fresh QR scan is needed to bring it back.
 // This is what stops a long-abandoned tab from paging a waiter to an
 // empty table. ---
-const HARD_EXPIRE_MS = 12 * 60 * 60 * 1000;
-const sessionStartedAt = Date.now();
-let sessionExpired = false;
 
 function expireCallBar(){
   if(sessionExpired) return;
@@ -570,7 +573,7 @@ function callWaiter(){
       clearInterval(tick);
       callCooldown = false;
       btn.disabled = false;
-      label.textContent = 'Позвать официанта';
+      label.textContent = 'Хочу сделать заказ';
     }
   }, 1000);
 }
@@ -605,20 +608,22 @@ function renderBill(){
 
 function requestBillFromModal(){
   if(!TABLE || sessionExpired) return;
-  if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
-    liveSocket.send(JSON.stringify({type:"request_bill", table: TABLE}));
-  }
-  const btn = document.getElementById('billRequestBtn');
-  btn.disabled = true;
-  btn.textContent = 'Официант уже несёт счёт…';
-  setTimeout(() => { btn.disabled = false; btn.textContent = 'Попросить расчёт'; }, 30000);
+  showConfirm("Позвать официанта с расчётом?", null, () => {
+    if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
+      liveSocket.send(JSON.stringify({type:"request_bill", table: TABLE}));
+    }
+    const btn = document.getElementById('billRequestBtn');
+    btn.disabled = true;
+    btn.textContent = 'Официант уже несёт счёт…';
+    setTimeout(() => { btn.disabled = false; btn.textContent = 'Попросить расчёт'; }, 30000);
 
-  const consent = localStorage.getItem('gopub_guest_consent');
-  if(consent === null){
-    document.getElementById('consentAsk').style.display = 'block';
-  } else if(consent === 'yes'){
-    sendSaveGuestOrder();
-  }
+    const consent = localStorage.getItem('gopub_guest_consent');
+    if(consent === null){
+      document.getElementById('consentAsk').style.display = 'block';
+    } else if(consent === 'yes'){
+      sendSaveGuestOrder();
+    }
+  });
 }
 
 function getOrCreateDeviceId(){
@@ -644,7 +649,6 @@ function answerConsent(yes){
   }
 }
 
-let pendingConfirmCallback = null;
 function showConfirm(question, sub, onYes, danger){
   document.getElementById('confirmQuestion').textContent = question;
   const subEl = document.getElementById('confirmSub');
@@ -691,8 +695,6 @@ function announceReturningGuestIfConsented(){
   }
 }
 
-const APP_VERSION = "3";
-let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
   fetch(location.pathname, {cache:'no-store'})
