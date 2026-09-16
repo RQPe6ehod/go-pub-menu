@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>GO pub — Официант</title>
-<link rel="manifest" href="/manifest-waiter.json">
+<link rel="manifest" id="manifestLink" href="/manifest-waiter.json">
 <meta name="theme-color" content="#C79A46">
 <link rel="apple-touch-icon" href="/icons/icon-waiter-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -388,6 +388,15 @@ let pushSetupDone = false;
     window.history.replaceState({}, '', url.pathname + url.search);
   }
   staffId = localStorage.getItem('gopub_staff_id_'+ROLE);
+  // The manifest's start_url is what iOS actually opens from an installed
+  // Home Screen icon — bake the staff id into it here so a fresh install
+  // always carries the id in the URL itself, instead of depending on
+  // localStorage being shared between Safari and the installed icon
+  // (which isn't reliable on every iOS version/device).
+  if(staffId){
+    const link = document.getElementById('manifestLink');
+    if(link) link.href = '/manifest-waiter.json?staff=' + encodeURIComponent(staffId);
+  }
 })();
 
 function getStaffPin(){ return localStorage.getItem('gopub_staff_pin_'+ROLE); }
@@ -558,6 +567,17 @@ function alertReady(msg){
   if(msg.kind === "still_not_served"){
     if(navigator.vibrate) navigator.vibrate([250,100,250,100,250]);
     const text = "Стол " + tableLabel(msg.table) + " — заказ готов уже 2 минуты, до сих пор не подан!";
+    if("Notification" in window && Notification.permission === "granted"){
+      new Notification(text);
+    } else {
+      alert(text);
+    }
+    setMode('board');
+    return;
+  }
+  if(msg.kind === "still_no_bill"){
+    if(navigator.vibrate) navigator.vibrate([250,100,250,100,250]);
+    const text = "Стол " + tableLabel(msg.table) + " — гость уже 2 минуты ждёт счёт!";
     if("Notification" in window && Notification.permission === "granted"){
       new Notification(text);
     } else {
@@ -1162,7 +1182,7 @@ function requestNotifPermission(){
 }
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission().then(updateNotifPermBanner);
 updateNotifPermBanner();
-const APP_VERSION = "12";
+const APP_VERSION = "14";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;

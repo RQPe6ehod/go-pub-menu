@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>GO pub — Кухня</title>
-<link rel="manifest" href="/manifest-cook.json">
+<link rel="manifest" id="manifestLink" href="/manifest-cook.json">
 <meta name="theme-color" content="#E0954A">
 <link rel="apple-touch-icon" href="/icons/icon-cook-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -260,6 +260,10 @@ const DEST = "kitchen";
     window.history.replaceState({}, '', url.pathname + url.search);
   }
   staffId = localStorage.getItem('gopub_staff_id_'+ROLE);
+  if(staffId){
+    const link = document.getElementById('manifestLink');
+    if(link) link.href = '/manifest-cook.json?staff=' + encodeURIComponent(staffId);
+  }
 })();
 
 function getStaffPin(){ return localStorage.getItem('gopub_staff_pin_'+ROLE); }
@@ -739,7 +743,7 @@ async function setupPush(){
 }
 
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
-const APP_VERSION = "8";
+const APP_VERSION = "9";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
