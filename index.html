@@ -40,7 +40,7 @@
     padding: 14px 20px 0;
   }
 
-  .lang-switch-wrap{ display:flex; justify-content:center; position:relative; margin-bottom: 8px; }
+  .lang-switch-wrap{ display:flex; justify-content:space-between; align-items:center; position:relative; margin-bottom: 8px; gap:10px; }
   .lang-btn{
     display:flex; align-items:center; gap:6px;
     background: var(--panel); border: 1px solid var(--line); color: var(--cream-dim);
@@ -68,6 +68,30 @@
   }
   .credit-link:hover{ text-decoration:underline; }
   .credit-icon{ flex-shrink:0; opacity:.9; }
+
+  .top-right-actions{
+    display:flex; align-items:center; justify-content:flex-end; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .review-link{
+    display:inline-flex; align-items:center; gap: 6px;
+    background: linear-gradient(135deg, rgba(199,154,70,0.2), rgba(199,154,70,0.1));
+    border: 1.5px solid var(--gold);
+    color: var(--gold);
+    text-decoration:none;
+    font-weight:700;
+    font-size: 12.5px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    box-shadow: 0 3px 12px rgba(199,154,70,0.18);
+    transition: background .2s ease, transform .15s ease;
+    white-space: nowrap;
+  }
+  .review-link:hover, .review-link:active{
+    background: rgba(199,154,70,0.3);
+    transform: translateY(-1px);
+  }
+  .review-link svg{ flex-shrink:0; }
 
   .brand-row{
     display:flex; align-items:center; justify-content:space-between; gap: 12px;
@@ -220,23 +244,32 @@
 <body>
 
 <div id="updateBanner" style="display:none; position:sticky; top:0; z-index:150; background:var(--gold); color:var(--bg-deep); padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; font-weight:700;">
-  <span>Доступна новая версия меню</span>
+  <span id="updateBannerText">Доступна новая версия меню</span>
   <div style="display:flex; gap:8px; align-items:center;">
-    <button onclick="applyUpdate()" style="background:var(--bg-deep); color:var(--gold); border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:12px;">Обновить</button>
+    <button id="updateBannerBtn" onclick="applyUpdate()" style="background:var(--bg-deep); color:var(--gold); border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:12px;">Обновить</button>
     <button onclick="dismissUpdateBanner()" style="background:transparent; border:none; color:var(--bg-deep); font-size:16px; font-weight:700; padding:0 4px;">×</button>
   </div>
 </div>
 
 <header class="top">
   <div class="lang-switch-wrap">
-    <button class="lang-btn" onclick="toggleLangMenu()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20"/></svg>
-      <span id="langLabel">RU</span>
-    </button>
-    <div class="lang-menu" id="langMenu">
-      <button onclick="setLang('ru')" data-lang="ru">Русский</button>
-      <button onclick="setLang('en')" data-lang="en">English</button>
-      <button onclick="setLang('kk')" data-lang="kk">Қазақша</button>
+    <div style="flex:1;"></div>
+    <div style="position:relative;">
+      <button class="lang-btn" onclick="toggleLangMenu()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20"/></svg>
+        <span id="langLabel">RU</span>
+      </button>
+      <div class="lang-menu" id="langMenu">
+        <button onclick="setLang('ru')" data-lang="ru">Русский</button>
+        <button onclick="setLang('en')" data-lang="en">English</button>
+        <button onclick="setLang('kk')" data-lang="kk">Қазақша</button>
+      </div>
+    </div>
+    <div style="flex:1; display:flex; justify-content:flex-end;">
+      <a class="review-link" href="https://2gis.kz/astana/firm/70000001101686055/tab/reviews" target="_blank" rel="noopener noreferrer">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span id="reviewPromptText">Оставить отзыв</span>
+      </a>
     </div>
   </div>
 
@@ -280,7 +313,7 @@
   </button>
   <button class="call-bill-btn" id="callBillBtn" onclick="openBill()" style="display:none;">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12a1 1 0 0 1 1 1v18l-3-2-3 2-3-2-3 2-3-2V3a1 1 0 0 1 1-1z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/></svg>
-    Предварительный чек
+    <span id="callBillLabel">Предварительный чек</span>
   </button>
 </div>
 
@@ -290,7 +323,7 @@
     <div class="confirm-question" id="confirmQuestion"></div>
     <div class="confirm-sub" id="confirmSub"></div>
     <div class="confirm-actions">
-      <button class="confirm-cancel" onclick="confirmNo()">Отмена</button>
+      <button class="confirm-cancel" id="confirmCancelBtn" onclick="confirmNo()">Отмена</button>
       <button class="confirm-ok" id="confirmOkBtn" onclick="confirmYes()">Да</button>
     </div>
   </div>
@@ -304,14 +337,14 @@
       <button class="bill-request" onclick="requestBillFromModal()" id="billRequestBtn">Попросить расчёт</button>
     </div>
     <div id="consentAsk" style="display:none; margin:0 24px 20px; padding:14px 16px; background:#f6f3ea; border-radius:12px; text-align:center;">
-      <p style="margin:0 0 10px; font-size:12.5px; color:#555; line-height:1.4;">Нам запомнить ваши предпочтения?</p>
+      <p id="consentText" style="margin:0 0 10px; font-size:12.5px; color:#555; line-height:1.4;">Нам запомнить ваши предпочтения?</p>
       <div style="display:flex; gap:8px;">
-        <button onclick="answerConsent(false)" style="flex:1; padding:9px; border-radius:9px; border:1px solid #ccc; background:#fff; color:#333; font-weight:700; font-size:12.5px;">Нет, спасибо</button>
-        <button onclick="answerConsent(true)" style="flex:1; padding:9px; border-radius:9px; border:none; background:var(--gold); color:#1b1206; font-weight:700; font-size:12.5px;">Да, запомнить</button>
+        <button id="consentNoBtn" onclick="answerConsent(false)" style="flex:1; padding:9px; border-radius:9px; border:1px solid #ccc; background:#fff; color:#333; font-weight:700; font-size:12.5px;">Нет, спасибо</button>
+        <button id="consentYesBtn" onclick="answerConsent(true)" style="flex:1; padding:9px; border-radius:9px; border:none; background:var(--gold); color:#1b1206; font-weight:700; font-size:12.5px;">Да, запомнить</button>
       </div>
     </div>
     <div id="forgetMeRow" style="display:none; text-align:center; margin:0 24px 20px;">
-      <a href="#" onclick="forgetMe();return false;" style="font-size:11.5px; color:#999; text-decoration:underline;">Забыть меня на этом устройстве</a>
+      <a href="#" id="forgetMeLinkText" onclick="forgetMe();return false;" style="font-size:11.5px; color:#999; text-decoration:underline;">Забыть меня на этом устройстве</a>
     </div>
   </div>
 </div>
@@ -321,9 +354,42 @@ let MENU = { food: [], bar: [] }; // populated live from the server's shared men
 let unavailable = {};
 
 const STR = {
-  ru: { tagline:"ЦИФРОВОЕ МЕНЮ", svc:"Обслуживание 10%. Цены указаны в тенге.", kitchen:"Кухня", bar:"Бар", search:"Найти блюдо или напиток…", enjoy:"Приятного аппетита!", scanNote:"Отсканируйте QR‑код у столика, чтобы вернуться к меню в любой момент.", currency:" тг.", soldOut:"нет в наличии" },
-  en: { tagline:"DIGITAL MENU", svc:"10% service charge included. Prices in KZT.", kitchen:"Kitchen", bar:"Bar", search:"Search dish or drink…", enjoy:"Enjoy your meal!", scanNote:"Scan the QR code at your table to return to the menu anytime.", currency:" KZT", soldOut:"sold out" },
-  kk: { tagline:"ЦИФРЛЫҚ МӘЗІР", svc:"Қызмет көрсету ақысы 10%. Бағалар теңгемен.", kitchen:"Ас үй", bar:"Бар", search:"Тағам немесе сусын іздеу…", enjoy:"Ас болсын!", scanNote:"Кез келген уақытта мәзірге оралу үшін үстелдегі QR-кодты сканерлеңіз.", currency:" тг.", soldOut:"қазір жоқ" }
+  ru: { tagline:"ЦИФРОВОЕ МЕНЮ", svc:"Обслуживание 10%. Цены указаны в тенге.", kitchen:"Кухня", bar:"Бар", search:"Найти блюдо или напиток…", enjoy:"Приятного аппетита!", scanNote:"Отсканируйте QR‑код у столика, чтобы вернуться к меню в любой момент.", currency:" тг.", soldOut:"нет в наличии",
+    callWaiterBtn:"Хочу сделать заказ", callWaiterWaiting:"Официант уже идёт…",
+    billBtn:"Предварительный чек", billTitle:"Предварительный чек", billNotFiscal:"Не является фискальным чеком", billEmpty:"Пока нет заказанных позиций",
+    billSum:"Сумма", billService:"Обслуживание (10%)", billTotal:"Итого", tableWord:"Стол",
+    billRequestBtn:"Попросить расчёт", billRequestWaiting:"Официант уже несёт счёт…",
+    consentQuestion:"Нам запомнить ваши предпочтения?", consentYes:"Да, запомнить", consentNo:"Нет, спасибо",
+    forgetMeLink:"Забыть меня на этом устройстве", forgottenAlert:"Готово — данные забыты.",
+    confirmBillQuestion:"Позвать официанта с расчётом?", confirmCancel:"Отмена", confirmYes:"Да",
+    forgetConfirmQuestion:"Забыть вас?", forgetConfirmSub:"В следующий раз официант не будет знать ваш обычный заказ.",
+    billClose:"Закрыть",
+    updateBannerText:"Доступна новая версия меню", updateBannerBtn:"Обновить",
+    reviewPrompt:"Оставить отзыв" },
+  en: { tagline:"DIGITAL MENU", svc:"10% service charge included. Prices in KZT.", kitchen:"Kitchen", bar:"Bar", search:"Search dish or drink…", enjoy:"Enjoy your meal!", scanNote:"Scan the QR code at your table to return to the menu anytime.", currency:" KZT", soldOut:"sold out",
+    callWaiterBtn:"I'd like to order", callWaiterWaiting:"Waiter is on the way…",
+    billBtn:"Preliminary bill", billTitle:"Preliminary bill", billNotFiscal:"Not a fiscal receipt", billEmpty:"No items ordered yet",
+    billSum:"Subtotal", billService:"Service (10%)", billTotal:"Total", tableWord:"Table",
+    billRequestBtn:"Request the bill", billRequestWaiting:"Waiter is bringing the bill…",
+    consentQuestion:"Should we remember your preferences?", consentYes:"Yes, remember", consentNo:"No, thanks",
+    forgetMeLink:"Forget me on this device", forgottenAlert:"Done — your data has been forgotten.",
+    confirmBillQuestion:"Call the waiter with the bill?", confirmCancel:"Cancel", confirmYes:"Yes",
+    forgetConfirmQuestion:"Forget you?", forgetConfirmSub:"Next time the waiter won't know your usual order.",
+    billClose:"Close",
+    updateBannerText:"A new menu version is available", updateBannerBtn:"Update",
+    reviewPrompt:"Leave a review" },
+  kk: { tagline:"ЦИФРЛЫҚ МӘЗІР", svc:"Қызмет көрсету ақысы 10%. Бағалар теңгемен.", kitchen:"Ас үй", bar:"Бар", search:"Тағам немесе сусын іздеу…", enjoy:"Ас болсын!", scanNote:"Кез келген уақытта мәзірге оралу үшін үстелдегі QR-кодты сканерлеңіз.", currency:" тг.", soldOut:"қазір жоқ",
+    callWaiterBtn:"Тапсырыс бергім келеді", callWaiterWaiting:"Даяшы жолда…",
+    billBtn:"Алдын ала чек", billTitle:"Алдын ала чек", billNotFiscal:"Фискалдық чек емес", billEmpty:"Әзірге тапсырыс берілген тағам жоқ",
+    billSum:"Сома", billService:"Қызмет көрсету (10%)", billTotal:"Барлығы", tableWord:"Үстел",
+    billRequestBtn:"Есеп сұрау", billRequestWaiting:"Даяшы есепті әкеле жатыр…",
+    consentQuestion:"Сіздің қалауыңызды есте сақтайық па?", consentYes:"Иә, есте сақтау", consentNo:"Жоқ, рахмет",
+    forgetMeLink:"Бұл құрылғыда мені ұмыту", forgottenAlert:"Дайын — деректер ұмытылды.",
+    confirmBillQuestion:"Даяшыны есеппен шақыру керек пе?", confirmCancel:"Бас тарту", confirmYes:"Иә",
+    forgetConfirmQuestion:"Сізді ұмыту керек пе?", forgetConfirmSub:"Келесі жолы даяшы сіздің әдеттегі тапсырысыңызды білмейді.",
+    billClose:"Жабу",
+    updateBannerText:"Мәзірдің жаңа нұсқасы қолжетімді", updateBannerBtn:"Жаңарту",
+    reviewPrompt:"Пікір қалдыру" }
 };
 
 let currentMode = 'food';
@@ -340,7 +406,7 @@ const HARD_EXPIRE_MS = 12 * 60 * 60 * 1000;
 const sessionStartedAt = Date.now();
 let sessionExpired = false;
 let pendingConfirmCallback = null;
-const APP_VERSION = "6";
+const APP_VERSION = "8";
 let updateDismissed = false;
 
 function toggleLangMenu(){
@@ -372,6 +438,20 @@ function applyStaticStrings(){
   document.getElementById('search').placeholder = s.search;
   document.getElementById('enjoyText').textContent = s.enjoy;
   document.getElementById('scanNoteText').textContent = s.scanNote;
+  document.getElementById('reviewPromptText').textContent = s.reviewPrompt;
+
+  if(!callCooldown) document.getElementById('callWaiterLabel').textContent = s.callWaiterBtn;
+  document.getElementById('callBillLabel').textContent = s.billBtn;
+  document.getElementById('confirmCancelBtn').textContent = s.confirmCancel;
+  document.getElementById('billCloseText').textContent = s.billClose;
+  if(!document.getElementById('billRequestBtn').disabled) document.getElementById('billRequestBtn').textContent = s.billRequestBtn;
+  document.getElementById('consentText').textContent = s.consentQuestion;
+  document.getElementById('consentNoBtn').textContent = s.consentNo;
+  document.getElementById('consentYesBtn').textContent = s.consentYes;
+  document.getElementById('forgetMeLinkText').textContent = s.forgetMeLink;
+  document.getElementById('updateBannerText').textContent = s.updateBannerText;
+  document.getElementById('updateBannerBtn').textContent = s.updateBannerBtn;
+  if(currentBill) renderBill();
 }
 
 function fmtPrice(item){
@@ -566,14 +646,14 @@ function callWaiter(){
   const label = document.getElementById('callWaiterLabel');
   btn.disabled = true;
   let seconds = 20;
-  label.textContent = 'Официант уже идёт…';
+  label.textContent = STR[LANG].callWaiterWaiting;
   const tick = setInterval(() => {
     seconds--;
     if(seconds <= 0){
       clearInterval(tick);
       callCooldown = false;
       btn.disabled = false;
-      label.textContent = 'Хочу сделать заказ';
+      label.textContent = STR[LANG].callWaiterBtn;
     }
   }, 1000);
 }
@@ -591,31 +671,32 @@ function closeBill(){
 
 function renderBill(){
   const body = document.getElementById('billBody');
+  const s = STR[LANG];
   if(!currentBill || !currentBill.hasOrders){
-    body.innerHTML = `<h2>Предварительный чек</h2><div class="bill-empty">Пока нет заказанных позиций</div>`;
+    body.innerHTML = `<h2>${s.billTitle}</h2><div class="bill-empty">${s.billEmpty}</div>`;
     return;
   }
-  let html = `<h2>Предварительный чек</h2><div class="sub">GO pub · Стол ${TABLE}</div><div class="sub" style="margin-top:-10px;">Не является фискальным чеком</div>`;
+  let html = `<h2>${s.billTitle}</h2><div class="sub">GO pub · ${s.tableWord} ${TABLE}</div><div class="sub" style="margin-top:-10px;">${s.billNotFiscal}</div>`;
   currentBill.items.forEach(i => {
     const price = parseInt(String(i.price).replace(/[^\d]/g,''),10) || 0;
     html += `<div class="bill-line"><span class="n">${i.qty} × ${i.name}</span><span>${(price*i.qty).toLocaleString('ru-RU')}</span></div>`;
   });
-  html += `<div class="bill-total-row"><span>Сумма</span><span>${currentBill.subtotal.toLocaleString('ru-RU')} тг</span></div>
-    <div class="bill-total-row"><span>Обслуживание (10%)</span><span>${currentBill.service.toLocaleString('ru-RU')} тг</span></div>
-    <div class="bill-total"><span>Итого</span><span>${currentBill.total.toLocaleString('ru-RU')} тг</span></div>`;
+  html += `<div class="bill-total-row"><span>${s.billSum}</span><span>${currentBill.subtotal.toLocaleString('ru-RU')} тг</span></div>
+    <div class="bill-total-row"><span>${s.billService}</span><span>${currentBill.service.toLocaleString('ru-RU')} тг</span></div>
+    <div class="bill-total"><span>${s.billTotal}</span><span>${currentBill.total.toLocaleString('ru-RU')} тг</span></div>`;
   body.innerHTML = html;
 }
 
 function requestBillFromModal(){
   if(!TABLE || sessionExpired) return;
-  showConfirm("Позвать официанта с расчётом?", null, () => {
+  showConfirm(STR[LANG].confirmBillQuestion, null, () => {
     if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
       liveSocket.send(JSON.stringify({type:"request_bill", table: TABLE}));
     }
     const btn = document.getElementById('billRequestBtn');
     btn.disabled = true;
-    btn.textContent = 'Официант уже несёт счёт…';
-    setTimeout(() => { btn.disabled = false; btn.textContent = 'Попросить расчёт'; }, 30000);
+    btn.textContent = STR[LANG].billRequestWaiting;
+    setTimeout(() => { btn.disabled = false; btn.textContent = STR[LANG].billRequestBtn; }, 30000);
 
     const consent = localStorage.getItem('gopub_guest_consent');
     if(consent === null){
@@ -654,7 +735,9 @@ function showConfirm(question, sub, onYes, danger){
   const subEl = document.getElementById('confirmSub');
   if(sub){ subEl.textContent = sub; subEl.style.display = 'block'; }
   else { subEl.style.display = 'none'; }
-  document.getElementById('confirmOkBtn').className = 'confirm-ok' + (danger ? ' danger' : '');
+  const okBtn = document.getElementById('confirmOkBtn');
+  okBtn.className = 'confirm-ok' + (danger ? ' danger' : '');
+  okBtn.textContent = STR[LANG].confirmYes;
   pendingConfirmCallback = onYes;
   document.getElementById('confirmOverlay').classList.add('open');
 }
@@ -670,7 +753,7 @@ function confirmNo(){
 }
 
 function forgetMe(){
-  showConfirm("Забыть вас?", "В следующий раз официант не будет знать ваш обычный заказ.", () => {
+  showConfirm(STR[LANG].forgetConfirmQuestion, STR[LANG].forgetConfirmSub, () => {
     const deviceId = getOrCreateDeviceId();
     if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
       liveSocket.send(JSON.stringify({type:"forget_guest", deviceId}));
@@ -678,7 +761,7 @@ function forgetMe(){
     localStorage.removeItem('gopub_guest_consent');
     localStorage.removeItem('gopub_device_id'); // rotate to a fresh, unlinked id
     document.getElementById('forgetMeRow').style.display = 'none';
-    alert('Готово — данные забыты.');
+    alert(STR[LANG].forgottenAlert);
   }, true);
 }
 
