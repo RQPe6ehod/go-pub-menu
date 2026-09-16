@@ -237,6 +237,7 @@ const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
 const ROLE = "cook";
 let socket, allOrders = [], newIds = new Set();
 let allHistory = [];
+let rooms = [{id:"default", name:"Зал", tableCount:20}];
 let boardMode = 'active';
 let staffId = null;
 let staffName = "";
@@ -266,6 +267,7 @@ function setStaffPin(p){ localStorage.setItem('gopub_staff_pin_'+ROLE, p); }
 function clearStaffPin(){ localStorage.removeItem('gopub_staff_pin_'+ROLE); }
 
 let triedDefaultPin = false;
+let unknownStaffRetries = 0;
 let locked = false;
 
 function closeAnyOpenSheets(){
@@ -351,9 +353,14 @@ function connect(){
   socket.onerror = () => socket.close();
   socket.onmessage = (evt) => {
     const msg = JSON.parse(evt.data);
-    if(msg.type === "auth_ok"){ hideLock(); setStaffPin(pin); }
+    if(msg.type === "auth_ok"){ hideLock(); setStaffPin(pin); unknownStaffRetries = 0; }
     if(msg.type === "auth_error"){
       if(msg.reason === "unknown_staff"){
+        if(unknownStaffRetries < 1){
+          unknownStaffRetries++;
+          setTimeout(connect, 1200);
+          return;
+        }
         localStorage.removeItem('gopub_staff_id_'+ROLE);
         localStorage.removeItem('gopub_staff_name_'+ROLE);
         clearStaffPin();
@@ -375,6 +382,7 @@ function connect(){
     if(msg.type === "state"){
       allOrders = msg.orders;
       allHistory = msg.history || [];
+      rooms = msg.rooms || rooms;
       unavailable = msg.unavailable || {};
       inventory = (msg.inventory && msg.inventory[DEST]) || {};
       if(msg.menu && msg.menu[DEST]) KITCHEN_MENU = msg.menu[DEST];
@@ -402,6 +410,16 @@ function setConn(on){
   el.textContent = on ? "в сети" : "нет связи — переподключение…";
   el.className = "conn " + (on?"on":"off");
 }
+function tableLabel(globalNum){
+  if(rooms.length <= 1) return String(globalNum);
+  let offset = 0;
+  for(const room of rooms){
+    if(globalNum <= offset + room.tableCount) return `${room.name} · ${globalNum - offset}`;
+    offset += room.tableCount;
+  }
+  return String(globalNum);
+}
+
 function ding(msg){
   if(msg.kind === "low_stock"){
     if(navigator.vibrate) navigator.vibrate([120,60,120]);
@@ -415,7 +433,7 @@ function ding(msg){
   if(msg.cancelled) return;
   if(navigator.vibrate) navigator.vibrate([250,100,250,100,250]);
   if("Notification" in window && Notification.permission === "granted"){
-    new Notification("Новый заказ — стол " + msg.table);
+    new Notification("Новый заказ — стол " + tableLabel(msg.table));
   }
   newIds.add(msg.orderId);
 }
@@ -428,7 +446,7 @@ function render(){
   active.slice().sort((a,b)=>a.createdAt-b.createdAt).forEach(o => {
     const isNew = newIds.has(o.id);
     html += `<div class="ticket ${isNew?'new':''}">
-      <div class="top"><span class="table-badge">Стол ${o.table}</span><span class="time">${timeAgo(o.createdAt)}</span></div>`;
+      <div class="top"><span class="table-badge">Стол ${tableLabel(o.table)}</span><span class="time">${timeAgo(o.createdAt)}</span></div>`;
     if(o.waiterName) html += `<div class="line" style="font-size:12px;color:var(--muted);border-bottom:none;padding:0 0 6px;">Официант: ${o.waiterName}</div>`;
     o.kitchenItems.forEach(i => {
       html += `<div class="line"><b>${i.qty}×</b> ${i.name}</div>`;
@@ -479,7 +497,7 @@ function renderHistory(){
     const day = dayLabel(o.servedAt);
     if(day !== lastDay){ html += `<div class="day-header">${day}</div>`; lastDay = day; }
     html += `<div class="ticket">
-      <div class="top"><span class="table-badge">Стол ${o.table}</span><span class="time">${new Date(o.servedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span></div>`;
+      <div class="top"><span class="table-badge">Стол ${tableLabel(o.table)}</span><span class="time">${new Date(o.servedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span></div>`;
     o.kitchenItems.forEach(i => {
       html += `<div class="line">${i.qty}× ${i.name}</div>`;
       if(i.note) html += `<div class="item-note" style="animation:none;"><span class="ico">💬</span><span>${i.note}</span></div>`;
@@ -721,7 +739,7 @@ async function setupPush(){
 }
 
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
-const APP_VERSION = "6";
+const APP_VERSION = "8";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;

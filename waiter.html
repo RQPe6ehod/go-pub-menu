@@ -252,6 +252,11 @@
   </div>
 </div>
 
+<div id="notifPermBanner" style="display:none; position:sticky; top:0; z-index:149; background:var(--red); color:#fff; padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; font-weight:700;">
+  <span>Уведомления выключены — вы можете пропустить заказ</span>
+  <button onclick="requestNotifPermission()" style="background:#fff; color:var(--red); border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:12px;">Включить</button>
+</div>
+
 <header>
   <div class="header-top">
     <h1>GO pub · Официант <span id="staffNameTag" onclick="openNamePrompt()" style="color:var(--gold); font-weight:600; cursor:pointer;"></span></h1>
@@ -384,6 +389,7 @@ function setStaffPin(p){ localStorage.setItem('gopub_staff_pin_'+ROLE, p); }
 function clearStaffPin(){ localStorage.removeItem('gopub_staff_pin_'+ROLE); }
 
 let triedDefaultPin = false;
+let unknownStaffRetries = 0;
 let locked = false;
 
 function closeAnyOpenOverlays(){
@@ -474,9 +480,17 @@ function connect(){
   socket.onerror = () => socket.close();
   socket.onmessage = (evt) => {
     const msg = JSON.parse(evt.data);
-    if(msg.type === "auth_ok"){ hideLock(); setStaffPin(pin); }
+    if(msg.type === "auth_ok"){ hideLock(); setStaffPin(pin); unknownStaffRetries = 0; }
     if(msg.type === "auth_error"){
       if(msg.reason === "unknown_staff"){
+        if(unknownStaffRetries < 1){
+          // Could be a one-off hiccup (e.g. the backend waking up from idle) —
+          // retry once before treating this as a real deregistration and
+          // wiping a device binding that might still be perfectly valid.
+          unknownStaffRetries++;
+          setTimeout(connect, 1200);
+          return;
+        }
         localStorage.removeItem('gopub_staff_id_'+ROLE);
         localStorage.removeItem('gopub_staff_name_'+ROLE);
         clearStaffPin();
@@ -542,6 +556,7 @@ function alertReady(msg){
     } else {
       alert(text);
     }
+    setMode('board');
     return;
   }
   if(msg.kind === "cancel_approved" || msg.kind === "cancel_rejected" || msg.kind === "cancel_already_resolved"){
@@ -555,6 +570,7 @@ function alertReady(msg){
     } else {
       alert(text);
     }
+    setMode('board');
     return;
   }
   if(navigator.vibrate) navigator.vibrate([200,80,200]);
@@ -1072,8 +1088,31 @@ async function setupPush(){
   }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
 }
 
-if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
-const APP_VERSION = "8";
+function updateNotifPermBanner(){
+  const banner = document.getElementById('notifPermBanner');
+  if(!banner) return;
+  if(!("Notification" in window) || Notification.permission === "granted"){
+    banner.style.display = 'none';
+    return;
+  }
+  const textEl = banner.querySelector('span');
+  const btnEl = banner.querySelector('button');
+  if(Notification.permission === "denied"){
+    textEl.textContent = "Уведомления заблокированы — включите вручную в настройках сайта в браузере";
+    btnEl.style.display = 'none';
+  } else {
+    textEl.textContent = "Уведомления выключены — вы можете пропустить заказ";
+    btnEl.style.display = 'inline-block';
+  }
+  banner.style.display = 'flex';
+}
+function requestNotifPermission(){
+  if(!("Notification" in window)) return;
+  Notification.requestPermission().then(updateNotifPermBanner);
+}
+if("Notification" in window && Notification.permission==="default") Notification.requestPermission().then(updateNotifPermBanner);
+updateNotifPermBanner();
+const APP_VERSION = "10";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
