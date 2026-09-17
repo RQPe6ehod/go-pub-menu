@@ -395,7 +395,7 @@ const HARD_EXPIRE_MS = 12 * 60 * 60 * 1000;
 const sessionStartedAt = Date.now();
 let sessionExpired = false;
 let pendingConfirmCallback = null;
-const APP_VERSION = "10";
+const APP_VERSION = "11";
 let updateDismissed = false;
 
 function toggleLangMenu(){
@@ -562,7 +562,7 @@ function connectLive(){
   try{ socket = new WebSocket(WS_URL); }catch(e){ return; }
   liveSocket = socket;
   socket.onopen = () => {
-    socket.send(JSON.stringify({type:"hello", role:"guest"}));
+    socket.send(JSON.stringify({type:"hello", role:"guest", table: TABLE}));
     if(TABLE) activateTableUI();
     else if(QR_ID) socket.send(JSON.stringify({type:"resolve_qr", qrId: QR_ID}));
   };
@@ -576,6 +576,11 @@ function connectLive(){
       renderMain();
       onSearch();
       setupObserver();
+    }
+    if(msg.type === "table_closed"){
+      const btn = document.getElementById('billRequestBtn');
+      if(btn){ btn.disabled = false; btn.textContent = STR[LANG].billRequestBtn; }
+      if(currentBill){ currentBill = null; } // stale — next open will fetch the fresh (served) state
     }
     if(msg.type === "qr_table" && msg.qrId === QR_ID){
       if(msg.table){ TABLE = msg.table; activateTableUI(); }
