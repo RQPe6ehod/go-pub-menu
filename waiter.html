@@ -84,6 +84,10 @@
   .qty{ display:flex; align-items:center; gap:8px; }
   .qty button{ width:32px; height:32px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:17px; }
   .qty span{ min-width:16px; text-align:center; font-weight:600; }
+  .item-variants{ flex-direction:column; align-items:stretch; gap:6px; }
+  .item-variants .name{ font-size:14.5px; margin-bottom:2px; }
+  .variant-row{ display:flex; align-items:center; gap:10px; padding-left:6px; }
+  .variant-row .price{ min-width:56px; }
 
   .dest-tabs{ display:flex; gap:6px; margin-bottom:12px; }
   .guest-history-banner{
@@ -747,7 +751,14 @@ function setMode(m){
 }
 
 function catCount(dest, cat){
-  return cat.items.reduce((s,item) => s + (cart[dest+"|"+item.name.ru] ? cart[dest+"|"+item.name.ru].qty : 0), 0);
+  return cat.items.reduce((s,item) => {
+    const name = item.name.ru;
+    if(item.price2){
+      const prices = [item.price, item.price2, item.price3].filter(Boolean);
+      return s + prices.reduce((s2,p) => s2 + (cart[dest+"|"+name+"|"+p] ? cart[dest+"|"+name+"|"+p].qty : 0), 0);
+    }
+    return s + (cart[dest+"|"+name] ? cart[dest+"|"+name].qty : 0);
+  }, 0);
 }
 
 function renderDestTabs(){
@@ -811,17 +822,39 @@ function renderMenu(){
       <div class="accordion-body ${isOpen?'open':''}">`;
     cat.items.forEach(it => {
       const name = it.name.ru;
-      const price = it.price;
       const key = activeDest+"|"+name;
-      const qty = cart[key] ? cart[key].qty : 0;
       const unavail = unavailable[key];
       if(unavail){
         html += `<div class="item disabled" onclick="showUnavailReason('${name.replace(/'/g,"\\'")}','${(unavail.comment||'').replace(/'/g,"\\'")}')">
           <div class="name">${name} <span class="unavail-tag">нет в наличии</span></div>
-          <div class="price">${price}</div>
+          <div class="price">${it.price}</div>
         </div>`;
         return;
       }
+      if(it.price2){
+        // Two (or three) pour/size variants of the same dish — each needs
+        // its own price and its own quantity, tracked as separate cart lines.
+        const variants = [it.price, it.price2, it.price3].filter(Boolean);
+        html += `<div class="item item-variants"><div class="name">${name}</div>`;
+        variants.forEach(price => {
+          const vKey = activeDest+"|"+name+"|"+price;
+          const qty = cart[vKey] ? cart[vKey].qty : 0;
+          const note = cart[vKey] ? cart[vKey].note : "";
+          html += `<div class="variant-row">
+            <div class="price">${price}</div>
+            <button class="note-btn ${note?'has-note':''}" onclick="editNote('${activeDest}','${name.replace(/'/g,"\\'")}','${price}','${price}')" title="Комментарий">💬</button>
+            <div class="qty">
+              <button onclick="changeQty('${activeDest}','${name.replace(/'/g,"\\'")}',-1,'${price}','${price}')">−</button>
+              <span id="qty-${activeDest}-${cssSafe(name)}-${cssSafe(price)}">${qty}</span>
+              <button onclick="changeQty('${activeDest}','${name.replace(/'/g,"\\'")}',1,'${price}','${price}')">+</button>
+            </div>
+          </div>`;
+        });
+        html += `</div>`;
+        return;
+      }
+      const price = it.price;
+      const qty = cart[key] ? cart[key].qty : 0;
       const note = cart[key] ? cart[key].note : "";
       html += `<div class="item">
         <div class="name">${name}</div>
@@ -840,15 +873,15 @@ function renderMenu(){
 }
 function cssSafe(s){ return s.replace(/[^a-zA-Zа-яА-Я0-9]/g,'_'); }
 
-function changeQty(dest, name, delta, price){
-  const key = dest+"|"+name;
+function changeQty(dest, name, delta, price, variantKey){
+  const key = dest+"|"+name+(variantKey?"|"+variantKey:"");
   const current = cart[key] ? cart[key].qty : 0;
   const existingPrice = cart[key] ? cart[key].price : price;
   const existingNote = cart[key] ? cart[key].note : "";
   const next = Math.max(0, current + delta);
   if(next===0) delete cart[key];
   else cart[key] = { name, qty: next, dest, price: existingPrice, note: existingNote };
-  const span = document.getElementById('qty-'+dest+'-'+cssSafe(name));
+  const span = document.getElementById('qty-'+dest+'-'+cssSafe(name)+(variantKey?'-'+cssSafe(variantKey):''));
   if(span) span.textContent = next;
   renderChips();
   updateCartBar();
@@ -858,8 +891,8 @@ function showUnavailReason(name, comment){
   alert(name + " временно недоступно" + (comment ? ":\n" + comment : "."));
 }
 
-function editNote(dest, name, price){
-  const key = dest+"|"+name;
+function editNote(dest, name, price, variantKey){
+  const key = dest+"|"+name+(variantKey?"|"+variantKey:"");
   if(!cart[key]){ alert("Сначала добавьте позицию (нажмите +), потом можно оставить комментарий."); return; }
   const current = cart[key].note || "";
   const note = prompt("Комментарий к позиции «" + name + "» (например: без перца, без молока):", current);
@@ -1256,7 +1289,7 @@ function requestNotifPermission(){
 }
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission().then(updateNotifPermBanner);
 updateNotifPermBanner();
-const APP_VERSION = "18";
+const APP_VERSION = "19";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
