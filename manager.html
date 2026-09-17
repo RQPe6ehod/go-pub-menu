@@ -139,16 +139,19 @@
   .icon-btn.copied{ border-color:var(--green); color:var(--green); }
 
   .qr-overlay{ position:fixed; inset:0; background:rgba(14,29,23,.92); z-index:95; display:none; align-items:center; justify-content:center; padding:24px; }
-  .qr-overlay.open{ display:flex; }
-  .qr-box{ background:#fff; border-radius:16px; padding:24px; text-align:center; max-width:320px; width:100%; }
+  @keyframes fadeIn{ from{ opacity:0; } to{ opacity:1; } }
+  @keyframes popIn{ from{ opacity:0; transform:scale(.92); } to{ opacity:1; transform:scale(1); } }
+  @keyframes slideUpIn{ from{ opacity:0; transform:translateY(24px); } to{ opacity:1; transform:translateY(0); } }
+  .qr-overlay.open{ display:flex; animation: fadeIn .2s ease; }
+  .qr-box{ background:#fff; border-radius:16px; padding:24px; text-align:center; max-width:320px; width:100%; animation: popIn .25s cubic-bezier(.2,1,.3,1); }
   .qr-box img{ width:220px; height:220px; margin-bottom:14px; }
   .qr-box .role{ font-family:'Fraunces',serif; color:#1b1b1b; font-size:16px; margin-bottom:4px; }
   .qr-box .link{ font-size:11px; color:#777; word-break:break-all; margin-bottom:16px; }
   .qr-box button{ width:100%; padding:12px; border:none; border-radius:10px; background:var(--gold); color:#1b1b1b; font-weight:700; }
 
   .confirm-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:210; display:none; align-items:center; justify-content:center; padding:24px; }
-  .confirm-overlay.open{ display:flex; }
-  .confirm-box{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px 22px; max-width:300px; width:100%; text-align:center; }
+  .confirm-overlay.open{ display:flex; animation: fadeIn .2s ease; }
+  .confirm-box{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px 22px; max-width:300px; width:100%; text-align:center; animation: popIn .25s cubic-bezier(.2,1,.3,1); }
   .confirm-brand{ font-family:'Fraunces',serif; color:var(--gold); font-size:12px; font-weight:700; margin-bottom:12px; letter-spacing:.06em; text-transform:uppercase; }
   .confirm-question{ font-size:16px; font-weight:700; color:var(--cream); margin-bottom:6px; }
   .confirm-sub{ font-size:12.5px; color:var(--muted); margin-bottom:20px; line-height:1.4; display:none; }
@@ -159,8 +162,8 @@
   .confirm-ok.danger{ background:var(--red); color:#fff; }
 
   .receipt-overlay{ position:fixed; inset:0; background:rgba(14,29,23,.92); z-index:96; display:none; align-items:center; justify-content:center; padding:20px; }
-  .receipt-overlay.open{ display:flex; }
-  .receipt-overlay .receipt-panel{ width:100%; max-width:400px; background:#fff; color:#111; border-radius:16px; max-height:85vh; display:flex; flex-direction:column; font-family:'Inter',monospace; overflow-y:auto; }
+  .receipt-overlay.open{ display:flex; animation: fadeIn .22s ease; }
+  .receipt-overlay .receipt-panel{ width:100%; max-width:400px; background:#fff; color:#111; border-radius:16px; max-height:85vh; display:flex; flex-direction:column; font-family:'Inter',monospace; overflow-y:auto; animation: popIn .28s cubic-bezier(.2,1,.3,1); }
   .receipt-overlay .receipt-body{ padding:22px 24px 6px; }
   .receipt-overlay .receipt-body h2{ text-align:center; font-family:'Fraunces',serif; font-size:22px; margin:0 0 4px; }
   .receipt-overlay .sub{ text-align:center; font-size:12px; color:#666; margin-bottom:16px; }
@@ -207,8 +210,8 @@
   .hist-row .t{ color:var(--muted); }
   .hist-row .p{ font-family:'Fraunces',serif; color:var(--gold); font-weight:600; }
 
-  .lock{ position:fixed; inset:0; background:var(--bg-deep); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px; }
-  .lock-box{ width:100%; max-width:300px; text-align:center; }
+  .lock{ position:fixed; inset:0; background:var(--bg-deep); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px; animation: fadeIn .25s ease; }
+  .lock-box{ width:100%; max-width:300px; text-align:center; animation: popIn .3s cubic-bezier(.2,1,.3,1); }
   .lock-box h2{ font-family:'Fraunces',serif; color:var(--cream); margin-bottom:6px; }
   .lock-box p{ color:var(--muted); font-size:13px; margin-bottom:18px; }
   .lock-box input{ width:100%; text-align:center; font-size:24px; letter-spacing:8px; padding:14px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); margin-bottom:12px; }
@@ -252,7 +255,7 @@
   </div>
 </div>
 
-<div id="updateBanner" style="display:none; position:sticky; top:0; z-index:150; background:var(--gold); color:var(--bg-deep); padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; font-weight:700;">
+<div id="updateBanner" style="display:none; position:sticky; top:0; z-index:150; background:var(--gold); color:var(--bg-deep); padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; font-weight:700; animation: popIn .3s cubic-bezier(.2,1,.3,1);">
   <span>Доступна новая версия приложения</span>
   <div style="display:flex; gap:8px; align-items:center;">
     <button onclick="applyUpdate()" style="background:var(--bg-deep); color:var(--gold); border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:12px;">Обновить</button>
@@ -1673,7 +1676,7 @@ async function setupPush(){
   }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
 }
 
-const APP_VERSION = "12";
+const APP_VERSION = "13";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;

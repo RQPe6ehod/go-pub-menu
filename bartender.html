@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>GO pub — Бар</title>
-<link rel="manifest" id="manifestLink" href="/manifest-bartender.json">
+<link rel="manifest" id="manifestLink" href="/manifest-cook.json">
 <meta name="theme-color" content="#E0954A">
 <link rel="apple-touch-icon" href="/icons/icon-bartender-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -30,6 +30,9 @@
   .ticket{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; }
   .ticket.new{ animation: pulse 1.4s ease-in-out 2; border-color: var(--gold); }
   @keyframes pulse{ 0%,100%{ box-shadow:0 0 0 rgba(63,169,224,0);} 50%{ box-shadow:0 0 0 8px rgba(63,169,224,.15);} }
+  @keyframes fadeIn{ from{ opacity:0; } to{ opacity:1; } }
+  @keyframes popIn{ from{ opacity:0; transform:scale(.92); } to{ opacity:1; transform:scale(1); } }
+  @keyframes slideUpIn{ from{ opacity:0; transform:translateY(24px); } to{ opacity:1; transform:translateY(0); } }
   .ticket .top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
   .table-badge{ font-family:'Fraunces',serif; font-weight:700; font-size:22px; color:var(--gold); }
   .time{ font-size:11px; color:var(--muted); }
@@ -81,8 +84,8 @@
   .day-header:first-child{ margin-top:0; }
 
   .sheet{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:90; display:none; align-items:flex-end; justify-content:center; }
-  .sheet.open{ display:flex; }
-  .sheet-panel{ width:100%; max-width:520px; background:var(--bg); border-radius:20px 20px 0 0; max-height:85vh; display:flex; flex-direction:column; }
+  .sheet.open{ display:flex; animation: fadeIn .22s ease; }
+  .sheet-panel{ width:100%; max-width:520px; background:var(--bg); border-radius:20px 20px 0 0; max-height:85vh; display:flex; flex-direction:column; animation: slideUpIn .28s cubic-bezier(.2,1,.3,1); }
   .sheet-head{ padding:18px 20px 10px; border-bottom:1px solid var(--line); }
   .sheet-head h2{ font-family:'Fraunces',serif; font-size:18px; margin:0 0 4px; }
   .sheet-head p{ font-size:12px; color:var(--muted); margin:0; }
@@ -101,16 +104,16 @@
   .sheet-actions .cancel{ background:transparent; border:1px solid var(--line); color:var(--cream); }
   .sheet-actions .confirm{ background:var(--gold); color:var(--bg-deep); }
 
-  .lock{ position:fixed; inset:0; background:var(--bg-deep); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px; }
-  .lock-box{ width:100%; max-width:300px; text-align:center; }
+  .lock{ position:fixed; inset:0; background:var(--bg-deep); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px; animation: fadeIn .25s ease; }
+  .lock-box{ width:100%; max-width:300px; text-align:center; animation: popIn .3s cubic-bezier(.2,1,.3,1); }
   .lock-box h2{ font-family:'Fraunces',serif; color:var(--cream); margin-bottom:6px; }
   .lock-box p{ color:var(--muted); font-size:13px; margin-bottom:18px; }
   .lock-box input{ width:100%; text-align:center; font-size:24px; letter-spacing:8px; padding:14px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); margin-bottom:12px; }
   .lock-box button{ width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; }
 
   .confirm-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:210; display:none; align-items:center; justify-content:center; padding:24px; }
-  .confirm-overlay.open{ display:flex; }
-  .confirm-box{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px 22px; max-width:300px; width:100%; text-align:center; }
+  .confirm-overlay.open{ display:flex; animation: fadeIn .2s ease; }
+  .confirm-box{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px 22px; max-width:300px; width:100%; text-align:center; animation: popIn .25s cubic-bezier(.2,1,.3,1); }
   .confirm-brand{ font-family:'Fraunces',serif; color:var(--gold); font-size:12px; font-weight:700; margin-bottom:12px; letter-spacing:.06em; text-transform:uppercase; }
   .confirm-question{ font-size:16px; font-weight:700; color:var(--cream); margin-bottom:6px; }
   .confirm-sub{ font-size:12.5px; color:var(--muted); margin-bottom:20px; line-height:1.4; display:none; }
@@ -164,7 +167,7 @@
   </div>
 </div>
 
-<div id="updateBanner" style="display:none; position:sticky; top:0; z-index:150; background:var(--gold); color:var(--bg-deep); padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; font-weight:700;">
+<div id="updateBanner" style="display:none; position:sticky; top:0; z-index:150; background:var(--gold); color:var(--bg-deep); padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; font-weight:700; animation: popIn .3s cubic-bezier(.2,1,.3,1);">
   <span>Доступна новая версия приложения</span>
   <div style="display:flex; gap:8px; align-items:center;">
     <button onclick="applyUpdate()" style="background:var(--bg-deep); color:var(--gold); border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:12px;">Обновить</button>
@@ -262,7 +265,7 @@ const DEST = "bar";
   staffId = localStorage.getItem('gopub_staff_id_'+ROLE);
   if(staffId){
     const link = document.getElementById('manifestLink');
-    if(link) link.href = '/manifest-bartender.json?staff=' + encodeURIComponent(staffId);
+    if(link) link.href = '/manifest-cook.json?staff=' + encodeURIComponent(staffId);
   }
 })();
 
@@ -743,7 +746,7 @@ async function setupPush(){
 }
 
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
-const APP_VERSION = "9";
+const APP_VERSION = "10";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
