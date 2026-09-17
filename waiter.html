@@ -1043,6 +1043,16 @@ function installApp(){
     deferredInstallPrompt.prompt();
     deferredInstallPrompt.userChoice.finally(() => { deferredInstallPrompt = null; });
   } else if(isIos()){
+    // iOS's native "Add to Home Screen" bookmarks whatever URL is in the
+    // address bar at that exact moment — it does NOT read the manifest's
+    // start_url. Put the staff id back in the visible URL right now, just
+    // before showing the instructions, so the resulting icon always opens
+    // straight back into this staff member's account.
+    if(staffId){
+      const url = new URL(window.location.href);
+      url.searchParams.set('staff', staffId);
+      window.history.replaceState({}, '', url.pathname + url.search);
+    }
     document.getElementById('iosLock').style.display = 'flex';
   } else {
     alert("Откройте меню браузера и выберите «Добавить на главный экран» / «Установить приложение».");
@@ -1186,7 +1196,7 @@ function requestNotifPermission(){
 }
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission().then(updateNotifPermBanner);
 updateNotifPermBanner();
-const APP_VERSION = "15";
+const APP_VERSION = "16";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;

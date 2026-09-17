@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>GO pub — Бар</title>
-<link rel="manifest" id="manifestLink" href="/manifest-bartender.json">
+<link rel="manifest" id="manifestLink" href="/manifest-cook.json">
 <meta name="theme-color" content="#E0954A">
 <link rel="apple-touch-icon" href="/icons/icon-bartender-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -265,7 +265,7 @@ const DEST = "bar";
   staffId = localStorage.getItem('gopub_staff_id_'+ROLE);
   if(staffId){
     const link = document.getElementById('manifestLink');
-    if(link) link.href = '/manifest-bartender.json?staff=' + encodeURIComponent(staffId);
+    if(link) link.href = '/manifest-cook.json?staff=' + encodeURIComponent(staffId);
   }
 })();
 
@@ -657,6 +657,11 @@ function installApp(){
     deferredInstallPrompt.prompt();
     deferredInstallPrompt.userChoice.finally(() => { deferredInstallPrompt = null; });
   } else if(isIos()){
+    if(staffId){
+      const url = new URL(window.location.href);
+      url.searchParams.set('staff', staffId);
+      window.history.replaceState({}, '', url.pathname + url.search);
+    }
     document.getElementById('iosLock').style.display = 'flex';
   } else {
     alert("Откройте меню браузера и выберите «Добавить на главный экран» / «Установить приложение».");
@@ -746,7 +751,7 @@ async function setupPush(){
 }
 
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
-const APP_VERSION = "10";
+const APP_VERSION = "11";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;

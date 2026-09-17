@@ -657,6 +657,11 @@ function installApp(){
     deferredInstallPrompt.prompt();
     deferredInstallPrompt.userChoice.finally(() => { deferredInstallPrompt = null; });
   } else if(isIos()){
+    if(staffId){
+      const url = new URL(window.location.href);
+      url.searchParams.set('staff', staffId);
+      window.history.replaceState({}, '', url.pathname + url.search);
+    }
     document.getElementById('iosLock').style.display = 'flex';
   } else {
     alert("Откройте меню браузера и выберите «Добавить на главный экран» / «Установить приложение».");
@@ -746,7 +751,7 @@ async function setupPush(){
 }
 
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
-const APP_VERSION = "10";
+const APP_VERSION = "11";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
