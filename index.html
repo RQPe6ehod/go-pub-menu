@@ -40,13 +40,19 @@
     padding: 14px 20px 0;
   }
 
-  .lang-switch-wrap{ display:flex; justify-content:center; position:relative; margin-bottom: 8px; }
+  .lang-switch-wrap{ display:flex; justify-content:center; align-items:center; gap:10px; position:relative; margin-bottom: 8px; }
   .lang-btn{
     display:flex; align-items:center; gap:6px;
     background: var(--panel); border: 1px solid var(--line); color: var(--cream-dim);
     padding: 6px 14px; border-radius: 999px; font-size: 12.5px; font-weight:600; cursor:pointer;
   }
   .lang-btn svg{ opacity:.85; }
+  .review-btn{
+    display:flex; align-items:center; gap:6px;
+    background: var(--gold); color: var(--bg-deep);
+    padding: 6px 14px; border-radius: 999px; font-size: 12.5px; font-weight:700; cursor:pointer;
+    text-decoration:none; box-shadow: 0 3px 10px rgba(199,154,70,.35);
+  }
   .lang-menu{
     display:none; position:absolute; top: 36px; z-index:40;
     background: var(--panel); border:1px solid var(--line); border-radius: 12px;
@@ -245,6 +251,10 @@
       <button onclick="setLang('en')" data-lang="en">English</button>
       <button onclick="setLang('kk')" data-lang="kk">Қазақша</button>
     </div>
+    <a href="https://2gis.kz/astana/firm/70000001101686055/tab/reviews" target="_blank" rel="noopener" class="review-btn" id="reviewBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+      <span id="reviewBtnLabel">Оставить отзыв</span>
+    </a>
   </div>
 
   <a href="/contact.html" class="credit-link">by RQ Coding<svg class="credit-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/><path d="M14 4h6v6"/><path d="M10 14L20 4"/></svg></a>
@@ -338,7 +348,7 @@ const STR = {
     forgetMeLink:"Забыть меня на этом устройстве", forgottenAlert:"Готово — данные забыты.",
     confirmBillQuestion:"Позвать официанта с расчётом?", confirmCancel:"Отмена", confirmYes:"Да",
     forgetConfirmQuestion:"Забыть вас?", forgetConfirmSub:"В следующий раз официант не будет знать ваш обычный заказ.",
-    billClose:"Закрыть",
+    billClose:"Закрыть", reviewBtn:"Оставить отзыв",
     updateBannerText:"Доступна новая версия меню", updateBannerBtn:"Обновить" },
   en: { tagline:"DIGITAL MENU", svc:"10% service charge included. Prices in KZT.", kitchen:"Kitchen", bar:"Bar", search:"Search dish or drink…", enjoy:"Enjoy your meal!", scanNote:"Scan the QR code at your table to return to the menu anytime.", currency:" KZT", soldOut:"sold out",
     callWaiterBtn:"I'd like to order", callWaiterWaiting:"Waiter is on the way…",
@@ -350,7 +360,7 @@ const STR = {
     forgetMeLink:"Forget me on this device", forgottenAlert:"Done — your data has been forgotten.",
     confirmBillQuestion:"Call the waiter with the bill?", confirmCancel:"Cancel", confirmYes:"Yes",
     forgetConfirmQuestion:"Forget you?", forgetConfirmSub:"Next time the waiter won't know your usual order.",
-    billClose:"Close",
+    billClose:"Close", reviewBtn:"Leave a review",
     updateBannerText:"A new menu version is available", updateBannerBtn:"Update" },
   kk: { tagline:"ЦИФРЛЫҚ МӘЗІР", svc:"Қызмет көрсету ақысы 10%. Бағалар теңгемен.", kitchen:"Ас үй", bar:"Бар", search:"Тағам немесе сусын іздеу…", enjoy:"Ас болсын!", scanNote:"Кез келген уақытта мәзірге оралу үшін үстелдегі QR-кодты сканерлеңіз.", currency:" тг.", soldOut:"қазір жоқ",
     callWaiterBtn:"Тапсырыс бергім келеді", callWaiterWaiting:"Даяшы жолда…",
@@ -362,7 +372,7 @@ const STR = {
     forgetMeLink:"Бұл құрылғыда мені ұмыту", forgottenAlert:"Дайын — деректер ұмытылды.",
     confirmBillQuestion:"Даяшыны есеппен шақыру керек пе?", confirmCancel:"Бас тарту", confirmYes:"Иә",
     forgetConfirmQuestion:"Сізді ұмыту керек пе?", forgetConfirmSub:"Келесі жолы даяшы сіздің әдеттегі тапсырысыңызды білмейді.",
-    billClose:"Жабу",
+    billClose:"Жабу", reviewBtn:"Пікір қалдыру",
     updateBannerText:"Мәзірдің жаңа нұсқасы қолжетімді", updateBannerBtn:"Жаңарту" }
 };
 
@@ -380,7 +390,7 @@ const HARD_EXPIRE_MS = 12 * 60 * 60 * 1000;
 const sessionStartedAt = Date.now();
 let sessionExpired = false;
 let pendingConfirmCallback = null;
-const APP_VERSION = "8";
+const APP_VERSION = "9";
 let updateDismissed = false;
 
 function toggleLangMenu(){
@@ -424,6 +434,7 @@ function applyStaticStrings(){
   document.getElementById('forgetMeLinkText').textContent = s.forgetMeLink;
   document.getElementById('updateBannerText').textContent = s.updateBannerText;
   document.getElementById('updateBannerBtn').textContent = s.updateBannerBtn;
+  document.getElementById('reviewBtnLabel').textContent = s.reviewBtn;
   if(currentBill) renderBill();
 }
 
