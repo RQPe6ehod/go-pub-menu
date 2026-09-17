@@ -379,7 +379,8 @@
       <h2>QR-коды столов</h2>
       <p style="font-size:12px;color:var(--muted);margin:-6px 0 12px;">Напечатанные QR ничего не знают о номере стола сами по себе — отсканируйте каждый здесь и привяжите к залу и номеру. Позже можно переназначить.</p>
       <div id="qrList"></div>
-      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="openQrScanner()">+ Сканировать QR</button>
+      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:10px;" onclick="openQrScanner()">+ Сканировать QR</button>
+      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--gold); background:transparent; color:var(--gold); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="generateNewTableQr()">+ Создать новый QR для стола</button>
     </div>
 
     <div id="staffView" style="display:none">
@@ -607,6 +608,16 @@ function connect(){
     if(msg.type === "pin_changed"){ setPin(lastPinAttempt); alert("PIN обновлён. Запомните новый PIN — он понадобится при следующем входе."); }
     if(msg.type === "pin_change_error"){ alert("Не удалось изменить PIN — используйте 4-6 цифр."); }
     if(msg.type === "table_closed"){ showReceiptFromData(msg.receipt); }
+    if(msg.type === "qr_generated"){
+      const url = location.origin + '/index.html?qr=' + msg.qrId;
+      document.getElementById('qrRole').textContent = 'Новый QR для стола';
+      document.getElementById('qrLink').textContent = url;
+      document.getElementById('qrImg').src = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(url);
+      document.getElementById('qrOverlay').classList.add('open');
+    }
+    if(msg.type === "qr_assign_error" && msg.reason === "not_ours"){
+      alert("Этот QR-код не был выпущен нашей системой — его нельзя привязать к столу.");
+    }
     if(msg.type === "notify" && msg.kind === "cancel_request"){
       if(navigator.vibrate) navigator.vibrate([200,80,200,80,200]);
       if("Notification" in window && Notification.permission === "granted"){
@@ -1541,6 +1552,10 @@ function closeQr(){
   document.getElementById('qrOverlay').classList.remove('open');
 }
 
+function generateNewTableQr(){
+  socket.send(JSON.stringify({type:"generate_qr"}));
+}
+
 let currentReceipt = null;
 function openReceiptViewer(id){
   const r = closedTables.find(c => c.id === id);
@@ -1676,7 +1691,7 @@ async function setupPush(){
   }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
 }
 
-const APP_VERSION = "13";
+const APP_VERSION = "14";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
