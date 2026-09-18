@@ -3497,9 +3497,9 @@ function renderMenuEditor(){
       const name = item.name.ru;
       html += `<div class="menu-item-row">
         <span class="mi-name">${name}</span>
-        <span class="mi-price">${item.price} тг</span>
+        <span class="mi-price">${[item.price, item.price2, item.price3].filter(Boolean).join(' / ')} тг</span>
         <span class="mi-actions">
-          <button onclick="editMenuItemPrompt('${cat.id}','${item.id}','${name.replace(/'/g,"\\'")}','${item.price.replace(/'/g,"\\'")}','${(item.desc&&item.desc.ru||'').replace(/'/g,"\\'")}')">Изменить</button>
+          <button onclick="editMenuItemPrompt('${cat.id}','${item.id}','${name.replace(/'/g,"\\'")}','${item.price.replace(/'/g,"\\'")}','${(item.desc&&item.desc.ru||'').replace(/'/g,"\\'")}','${(item.price2||'').replace(/'/g,"\\'")}','${(item.price3||'').replace(/'/g,"\\'")}')">Изменить</button>
           <button class="del" onclick="deleteMenuItemPrompt('${cat.id}','${item.id}','${name.replace(/'/g,"\\'")}')">✕</button>
         </span>
       </div>`;
@@ -3529,17 +3529,31 @@ function addMenuItemPrompt(categoryId){
   if(!name || !name.trim()) return;
   const price = prompt("Цена (тг):");
   if(price===null || !price.trim()) return;
+  const price2 = prompt("Вторая цена — для другого объёма/размера (тг). Оставьте пустым, если вариант только один:", "");
+  if(price2===null) return;
+  let price3 = "";
+  if(price2.trim()){
+    price3 = prompt("Третья цена (тг). Оставьте пустым, если вариантов только два:", "");
+    if(price3===null) return;
+  }
   const desc = prompt("Состав/описание (можно оставить пустым):", "");
-  socket.send(JSON.stringify({type:"add_menu_item", dest:menuDest, categoryId, name:name.trim(), price:price.trim(), desc:(desc||'').trim()}));
+  socket.send(JSON.stringify({type:"add_menu_item", dest:menuDest, categoryId, name:name.trim(), price:price.trim(), price2:price2.trim(), price3:price3.trim(), desc:(desc||'').trim()}));
 }
-function editMenuItemPrompt(categoryId, itemId, currentName, currentPrice, currentDesc){
+function editMenuItemPrompt(categoryId, itemId, currentName, currentPrice, currentDesc, currentPrice2, currentPrice3){
   const name = prompt("Название:", currentName);
   if(name===null || !name.trim()) return;
   const price = prompt("Цена (тг):", currentPrice);
   if(price===null || !price.trim()) return;
+  const price2 = prompt("Вторая цена — для другого объёма/размера (тг). Оставьте пустым, если вариант только один:", currentPrice2||"");
+  if(price2===null) return;
+  let price3 = "";
+  if(price2.trim()){
+    price3 = prompt("Третья цена (тг). Оставьте пустым, если вариантов только два:", currentPrice3||"");
+    if(price3===null) return;
+  }
   const desc = prompt("Состав/описание (можно оставить пустым):", currentDesc||"");
   if(desc===null) return;
-  socket.send(JSON.stringify({type:"update_menu_item", dest:menuDest, categoryId, itemId, name:name.trim(), price:price.trim(), desc:desc.trim()}));
+  socket.send(JSON.stringify({type:"update_menu_item", dest:menuDest, categoryId, itemId, name:name.trim(), price:price.trim(), price2:price2.trim(), price3:price3.trim(), desc:desc.trim()}));
 }
 function deleteMenuItemPrompt(categoryId, itemId, name){
   showConfirm(`Удалить «${name}»?`, "Уберётся из меню совсем.", () => {
@@ -4090,7 +4104,7 @@ async function setupPush(){
   }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
 }
 
-const APP_VERSION = "15";
+const APP_VERSION = "16";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
