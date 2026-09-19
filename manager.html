@@ -225,16 +225,12 @@
 <div class="lock" id="lock">
   <div class="lock-box">
     <h2>GO pub · Менеджер</h2>
-    <div id="unverifiedDevicePanel" style="display:none;">
-      <p>Это устройство ещё не подтверждено. Войдите один раз через RestoRUN, чтобы продолжить.</p>
-      <a href="https://restorun.kuatov.kz" style="display:block; width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; text-align:center; text-decoration:none; box-sizing:border-box;">Открыть RestoRUN</a>
-    </div>
-    <div id="pinFormPanel" style="display:none;">
-      <p>Введите PIN-код директора</p>
-      <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••">
-      <button onclick="tryPin()">Войти</button>
-      <div class="err" id="pinErr"></div>
-    </div>
+    <p id="lockMsg">Загрузка…</p>
+    <input id="unlockPinInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••" style="display:none; margin-top:14px;">
+    <button id="unlockBtn" onclick="submitUnlockPin()" style="display:none; width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; margin-top:10px;">Войти</button>
+    <a href="https://restorun.kuatov.kz" id="restorunBtn" style="display:none; width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; text-align:center; text-decoration:none; box-sizing:border-box; margin-top:10px;">Открыть RestoRUN</a>
+    <button id="backToStaffBtn" onclick="location.href='/staff.html'" style="display:none; width:100%; padding:13px; border:1px solid var(--line); border-radius:12px; background:transparent; color:var(--cream); font-weight:600; font-size:14px; margin-top:10px;">Вернуться к выбору</button>
+    <div class="err" id="pinErr"></div>
   </div>
 </div>
 
@@ -389,8 +385,11 @@
         <button onclick="createStaff('waiter')">+ Официант</button>
         <button onclick="createStaff('cook')">+ Повар</button>
         <button onclick="createStaff('bartender')">+ Бармен</button>
+        <button onclick="createStaff('manager')" id="addManagerBtn" style="display:none;">+ Менеджер</button>
       </div>
 
+      <h2 id="hManager" style="display:none;">Менеджеры</h2>
+      <div id="staffManager"></div>
       <h2 id="hWaiter">Официанты</h2>
       <div id="staffWaiter"></div>
       <h2 id="hCook">Повара</h2>
@@ -2806,63 +2805,92 @@ let mgrMode = 'overview';
 let qrStream = null;
 let qrScanRAF = null;
 let staffName = "";
+let staffId = null;
+let myIsMaster = false;
 
-function isKnownDevice(){ return !!localStorage.getItem("gopub_manager_device_id"); }
-function markDeviceKnown(){
-  if(!localStorage.getItem("gopub_manager_device_id")){
-    localStorage.setItem("gopub_manager_device_id", (crypto.randomUUID ? crypto.randomUUID() : Date.now()+"-"+Math.random()));
+function getStaffPin(){ return localStorage.getItem('gopub_staff_pin_'+ROLE); }
+function setStaffPin(p){ localStorage.setItem('gopub_staff_pin_'+ROLE, p); }
+function clearStaffPin(){ localStorage.removeItem('gopub_staff_pin_'+ROLE); }
+
+let triedDefaultPin = false;
+let unknownStaffRetries = 0;
+
+(function initStaffId(){
+  const url = new URL(window.location.href);
+  const fromUrl = url.searchParams.get('staff');
+  if(fromUrl){
+    localStorage.setItem('gopub_staff_id_'+ROLE, fromUrl);
   }
-}
+  staffId = localStorage.getItem('gopub_staff_id_'+ROLE);
+  // iOS's native "Add to Home Screen" bookmarks whatever URL is in the
+  // address bar at that exact moment, not the manifest — keep the staff id
+  // visible in the URL for the whole session so it's always correct.
+  if(staffId && !url.searchParams.get('staff')){
+    url.searchParams.set('staff', staffId);
+    window.history.replaceState({}, '', url.pathname + url.search);
+  }
+})();
 
 function takeAuthFromHash(){
+  // RestoRUN's dedicated handoff for the master manager only — it always
+  // carries both the master's staffId and their PIN.
   const raw = (location.hash || "").replace(/^#/, "");
   if(!raw) return;
   const params = new URLSearchParams(raw);
   const pin = (params.get("auth") || "").trim();
-  if(!pin) return;
-  sessionStorage.setItem("gopub_pin_"+ROLE, pin);
-  if(params.get("stay") === "1") localStorage.setItem("gopub_pin_"+ROLE, pin);
-  markDeviceKnown(); // arriving via a valid RestoRUN handoff verifies this device once and for all
+  const hashStaffId = (params.get("staff") || "").trim();
+  if(!pin || !hashStaffId) return;
+  localStorage.setItem('gopub_staff_id_'+ROLE, hashStaffId);
+  staffId = hashStaffId;
+  setStaffPin(pin);
   history.replaceState(null, "", location.pathname + location.search);
 }
 takeAuthFromHash();
-function getPin(){ return sessionStorage.getItem("gopub_pin_"+ROLE) || localStorage.getItem("gopub_pin_"+ROLE); }
-function setPin(p){
-  sessionStorage.setItem("gopub_pin_"+ROLE, p);
-  if(localStorage.getItem("gopub_pin_"+ROLE) !== null) localStorage.setItem("gopub_pin_"+ROLE, p);
-}
+
 function logoutDevice(){
-  showConfirm("Выйти?", "Понадобится PIN директора, чтобы войти снова.", () => {
-    sessionStorage.removeItem("gopub_pin_"+ROLE);
-    localStorage.removeItem("gopub_pin_"+ROLE);
-    location.reload();
+  showConfirm("Выйти?", "Уведомления перестанут приходить, пока не введёте PIN снова.", () => {
+    clearStaffPin();
+    if(socket) socket.close();
+    showUnlockScreen();
   });
 }
-function tryPin(){
-  const p = document.getElementById('pinInput').value.trim();
-  if(!p) return;
-  setPin(p);
-  document.getElementById('pinErr').textContent = "";
-  connect();
-}
-function showLock(err){
+
+function showLock(){
   document.getElementById('qrPopup').classList.remove('open');
   document.getElementById('receiptOverlay').classList.remove('open');
   document.getElementById('qrOverlay').classList.remove('open');
   document.getElementById('qrAssignOverlay').classList.remove('open');
   closeQrScanner(); // also stops the camera stream, if one was running
-  if(isKnownDevice()){
-    document.getElementById('unverifiedDevicePanel').style.display = 'none';
-    document.getElementById('pinFormPanel').style.display = 'block';
-    document.getElementById('pinErr').textContent = err || "";
-    document.getElementById('pinInput').value = "";
-  } else {
-    document.getElementById('unverifiedDevicePanel').style.display = 'block';
-    document.getElementById('pinFormPanel').style.display = 'none';
-  }
+  document.getElementById('lockMsg').textContent = "У вас нет доступа. Если вы мастер-менеджер — войдите через RestoRUN. Если вам выдали персональную ссылку — откройте её заново.";
+  document.getElementById('unlockPinInput').style.display = 'none';
+  document.getElementById('unlockBtn').style.display = 'none';
+  document.getElementById('restorunBtn').style.display = 'block';
+  document.getElementById('backToStaffBtn').style.display = 'block';
+  document.getElementById('lock').style.display = 'flex';
+}
+function showUnlockScreen(err){
+  document.getElementById('qrPopup').classList.remove('open');
+  document.getElementById('receiptOverlay').classList.remove('open');
+  document.getElementById('qrOverlay').classList.remove('open');
+  document.getElementById('qrAssignOverlay').classList.remove('open');
+  closeQrScanner();
+  document.getElementById('lockMsg').textContent = "Сессия заперта. Введите свой PIN, чтобы продолжить работу.";
+  document.getElementById('unlockPinInput').style.display = 'block';
+  document.getElementById('unlockBtn').style.display = 'block';
+  document.getElementById('restorunBtn').style.display = 'none';
+  document.getElementById('backToStaffBtn').style.display = 'none';
+  document.getElementById('pinErr').textContent = err || "";
+  document.getElementById('unlockPinInput').value = "";
   document.getElementById('lock').style.display = 'flex';
 }
 function hideLock(){ document.getElementById('lock').style.display = 'none'; }
+function submitUnlockPin(){
+  const p = document.getElementById('unlockPinInput').value.trim();
+  if(!/^\d{4,6}$/.test(p)) return;
+  setStaffPin(p);
+  document.getElementById('pinErr').textContent = "";
+  connect();
+}
 
 function showNameLock(){
   document.getElementById('nameInput').value = staffName || "";
@@ -2874,8 +2902,7 @@ function submitName(){
   const name = document.getElementById('nameInput').value.trim();
   if(!name) return;
   staffName = name;
-  localStorage.setItem('gopub_display_name_'+ROLE, name);
-  socket.send(JSON.stringify({type:"set_display_name", name}));
+  socket.send(JSON.stringify({type:"set_staff_name", staffId, name}));
   hideNameLock();
   updateStaffNameTag();
 }
@@ -2883,35 +2910,59 @@ function updateStaffNameTag(){
   document.getElementById('staffNameTag').textContent = staffName ? "— " + staffName : "— указать имя";
 }
 
-let lastPinAttempt = null;
 function openPinPrompt(){
-  const p1 = prompt("Новый PIN для входа (4-6 цифр):");
+  const p1 = prompt("Новый PIN (4-6 цифр) — понадобится после каждого выхода:");
   if(p1 === null) return;
   const clean = p1.trim();
   if(!/^\d{4,6}$/.test(clean)){ alert("PIN должен состоять из 4-6 цифр"); return; }
-  lastPinAttempt = clean;
-  socket.send(JSON.stringify({type:"change_pin", role:ROLE, newPin:clean}));
+  socket.send(JSON.stringify({type:"set_staff_pin", staffId, newPin: clean}));
+  setStaffPin(clean);
 }
 
 function connect(){
-  if(!isKnownDevice()){ showLock(); return; }
-  const pin = sessionStorage.getItem("gopub_pin_"+ROLE); // NOT getPin() — a remembered localStorage PIN must not skip re-entering it on a fresh visit
-  if(!pin){ showLock(); return; }
+  if(!staffId){ showLock(); return; }
+  let pin = getStaffPin();
+  if(!pin){
+    if(!triedDefaultPin){
+      triedDefaultPin = true;
+      pin = "1111";
+    } else {
+      showUnlockScreen();
+      return;
+    }
+  }
   socket = new WebSocket(WS_URL);
-  socket.onopen = () => { setConn(true); socket.send(JSON.stringify({type:"hello", role:ROLE, pin})); };
+  socket.onopen = () => { setConn(true); socket.send(JSON.stringify({type:"hello", role:ROLE, staffId, pin})); };
   socket.onclose = () => { setConn(false); setTimeout(connect, 2000); };
   socket.onerror = () => socket.close();
   socket.onmessage = (evt) => {
     const msg = JSON.parse(evt.data);
     if(msg.type === "auth_ok"){
       hideLock();
-      const cached = localStorage.getItem('gopub_display_name_'+ROLE);
-      if(cached){ staffName = cached; socket.send(JSON.stringify({type:"set_display_name", name:cached})); updateStaffNameTag(); }
-      else updateStaffNameTag();
+      setStaffPin(pin);
+      unknownStaffRetries = 0;
     }
-    if(msg.type === "auth_error"){ sessionStorage.removeItem("gopub_pin_"+ROLE); showLock("Неверный PIN"); }
-    if(msg.type === "pin_changed"){ setPin(lastPinAttempt); alert("PIN обновлён. Запомните новый PIN — он понадобится при следующем входе."); }
-    if(msg.type === "pin_change_error"){ alert("Не удалось изменить PIN — используйте 4-6 цифр."); }
+    if(msg.type === "auth_error"){
+      if(msg.reason === "unknown_staff"){
+        if(unknownStaffRetries < 1){
+          unknownStaffRetries++;
+          setTimeout(connect, 1200);
+          return;
+        }
+        localStorage.removeItem('gopub_staff_id_'+ROLE);
+        clearStaffPin();
+        staffId = null;
+        showLock();
+      } else if(msg.reason === "wrong_pin"){
+        clearStaffPin();
+        showUnlockScreen("Неверный PIN");
+      } else {
+        clearStaffPin();
+        showUnlockScreen("Неверный PIN");
+      }
+    }
+    if(msg.type === "staff_pin_changed"){ alert("PIN обновлён. Запомните новый PIN — он понадобится при следующем входе."); }
+    if(msg.type === "staff_pin_change_error"){ alert("Не удалось изменить PIN — используйте 4-6 цифр."); }
     if(msg.type === "table_closed"){ showReceiptFromData(msg.receipt); }
     if(msg.type === "qr_generated"){
       const url = location.origin + '/index.html?qr=' + msg.qrId;
@@ -2955,6 +3006,8 @@ function connect(){
     if(msg.type === "state"){
       allOrders = msg.orders; allHistory = msg.history || []; openTables = msg.openTables || {};
       closedTables = msg.closedTables || []; staff = msg.staff || []; rooms = msg.rooms || rooms;
+      const me = staff.find(s => s.id === staffId);
+      if(me){ staffName = me.name || ""; myIsMaster = !!me.isMaster; updateStaffNameTag(); }
       unavailable = msg.unavailable || {};
       inventory = msg.inventory || {kitchen:{}, bar:{}};
       actionLog = msg.actionLog || [];
@@ -3113,7 +3166,7 @@ function setSettingsSub(sub){
   if(sub === 'menu' && !menuUnlockedThisSession){
     const entered = prompt("Редактирование меню защищено — введите PIN директора:");
     if(entered === null) return; // stay on the current tab
-    if(entered.trim() !== getPin()){
+    if(entered.trim() !== getStaffPin()){
       alert("Неверный PIN.");
       return;
     }
@@ -3810,13 +3863,58 @@ function reassignStaff(id, name){
   });
 }
 
-const ROLE_LABELS = { waiter: "Официант", cook: "Повар", bartender: "Бармен" };
-const ROLE_PAGES = { waiter: "waiter.html", cook: "cook.html", bartender: "bartender.html" };
+const ROLE_LABELS = { waiter: "Официант", cook: "Повар", bartender: "Бармен", manager: "Менеджер" };
+const ROLE_PAGES = { waiter: "waiter.html", cook: "cook.html", bartender: "bartender.html", manager: "manager.html" };
 
 function renderStaff(){
+  document.getElementById('addManagerBtn').style.display = myIsMaster ? 'inline-block' : 'none';
+  const managers = staff.filter(s => s.role === 'manager');
+  document.getElementById('hManager').style.display = managers.length ? 'block' : 'none';
+  document.getElementById('hManager').textContent = `Менеджеры (${managers.length})`;
+  renderManagerGroup(managers);
   renderStaffGroup('waiter', 'staffWaiter', 'hWaiter', 'Официанты');
   renderStaffGroup('cook', 'staffCook', 'hCook', 'Повара');
   renderStaffGroup('bartender', 'staffBartender', 'hBartender', 'Бармены');
+}
+
+function renderManagerGroup(managers){
+  const el = document.getElementById('staffManager');
+  if(managers.length === 0){ el.innerHTML = ''; return; }
+  let html = "";
+  managers.forEach(s => {
+    const url = location.origin + '/manager.html?staff=' + s.id;
+    const inviteText = encodeURIComponent(`Приглашение в GO pub — Менеджер: `);
+    const encodedUrl = encodeURIComponent(url);
+    const canManage = myIsMaster && s.id !== staffId; // master can't demote/remove themself this way
+    html += `<div class="staff-row">
+      <div class="info">
+        <span class="name ${s.name?'':'pending'}">${s.name || 'Ожидает имени…'}${s.id===staffId?' (вы)':''}</span>
+        <span class="role-tag">${s.isMaster ? '👑 Мастер-менеджер' : 'Менеджер'}</span>
+      </div>
+      <div class="actions">
+        <a class="icon-btn wa" href="https://wa.me/?text=${inviteText}${encodedUrl}" target="_blank" rel="noopener" title="Отправить в WhatsApp">
+          <svg width="21" height="21" viewBox="0 0 32 32" fill="none"><path d="M16 3C9.1 3 3.5 8.6 3.5 15.5c0 2.5.7 4.8 1.9 6.8L3 29l6.9-2.3c1.9 1 4.1 1.6 6.1 1.6 6.9 0 12.5-5.6 12.5-12.5S22.9 3 16 3z" fill="#25D366"/><path d="M22.4 19.1c-.3-.2-1.9-1-2.2-1.1-.3-.1-.5-.2-.7.2s-.8 1.1-1 1.3-.4.2-.7.1c-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-2-1.8-2.3-.2-.3 0-.5.1-.6.1-.1.3-.4.5-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.6s-.7-1.7-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.2.2 2 3.1 4.9 4.2 2.8 1.1 2.8.8 3.3.7.5-.1 1.6-.7 1.8-1.3.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.6-.4z" fill="#fff"/></svg>
+        </a>
+        <a class="icon-btn tg" href="https://t.me/share/url?url=${encodedUrl}&text=${inviteText}" target="_blank" rel="noopener" title="Отправить в Telegram">
+          <svg width="21" height="21" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" fill="#29A9EA"/><path d="M8.5 15.8l13-5c.6-.2 1.2.2.9.9l-2.2 10.4c-.2.8-.7.9-1.3.6l-3.6-2.7-1.7 1.6c-.2.2-.4.3-.7.3l.2-3.6 6.6-6c.3-.2-.1-.4-.4-.2l-8.1 5.1-3.5-1.1c-.8-.2-.8-.8.1-1.2z" fill="#fff"/></svg>
+        </a>
+        <button class="icon-btn" onclick="copyStaffLink('${url}', this)" title="Скопировать ссылку">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+        </button>
+        <button onclick="showQr('manager','${s.id}')" style="font-size:14px;">QR</button>
+        ${canManage ? `<button onclick="promoteMaster('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')" title="Сделать мастер-менеджером">👑</button>` : ''}
+        ${canManage ? `<button onclick="reassignStaff('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')" title="Переназначить устройство">📱↺</button>` : ''}
+        ${canManage ? `<button class="danger" onclick="deleteStaff('${s.id}')">Удалить</button>` : ''}
+      </div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function promoteMaster(id, name){
+  showConfirm(`Сделать «${name}» мастер-менеджером?`, "Вы перестанете быть мастер-менеджером — эту роль можно передать только одному человеку.", () => {
+    socket.send(JSON.stringify({type:"promote_master", staffId:id}));
+  });
 }
 
 function renderStaffGroup(role, elId, headId, label){
@@ -4104,7 +4202,7 @@ async function setupPush(){
   }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
 }
 
-const APP_VERSION = "16";
+const APP_VERSION = "17";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;

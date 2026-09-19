@@ -49,6 +49,7 @@ const ROLES = [
   { key:"waiter", page:"waiter.html", emoji:"🧾", label:"Официант", desc:"Приём и передача заказов" },
   { key:"cook", page:"cook.html", emoji:"🍳", label:"Кухня", desc:"Кухонные тикеты" },
   { key:"bartender", page:"bartender.html", emoji:"🍸", label:"Бар", desc:"Барные тикеты" },
+  { key:"manager", page:"manager.html", emoji:"📊", label:"Менеджер", desc:"Все заказы и выручка" },
 ];
 
 function render(){
@@ -75,12 +76,11 @@ function render(){
       </div>`;
     }
   });
-  html += `<a class="role" href="/manager.html"><span class="emoji">📊</span><span>Менеджер<small>Все заказы и выручка</small></span></a>`;
   el.innerHTML = html;
 }
 
 function roleGenitive(label){
-  const map = { "Официант":"официантом", "Кухня":"поваром", "Бар":"барменом" };
+  const map = { "Официант":"официантом", "Кухня":"поваром", "Бар":"барменом", "Менеджер":"менеджером" };
   return map[label] || label.toLowerCase();
 }
 
@@ -93,7 +93,7 @@ function hideDenied(key){
 
 render();
 
-const APP_VERSION = "1";
+const APP_VERSION = "2";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
