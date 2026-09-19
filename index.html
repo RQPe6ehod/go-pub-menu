@@ -184,6 +184,63 @@
     white-space:nowrap;
   }
 
+  .ga-overlay{
+    position: fixed; inset:0; background: rgba(0,0,0,.55); z-index: 92;
+    display:flex; align-items:flex-end; justify-content:center;
+    opacity:0; pointer-events:none; transition: opacity .25s ease;
+  }
+  .ga-overlay.open{ opacity:1; pointer-events:auto; }
+  .ga-panel{
+    width:100%; max-width: 480px; background:#fff; color:#1b1b1b;
+    border-radius: 20px 20px 0 0; max-height: 85vh; overflow-y:auto;
+    padding: 22px 22px calc(20px + env(safe-area-inset-bottom));
+    position:relative;
+    transform: translateY(30px); transition: transform .25s ease;
+  }
+  .ga-overlay.open .ga-panel{ transform: translateY(0); }
+  .ga-panel h2{ font-family:'Fraunces', serif; font-size:19px; margin:0 0 16px; text-align:center; }
+  .ga-close{ position:absolute; top:14px; right:16px; background:none; border:none; font-size:18px; color:#999; padding:4px; }
+  .ga-repeat-row{
+    width:100%; display:flex; align-items:center; gap:10px; padding:14px 16px;
+    background: var(--gold); color:#1b1206; border:none; border-radius:14px;
+    font-weight:700; font-size:15px; margin-bottom:14px;
+  }
+  .ga-icon{ font-size:19px; }
+  .ga-quick-row{ display:flex; gap:8px; margin-bottom:10px; }
+  .ga-quick-btn{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;
+    padding:12px 6px; background:#f6f3ea; border:1px solid #e6e0d0; border-radius:12px;
+    font-size:12px; font-weight:600; color:#333;
+  }
+  .ga-qicon{ font-size:19px; }
+  .ga-more-toggle{
+    width:100%; background:none; border:none; color:#888; font-size:13px; font-weight:600;
+    padding:6px; margin-bottom:6px;
+  }
+  .ga-call-btn{
+    width:100%; display:flex; align-items:center; justify-content:center; gap:8px;
+    padding:13px; background:#1b1206; color:#fff; border:none; border-radius:14px;
+    font-weight:700; font-size:14px; margin-top:8px;
+  }
+  .ga-back{ background:none; border:none; font-size:20px; color:#888; padding:4px 8px 4px 0; }
+  #gaRepeatList{ margin:14px 0; max-height:45vh; overflow-y:auto; }
+  .ga-repeat-item{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 0; border-bottom:1px solid #eee;
+  }
+  .ga-repeat-item .rn{ font-size:14px; }
+  .ga-repeat-qty{ display:flex; align-items:center; gap:10px; }
+  .ga-repeat-qty button{
+    width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:#fff;
+    font-size:16px; font-weight:700; color:#333;
+  }
+  .ga-repeat-qty span{ min-width:16px; text-align:center; font-weight:700; }
+  .ga-send-btn{
+    width:100%; padding:14px; background:var(--gold); color:#1b1206; border:none; border-radius:14px;
+    font-weight:700; font-size:15px;
+  }
+  .ga-empty{ text-align:center; color:#999; font-size:14px; padding:20px 0; }
+
   .bill-overlay{
     position: fixed; inset:0; background: rgba(0,0,0,.55); z-index: 90;
     display:flex; align-items:center; justify-content:center; padding:20px;
@@ -296,7 +353,7 @@
 </footer>
 
 <div class="call-bar" id="callBar" style="display:none;">
-  <button class="call-waiter-btn" id="callWaiterBtn" onclick="callWaiter()">
+  <button class="call-waiter-btn" id="callWaiterBtn" onclick="openGuestActions()">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
     <span id="callWaiterLabel">Хочу сделать заказ</span>
   </button>
@@ -304,6 +361,35 @@
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12a1 1 0 0 1 1 1v18l-3-2-3 2-3-2-3 2-3-2V3a1 1 0 0 1 1-1z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/></svg>
     <span id="callBillLabel">Предварительный чек</span>
   </button>
+</div>
+
+<div class="ga-overlay" id="guestActionsOverlay">
+  <div class="ga-panel">
+    <div id="gaMainView">
+      <h2 id="gaTitle">Чем помочь?</h2>
+      <button class="ga-repeat-row" onclick="openRepeatView()">
+        <span class="ga-icon">🔁</span><span id="gaRepeatLabel">Повторить из заказанного</span>
+      </button>
+      <div class="ga-quick-row">
+        <button class="ga-quick-btn" onclick="confirmQuickRequest('cutlery')"><span class="ga-qicon">🍴</span><span id="gaCutlery">Приборы</span></button>
+        <button class="ga-quick-btn" onclick="confirmQuickRequest('napkins')"><span class="ga-qicon">🧻</span><span id="gaNapkins">Салфетки</span></button>
+        <button class="ga-quick-btn" onclick="confirmQuickRequest('toothpicks')"><span class="ga-qicon">🦷</span><span id="gaToothpicks">Зубочистки</span></button>
+      </div>
+      <button class="ga-more-toggle" onclick="toggleGaMore()"><span id="gaMoreLabel">Ещё</span> <span id="gaMoreArrow">▾</span></button>
+      <div class="ga-quick-row" id="gaMoreRow" style="display:none;">
+        <button class="ga-quick-btn" onclick="confirmQuickRequest('salt_pepper')"><span class="ga-qicon">🧂</span><span id="gaSaltPepper">Соль/перец</span></button>
+        <button class="ga-quick-btn" onclick="confirmQuickRequest('order_problem')"><span class="ga-qicon">⚠️</span><span id="gaProblem">Проблема с заказом</span></button>
+      </div>
+      <button class="ga-call-btn" onclick="confirmPlainCall()"><span class="ga-qicon">📞</span><span id="gaCallWaiter">Позвать официанта</span></button>
+    </div>
+    <div id="gaRepeatView" style="display:none;">
+      <button class="ga-back" onclick="backToGaMain()">←</button>
+      <h2 id="gaRepeatTitle">Повторить из заказанного</h2>
+      <div id="gaRepeatList"></div>
+      <button class="ga-send-btn" id="gaSendRepeatBtn" onclick="sendRepeatRequest()" style="display:none;"></button>
+    </div>
+    <button class="ga-close" onclick="closeGuestActions()">✕</button>
+  </div>
 </div>
 
 <div class="confirm-overlay" id="confirmOverlay">
@@ -354,6 +440,13 @@ const STR = {
     confirmBillQuestion:"Позвать официанта с расчётом?", confirmCallQuestion:"Позвать официанта?", confirmCancel:"Отмена", confirmYes:"Да",
     forgetConfirmQuestion:"Забыть вас?", forgetConfirmSub:"В следующий раз официант не будет знать ваш обычный заказ.",
     billClose:"Закрыть", reviewBtn:"Оставить отзыв",
+    gaTitle:"Чем помочь?", gaRepeat:"Повторить из заказанного",
+    gaCutlery:"Приборы", gaNapkins:"Салфетки", gaToothpicks:"Зубочистки", gaMore:"Ещё",
+    gaSaltPepper:"Соль/перец", gaProblem:"Проблема с заказом", gaCallWaiter:"Позвать официанта",
+    confirmCutlery:"Попросить приборы?", confirmNapkins:"Попросить салфетки?", confirmToothpicks:"Попросить зубочистки?",
+    confirmSaltPepper:"Попросить соль/перец?", confirmProblem:"Сообщить официанту о проблеме с заказом?",
+    gaRepeatEmpty:"У вас пока нет истории заказов", gaSendRepeat:"Отправить официанту",
+    gaRepeatSentAlert:"Отправлено! Официант проверит и подтвердит заказ.",
     updateBannerText:"Доступна новая версия меню", updateBannerBtn:"Обновить" },
   en: { tagline:"DIGITAL MENU", svc:"10% service charge included. Prices in KZT.", kitchen:"Kitchen", bar:"Bar", search:"Search dish or drink…", enjoy:"Enjoy your meal!", scanNote:"Scan the QR code at your table to return to the menu anytime.", currency:" KZT", soldOut:"sold out",
     callWaiterBtn:"I'd like to order", callWaiterWaiting:"Waiter is on the way…",
@@ -366,6 +459,13 @@ const STR = {
     confirmBillQuestion:"Call the waiter with the bill?", confirmCallQuestion:"Call the waiter?", confirmCancel:"Cancel", confirmYes:"Yes",
     forgetConfirmQuestion:"Forget you?", forgetConfirmSub:"Next time the waiter won't know your usual order.",
     billClose:"Close", reviewBtn:"Leave a review",
+    gaTitle:"How can we help?", gaRepeat:"Repeat from your order",
+    gaCutlery:"Cutlery", gaNapkins:"Napkins", gaToothpicks:"Toothpicks", gaMore:"More",
+    gaSaltPepper:"Salt/pepper", gaProblem:"Problem with order", gaCallWaiter:"Call the waiter",
+    confirmCutlery:"Request cutlery?", confirmNapkins:"Request napkins?", confirmToothpicks:"Request toothpicks?",
+    confirmSaltPepper:"Request salt/pepper?", confirmProblem:"Tell the waiter about a problem with your order?",
+    gaRepeatEmpty:"You don't have any order history yet", gaSendRepeat:"Send to waiter",
+    gaRepeatSentAlert:"Sent! The waiter will review and confirm the order.",
     updateBannerText:"A new menu version is available", updateBannerBtn:"Update" },
   kk: { tagline:"ЦИФРЛЫҚ МӘЗІР", svc:"Қызмет көрсету ақысы 10%. Бағалар теңгемен.", kitchen:"Ас үй", bar:"Бар", search:"Тағам немесе сусын іздеу…", enjoy:"Ас болсын!", scanNote:"Кез келген уақытта мәзірге оралу үшін үстелдегі QR-кодты сканерлеңіз.", currency:" тг.", soldOut:"қазір жоқ",
     callWaiterBtn:"Тапсырыс бергім келеді", callWaiterWaiting:"Даяшы жолда…",
@@ -378,6 +478,13 @@ const STR = {
     confirmBillQuestion:"Даяшыны есеппен шақыру керек пе?", confirmCallQuestion:"Даяшыны шақыру керек пе?", confirmCancel:"Бас тарту", confirmYes:"Иә",
     forgetConfirmQuestion:"Сізді ұмыту керек пе?", forgetConfirmSub:"Келесі жолы даяшы сіздің әдеттегі тапсырысыңызды білмейді.",
     billClose:"Жабу", reviewBtn:"Пікір қалдыру",
+    gaTitle:"Немен көмектесейік?", gaRepeat:"Тапсырыстан қайталау",
+    gaCutlery:"Аспаптар", gaNapkins:"Майлықтар", gaToothpicks:"Тіс тазалағыштар", gaMore:"Тағы",
+    gaSaltPepper:"Тұз/бұрыш", gaProblem:"Тапсырыспен мәселе", gaCallWaiter:"Даяшыны шақыру",
+    confirmCutlery:"Аспаптар сұрау керек пе?", confirmNapkins:"Майлықтар сұрау керек пе?", confirmToothpicks:"Тіс тазалағыш сұрау керек пе?",
+    confirmSaltPepper:"Тұз/бұрыш сұрау керек пе?", confirmProblem:"Даяшыға тапсырыспен мәселе туралы хабарлау керек пе?",
+    gaRepeatEmpty:"Сізде әлі тапсырыс тарихы жоқ", gaSendRepeat:"Даяшыға жіберу",
+    gaRepeatSentAlert:"Жіберілді! Даяшы тексеріп, тапсырысты растайды.",
     updateBannerText:"Мәзірдің жаңа нұсқасы қолжетімді", updateBannerBtn:"Жаңарту" }
 };
 
@@ -395,7 +502,7 @@ const HARD_EXPIRE_MS = 12 * 60 * 60 * 1000;
 const sessionStartedAt = Date.now();
 let sessionExpired = false;
 let pendingConfirmCallback = null;
-const APP_VERSION = "12";
+const APP_VERSION = "13";
 let updateDismissed = false;
 
 function toggleLangMenu(){
@@ -440,6 +547,17 @@ function applyStaticStrings(){
   document.getElementById('updateBannerText').textContent = s.updateBannerText;
   document.getElementById('updateBannerBtn').textContent = s.updateBannerBtn;
   document.getElementById('reviewBtnLabel').textContent = s.reviewBtn;
+  document.getElementById('gaTitle').textContent = s.gaTitle;
+  document.getElementById('gaRepeatLabel').textContent = s.gaRepeat;
+  document.getElementById('gaRepeatTitle').textContent = s.gaRepeat;
+  document.getElementById('gaCutlery').textContent = s.gaCutlery;
+  document.getElementById('gaNapkins').textContent = s.gaNapkins;
+  document.getElementById('gaToothpicks').textContent = s.gaToothpicks;
+  document.getElementById('gaMoreLabel').textContent = s.gaMore;
+  document.getElementById('gaSaltPepper').textContent = s.gaSaltPepper;
+  document.getElementById('gaProblem').textContent = s.gaProblem;
+  document.getElementById('gaCallWaiter').textContent = s.gaCallWaiter;
+  document.getElementById('gaSendRepeatBtn').textContent = s.gaSendRepeat;
   if(currentBill) renderBill();
 }
 
@@ -589,6 +707,7 @@ function connectLive(){
       currentBill = msg;
       document.getElementById('callBillBtn').style.display = msg.hasOrders ? 'flex' : 'none';
       if(document.getElementById('billOverlay').classList.contains('open')) renderBill();
+      if(repeatViewOpen) renderRepeatList(msg.hasOrders ? msg.items : []);
     }
   };
   socket.onclose = () => setTimeout(connectLive, 3000);
@@ -629,6 +748,107 @@ setTimeout(expireCallBar, HARD_EXPIRE_MS);
 document.addEventListener('visibilitychange', () => {
   if(!document.hidden && Date.now() - sessionStartedAt >= HARD_EXPIRE_MS) expireCallBar();
 });
+
+let repeatCart = {};
+let repeatViewOpen = false;
+
+function openGuestActions(){
+  if(!TABLE || sessionExpired) return;
+  document.getElementById('gaMainView').style.display = 'block';
+  document.getElementById('gaRepeatView').style.display = 'none';
+  document.getElementById('gaMoreRow').style.display = 'none';
+  document.getElementById('gaMoreArrow').textContent = '▾';
+  document.getElementById('guestActionsOverlay').classList.add('open');
+}
+function closeGuestActions(){
+  repeatViewOpen = false;
+  document.getElementById('guestActionsOverlay').classList.remove('open');
+}
+function toggleGaMore(){
+  const row = document.getElementById('gaMoreRow');
+  const open = row.style.display !== 'none';
+  row.style.display = open ? 'none' : 'flex';
+  document.getElementById('gaMoreArrow').textContent = open ? '▾' : '▴';
+}
+
+function confirmQuickRequest(what){
+  if(!TABLE || sessionExpired) return;
+  const questionKeys = { cutlery:'confirmCutlery', napkins:'confirmNapkins', toothpicks:'confirmToothpicks', salt_pepper:'confirmSaltPepper', order_problem:'confirmProblem' };
+  const question = STR[LANG][questionKeys[what]];
+  closeGuestActions();
+  showConfirm(question, null, () => {
+    if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
+      liveSocket.send(JSON.stringify({type:"guest_quick_request", table: TABLE, what}));
+    }
+  });
+}
+
+function confirmPlainCall(){
+  closeGuestActions();
+  callWaiter();
+}
+
+function openRepeatView(){
+  document.getElementById('gaMainView').style.display = 'none';
+  document.getElementById('gaRepeatView').style.display = 'block';
+  document.getElementById('gaRepeatList').innerHTML = `<div class="ga-empty">…</div>`;
+  document.getElementById('gaSendRepeatBtn').style.display = 'none';
+  repeatCart = {};
+  repeatViewOpen = true;
+  if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
+    liveSocket.send(JSON.stringify({type:"get_table_bill", table: TABLE}));
+  }
+}
+function backToGaMain(){
+  repeatViewOpen = false;
+  document.getElementById('gaMainView').style.display = 'block';
+  document.getElementById('gaRepeatView').style.display = 'none';
+}
+
+function renderRepeatList(items){
+  const el = document.getElementById('gaRepeatList');
+  if(!items || items.length === 0){
+    el.innerHTML = `<div class="ga-empty">${STR[LANG].gaRepeatEmpty}</div>`;
+    document.getElementById('gaSendRepeatBtn').style.display = 'none';
+    return;
+  }
+  let html = "";
+  items.forEach(i => {
+    const key = i.dest + "|" + i.name;
+    html += `<div class="ga-repeat-item">
+      <span class="rn">${i.name}</span>
+      <div class="ga-repeat-qty">
+        <button onclick="changeRepeatQty('${key.replace(/'/g,"\\'")}','${i.dest}','${i.name.replace(/'/g,"\\'")}',-1)">−</button>
+        <span id="garq-${cssSafeGa(key)}">0</span>
+        <button onclick="changeRepeatQty('${key.replace(/'/g,"\\'")}','${i.dest}','${i.name.replace(/'/g,"\\'")}',1)">+</button>
+      </div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+function cssSafeGa(s){ return s.replace(/[^a-zA-Z0-9]/g, '_'); }
+
+function changeRepeatQty(key, dest, name, delta){
+  const current = repeatCart[key] ? repeatCart[key].qty : 0;
+  const next = Math.max(0, Math.min(20, current + delta));
+  if(next === 0) delete repeatCart[key];
+  else repeatCart[key] = { name, dest, qty: next };
+  const span = document.getElementById('garq-' + cssSafeGa(key));
+  if(span) span.textContent = next;
+  const anySelected = Object.keys(repeatCart).length > 0;
+  document.getElementById('gaSendRepeatBtn').style.display = anySelected ? 'block' : 'none';
+}
+
+function sendRepeatRequest(){
+  const items = Object.values(repeatCart);
+  if(items.length === 0 || !TABLE) return;
+  if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
+    liveSocket.send(JSON.stringify({type:"guest_repeat_request", table: TABLE, items}));
+  }
+  repeatCart = {};
+  closeGuestActions();
+  alert(STR[LANG].gaRepeatSentAlert);
+}
 
 function callWaiter(){
   if(callCooldown || !TABLE || sessionExpired) return;

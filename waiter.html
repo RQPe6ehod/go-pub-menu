@@ -173,6 +173,17 @@
 
 
   .table-card{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:14px; }
+  .repeat-request-card{
+    background:var(--panel); border:2px solid var(--gold); border-radius:14px; padding:14px; margin-bottom:14px;
+    animation: popIn .28s cubic-bezier(.2,1,.3,1);
+  }
+  .repeat-items{ margin:8px 0; }
+  .repeat-actions{ display:flex; gap:8px; margin-top:10px; }
+  .repeat-actions .serve-btn{ margin-top:0; flex:1; }
+  .reject-btn{
+    flex:1; padding:10px; border:1px solid var(--line); border-radius:10px;
+    background:transparent; color:var(--muted); font-weight:600;
+  }
   .table-card.flash-target{ animation: flashTarget 2.2s ease; }
   @keyframes flashTarget{
     0%, 100%{ box-shadow:none; border-color:var(--line); }
@@ -422,6 +433,7 @@ let allOrders = [];
 let allHistory = [];
 let openTables = {};
 let closedTables = [];
+let repeatRequests = [];
 let callingTables = {};
 let billRequestedTables = {};
 let returningGuestTables = {};
@@ -592,6 +604,7 @@ function connect(){
       allOrders = msg.orders;
       allHistory = msg.history || [];
       closedTables = msg.closedTables || [];
+      repeatRequests = msg.repeatRequests || [];
       openTables = msg.openTables || {};
       callingTables = msg.callingTables || {};
       billRequestedTables = msg.billRequestedTables || {};
@@ -631,6 +644,29 @@ function connect(){
 }
 
 function alertReady(msg){
+  if(msg.kind === "quick_request"){
+    if(navigator.vibrate) navigator.vibrate([150,60,150,60,150]);
+    const labels = { cutlery:"просит приборы", napkins:"просит салфетки", toothpicks:"просит зубочистки", salt_pepper:"просит соль/перец", order_problem:"сообщает о проблеме с заказом" };
+    const text = "Стол " + tableLabel(msg.table) + " " + (labels[msg.what] || "что-то просит");
+    if("Notification" in window && Notification.permission === "granted"){
+      new Notification(text);
+    } else {
+      alert(text);
+    }
+    setMode('board');
+    return;
+  }
+  if(msg.kind === "repeat_request"){
+    if(navigator.vibrate) navigator.vibrate([200,80,200,80,200]);
+    const text = "Стол " + tableLabel(msg.table) + " хочет повторить заказ — проверьте и подтвердите";
+    if("Notification" in window && Notification.permission === "granted"){
+      new Notification(text);
+    } else {
+      alert(text);
+    }
+    setMode('board');
+    return;
+  }
   if(msg.kind === "still_not_served"){
     if(navigator.vibrate) navigator.vibrate([250,100,250,100,250]);
     const text = "Стол " + tableLabel(msg.table) + " — заказ готов уже 2 минуты, до сих пор не подан!";
@@ -964,9 +1000,20 @@ setInterval(tickCountdowns, 1000);
 
 function renderBoard(){
   const el = document.getElementById('boardView');
+  let repeatHtml = "";
+  repeatRequests.forEach(r => {
+    repeatHtml += `<div class="repeat-request-card">
+      <div class="head"><span class="num">🔁 Стол ${tableLabel(r.table)} — повтор заказа</span></div>
+      <div class="repeat-items">${r.items.map(i => `<div class="line">${i.qty} × ${i.name} <small>(${i.dest==='kitchen'?'кухня':'бар'})</small></div>`).join('')}</div>
+      <div class="repeat-actions">
+        <button class="serve-btn" onclick="confirmRepeatRequest('${r.id}')">Подтвердить</button>
+        <button class="reject-btn" onclick="rejectRepeatRequest('${r.id}')">Отклонить</button>
+      </div>
+    </div>`;
+  });
   const tableNums = Object.keys(openTables).map(Number).sort((a,b)=>a-b);
-  if(tableNums.length===0){ el.innerHTML = `<div class="empty">Открытых столов нет</div>`; return; }
-  let html = "";
+  if(tableNums.length===0){ el.innerHTML = repeatHtml + `<div class="empty">Открытых столов нет</div>`; return; }
+  let html = repeatHtml;
   tableNums.forEach(t => {
     const session = openTables[t];
     const ordersForTable = allOrders.filter(o => o.table === t).sort((a,b)=>a.createdAt-b.createdAt);
@@ -1048,6 +1095,15 @@ function renderHistory(){
     </div>`;
   });
   el.innerHTML = html;
+}
+
+function confirmRepeatRequest(id){
+  socket.send(JSON.stringify({type:"confirm_repeat_request", requestId:id}));
+}
+function rejectRepeatRequest(id){
+  showConfirm("Отклонить повторный заказ?", "Гостю ничего не отправится.", () => {
+    socket.send(JSON.stringify({type:"reject_repeat_request", requestId:id}));
+  });
 }
 
 function closeTable(t){
@@ -1295,7 +1351,7 @@ function requestNotifPermission(){
 }
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission().then(updateNotifPermBanner);
 updateNotifPermBanner();
-const APP_VERSION = "21";
+const APP_VERSION = "22";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
