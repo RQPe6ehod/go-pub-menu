@@ -421,6 +421,7 @@ let cart = {}; // key: "kitchen|Название" -> {name, qty, dest, price}
 let allOrders = [];
 let allHistory = [];
 let openTables = {};
+let closedTables = [];
 let callingTables = {};
 let billRequestedTables = {};
 let returningGuestTables = {};
@@ -590,6 +591,7 @@ function connect(){
     if(msg.type === "state"){
       allOrders = msg.orders;
       allHistory = msg.history || [];
+      closedTables = msg.closedTables || [];
       openTables = msg.openTables || {};
       callingTables = msg.callingTables || {};
       billRequestedTables = msg.billRequestedTables || {};
@@ -1033,18 +1035,17 @@ function dayLabel(ts){
 
 function renderHistory(){
   const el = document.getElementById('historyView');
-  const mine = allHistory.filter(o => o.waiterName === staffName).sort((a,b)=>b.servedAt-a.servedAt);
-  if(mine.length===0){ el.innerHTML = `<div class="empty">Пока нет поданных заказов</div>`; return; }
+  const mine = closedTables.filter(r => r.closedBy === staffName).sort((a,b)=>b.closedAt-a.closedAt);
+  if(mine.length===0){ el.innerHTML = `<div class="empty">Пока нет закрытых столов</div>`; return; }
   let html = "";
   let lastDay = null;
-  mine.forEach(o => {
-    const day = dayLabel(o.servedAt);
+  mine.forEach(r => {
+    const day = dayLabel(r.closedAt);
     if(day !== lastDay){ html += `<div class="day-header">${day}</div>`; lastDay = day; }
-    html += `<div class="hist-ticket">
-      <div class="top"><span class="table-badge">Стол ${tableLabel(o.table)}</span><span class="time">${new Date(o.servedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span></div>`;
-    o.kitchenItems.forEach(i => html += `<div class="line">${i.name} <small>× ${i.qty}</small>${i.note?` <em style="color:var(--gold);font-style:normal;">— ${i.note}</em>`:''}</div>`);
-    o.barItems.forEach(i => html += `<div class="line">${i.name} <small>× ${i.qty}</small>${i.note?` <em style="color:var(--gold);font-style:normal;">— ${i.note}</em>`:''}</div>`);
-    html += `</div>`;
+    html += `<div class="hist-ticket" onclick="showReceiptById('${r.id}')" style="cursor:pointer;">
+      <div class="top"><span class="table-badge">Стол ${tableLabel(r.table)}</span><span class="time">${new Date(r.closedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span></div>
+      <div class="line" style="display:flex; justify-content:space-between;"><span>${r.items.length} ${r.items.length===1?'позиция':'позиций'}</span><span style="color:var(--gold); font-weight:700;">${r.total.toLocaleString('ru-RU')} тг</span></div>
+    </div>`;
   });
   el.innerHTML = html;
 }
@@ -1056,6 +1057,11 @@ function closeTable(t){
 }
 
 let currentReceipt = null;
+
+function showReceiptById(id){
+  const r = closedTables.find(x => x.id === id);
+  if(r) showReceipt(r);
+}
 
 function showReceipt(r){
   currentReceipt = r;
@@ -1289,7 +1295,7 @@ function requestNotifPermission(){
 }
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission().then(updateNotifPermBanner);
 updateNotifPermBanner();
-const APP_VERSION = "20";
+const APP_VERSION = "21";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
