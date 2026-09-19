@@ -2907,7 +2907,7 @@ function submitName(){
   updateStaffNameTag();
 }
 function updateStaffNameTag(){
-  document.getElementById('staffNameTag').textContent = staffName ? "— " + staffName : "— указать имя";
+  document.getElementById('staffNameTag').textContent = (myIsMaster ? "👑 " : "") + (staffName ? "— " + staffName : "— указать имя");
 }
 
 function openPinPrompt(){
@@ -4202,7 +4202,7 @@ async function setupPush(){
   }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
 }
 
-const APP_VERSION = "18";
+const APP_VERSION = "19";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
