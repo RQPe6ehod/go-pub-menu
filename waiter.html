@@ -393,7 +393,7 @@
 
 <script>
 // ---- EDIT THIS after you deploy the Worker ----
-const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
+const WS_URL = "wss://api.restorun.kuatov.kz/ws";
 
 let MENU = { kitchen: [], bar: [] }; // populated from the server's shared menu (see state handler)
 
@@ -1289,7 +1289,7 @@ function requestNotifPermission(){
 }
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission().then(updateNotifPermBanner);
 updateNotifPermBanner();
-const APP_VERSION = "19";
+const APP_VERSION = "20";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;

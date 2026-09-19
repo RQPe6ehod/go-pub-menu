@@ -2790,7 +2790,7 @@ var qrcode = function() {
 </script>
 
 <script>
-const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
+const WS_URL = "wss://api.restorun.kuatov.kz/ws";
 const ROLE = "manager";
 let socket, allOrders = [], allHistory = [], openTables = {}, closedTables = [], staff = [], rooms = [], unavailable = {};
 let inventory = {kitchen:{}, bar:{}};
@@ -4202,7 +4202,7 @@ async function setupPush(){
   }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
 }
 
-const APP_VERSION = "17";
+const APP_VERSION = "18";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;

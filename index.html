@@ -384,7 +384,7 @@ const STR = {
 let currentMode = 'food';
 let LANG = localStorage.getItem('gopub_lang') || 'ru';
 let observer;
-const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
+const WS_URL = "wss://api.restorun.kuatov.kz/ws";
 const QR_ID = new URLSearchParams(location.search).get('qr');
 let TABLE = new URLSearchParams(location.search).get('table'); // may also arrive asynchronously via resolve_qr
 let liveSocket = null;
@@ -395,7 +395,7 @@ const HARD_EXPIRE_MS = 12 * 60 * 60 * 1000;
 const sessionStartedAt = Date.now();
 let sessionExpired = false;
 let pendingConfirmCallback = null;
-const APP_VERSION = "11";
+const APP_VERSION = "12";
 let updateDismissed = false;
 
 function toggleLangMenu(){

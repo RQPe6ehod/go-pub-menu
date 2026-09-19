@@ -250,7 +250,7 @@
 </div>
 
 <script>
-const WS_URL = "wss://go-pub-orders.kuatov-party.workers.dev/ws";
+const WS_URL = "wss://api.restorun.kuatov.kz/ws";
 const ROLE = "bartender";
 let socket, allOrders = [], newIds = new Set();
 let allHistory = [];
@@ -765,7 +765,7 @@ async function setupPush(){
 }
 
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
-const APP_VERSION = "13";
+const APP_VERSION = "14";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
