@@ -493,7 +493,7 @@ let LANG = localStorage.getItem('gopub_lang') || 'ru';
 let observer;
 const WS_URL = "wss://api.restorun.kuatov.kz/ws";
 const QR_ID = new URLSearchParams(location.search).get('qr');
-let TABLE = new URLSearchParams(location.search).get('table'); // may also arrive asynchronously via resolve_qr
+let TABLE = null; // only ever set from the server's verified resolve_qr response — never trust a raw ?table= param
 let liveSocket = null;
 let callCooldown = false;
 let currentBill = null;
@@ -502,7 +502,7 @@ const HARD_EXPIRE_MS = 12 * 60 * 60 * 1000;
 const sessionStartedAt = Date.now();
 let sessionExpired = false;
 let pendingConfirmCallback = null;
-const APP_VERSION = "13";
+const APP_VERSION = "15";
 let updateDismissed = false;
 
 function toggleLangMenu(){
@@ -729,7 +729,9 @@ function activateTableUI(){
   document.getElementById('callBar').style.display = 'flex';
   document.body.style.paddingBottom = '128px';
   pollBill();
-  announceReturningGuestIfConsented();
+  if(localStorage.getItem('gopub_guest_consent') === 'yes'){
+    document.getElementById('forgetMeRow').style.display = 'block';
+  }
 }
 
 // --- if this tab stays open for 12 hours straight, the call button
@@ -778,7 +780,7 @@ function confirmQuickRequest(what){
   closeGuestActions();
   showConfirm(question, null, () => {
     if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
-      liveSocket.send(JSON.stringify({type:"guest_quick_request", table: TABLE, what}));
+      liveSocket.send(JSON.stringify({type:"guest_quick_request", table: TABLE, what, deviceId: consentedDeviceId()}));
     }
   });
 }
@@ -843,7 +845,7 @@ function sendRepeatRequest(){
   const items = Object.values(repeatCart);
   if(items.length === 0 || !TABLE) return;
   if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
-    liveSocket.send(JSON.stringify({type:"guest_repeat_request", table: TABLE, items}));
+    liveSocket.send(JSON.stringify({type:"guest_repeat_request", table: TABLE, items, deviceId: consentedDeviceId()}));
   }
   repeatCart = {};
   closeGuestActions();
@@ -854,7 +856,7 @@ function callWaiter(){
   if(callCooldown || !TABLE || sessionExpired) return;
   showConfirm(STR[LANG].confirmCallQuestion, null, () => {
     if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
-      liveSocket.send(JSON.stringify({type:"call_waiter", table: TABLE}));
+      liveSocket.send(JSON.stringify({type:"call_waiter", table: TABLE, deviceId: consentedDeviceId()}));
     }
     callCooldown = true;
     const btn = document.getElementById('callWaiterBtn');
@@ -933,6 +935,11 @@ function getOrCreateDeviceId(){
   }
   return id;
 }
+// Only ever surfaces this device's id to the server when the guest has
+// actively opted in — first-time / opted-out visitors stay fully anonymous.
+function consentedDeviceId(){
+  return localStorage.getItem('gopub_guest_consent') === 'yes' ? getOrCreateDeviceId() : null;
+}
 
 function sendSaveGuestOrder(){
   if(!TABLE || !liveSocket || liveSocket.readyState !== WebSocket.OPEN) return;
@@ -981,19 +988,6 @@ function forgetMe(){
     document.getElementById('forgetMeRow').style.display = 'none';
     alert(STR[LANG].forgottenAlert);
   }, true);
-}
-
-// If this device already opted in on a previous visit, announce its
-// presence at this table as soon as it's known, so the waiter can see
-// "usual order" — brand-new / opted-out devices stay fully anonymous.
-function announceReturningGuestIfConsented(){
-  if(!TABLE) return;
-  if(localStorage.getItem('gopub_guest_consent') === 'yes'){
-    document.getElementById('forgetMeRow').style.display = 'block';
-    if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
-      liveSocket.send(JSON.stringify({type:"guest_at_table", deviceId: getOrCreateDeviceId(), table: TABLE}));
-    }
-  }
 }
 
 function checkForUpdate(){
