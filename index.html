@@ -317,6 +317,10 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
       <span id="reviewBtnLabel">Оставить отзыв</span>
     </a>
+    <button class="review-btn" id="wifiBtn" onclick="openWifiModal()" style="display:none;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 13a10 10 0 0 1 14 0"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+      <span id="wifiBtnLabel">Wi-Fi</span>
+    </button>
   </div>
 
   <a href="/contact.html" class="credit-link">by RQ Coding<svg class="credit-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/><path d="M14 4h6v6"/><path d="M10 14L20 4"/></svg></a>
@@ -404,6 +408,23 @@
   </div>
 </div>
 
+<div class="ga-overlay" id="wifiOverlay">
+  <div class="ga-panel">
+    <button class="ga-close" onclick="closeWifiModal()">✕</button>
+    <h2 id="wifiModalTitle">Wi-Fi заведения</h2>
+    <div style="background:#f6f3ea; border:1px solid #e6e0d0; border-radius:14px; padding:16px; margin-bottom:14px;">
+      <div style="font-size:12px; color:#888; margin-bottom:4px;" id="wifiSsidLabel">Сеть</div>
+      <div style="font-size:17px; font-weight:700; margin-bottom:14px;" id="wifiSsidValue"></div>
+      <div style="font-size:12px; color:#888; margin-bottom:4px;" id="wifiPasswordLabel">Пароль</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <span style="font-size:17px; font-weight:700;" id="wifiPasswordValue"></span>
+        <button onclick="copyWifiPassword()" style="padding:8px 14px; border-radius:10px; border:1px solid #ddd; background:#fff; font-size:13px; font-weight:600;" id="wifiCopyBtn">Копировать</button>
+      </div>
+    </div>
+    <p style="font-size:12.5px; color:#999; text-align:center;" id="wifiHint">Откройте настройки Wi-Fi на телефоне и выберите эту сеть</p>
+  </div>
+</div>
+
 <div class="bill-overlay" id="billOverlay">
   <div class="bill-panel">
     <div class="bill-body" id="billBody"></div>
@@ -447,6 +468,8 @@ const STR = {
     confirmSaltPepper:"Попросить соль/перец?", confirmProblem:"Сообщить официанту о проблеме с заказом?",
     gaRepeatEmpty:"У вас пока нет истории заказов", gaSendRepeat:"Отправить официанту",
     gaRepeatSentAlert:"Отправлено! Официант проверит и подтвердит заказ.",
+    wifiModalTitle:"Wi-Fi заведения", wifiSsidLabel:"Сеть", wifiPasswordLabel:"Пароль",
+    wifiHint:"Откройте настройки Wi-Fi на телефоне и выберите эту сеть", wifiCopyBtn:"Копировать", wifiCopied:"Скопировано!",
     updateBannerText:"Доступна новая версия меню", updateBannerBtn:"Обновить" },
   en: { tagline:"DIGITAL MENU", svc:"10% service charge included. Prices in KZT.", kitchen:"Kitchen", bar:"Bar", search:"Search dish or drink…", enjoy:"Enjoy your meal!", scanNote:"Scan the QR code at your table to return to the menu anytime.", currency:" KZT", soldOut:"sold out",
     callWaiterBtn:"I'd like to order", callWaiterWaiting:"Waiter is on the way…",
@@ -466,6 +489,8 @@ const STR = {
     confirmSaltPepper:"Request salt/pepper?", confirmProblem:"Tell the waiter about a problem with your order?",
     gaRepeatEmpty:"You don't have any order history yet", gaSendRepeat:"Send to waiter",
     gaRepeatSentAlert:"Sent! The waiter will review and confirm the order.",
+    wifiModalTitle:"Venue Wi-Fi", wifiSsidLabel:"Network", wifiPasswordLabel:"Password",
+    wifiHint:"Open Wi-Fi settings on your phone and select this network", wifiCopyBtn:"Copy", wifiCopied:"Copied!",
     updateBannerText:"A new menu version is available", updateBannerBtn:"Update" },
   kk: { tagline:"ЦИФРЛЫҚ МӘЗІР", svc:"Қызмет көрсету ақысы 10%. Бағалар теңгемен.", kitchen:"Ас үй", bar:"Бар", search:"Тағам немесе сусын іздеу…", enjoy:"Ас болсын!", scanNote:"Кез келген уақытта мәзірге оралу үшін үстелдегі QR-кодты сканерлеңіз.", currency:" тг.", soldOut:"қазір жоқ",
     callWaiterBtn:"Тапсырыс бергім келеді", callWaiterWaiting:"Даяшы жолда…",
@@ -485,10 +510,35 @@ const STR = {
     confirmSaltPepper:"Тұз/бұрыш сұрау керек пе?", confirmProblem:"Даяшыға тапсырыспен мәселе туралы хабарлау керек пе?",
     gaRepeatEmpty:"Сізде әлі тапсырыс тарихы жоқ", gaSendRepeat:"Даяшыға жіберу",
     gaRepeatSentAlert:"Жіберілді! Даяшы тексеріп, тапсырысты растайды.",
+    wifiModalTitle:"Мекеменің Wi-Fi желісі", wifiSsidLabel:"Желі", wifiPasswordLabel:"Құпия сөз",
+    wifiHint:"Телефоныңыздағы Wi-Fi баптауларын ашып, осы желіні таңдаңыз", wifiCopyBtn:"Көшіру", wifiCopied:"Көшірілді!",
     updateBannerText:"Мәзірдің жаңа нұсқасы қолжетімді", updateBannerBtn:"Жаңарту" }
 };
 
 let currentMode = 'food';
+let wifiInfo = null;
+
+function openWifiModal(){
+  if(!wifiInfo) return;
+  document.getElementById('wifiSsidValue').textContent = wifiInfo.ssid;
+  document.getElementById('wifiPasswordValue').textContent = wifiInfo.password || '—';
+  document.getElementById('wifiOverlay').classList.add('open');
+}
+function closeWifiModal(){
+  document.getElementById('wifiOverlay').classList.remove('open');
+}
+function copyWifiPassword(){
+  if(!wifiInfo || !wifiInfo.password) return;
+  const btn = document.getElementById('wifiCopyBtn');
+  const original = btn.textContent;
+  const done = () => { btn.textContent = STR[LANG].wifiCopied; setTimeout(() => { btn.textContent = original; }, 1500); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(wifiInfo.password).then(done).catch(done);
+  } else {
+    done();
+  }
+}
+
 let LANG = localStorage.getItem('gopub_lang') || 'ru';
 let observer;
 const WS_URL = "wss://api.restorun.kuatov.kz/ws";
@@ -558,6 +608,11 @@ function applyStaticStrings(){
   document.getElementById('gaProblem').textContent = s.gaProblem;
   document.getElementById('gaCallWaiter').textContent = s.gaCallWaiter;
   document.getElementById('gaSendRepeatBtn').textContent = s.gaSendRepeat;
+  document.getElementById('wifiModalTitle').textContent = s.wifiModalTitle;
+  document.getElementById('wifiSsidLabel').textContent = s.wifiSsidLabel;
+  document.getElementById('wifiPasswordLabel').textContent = s.wifiPasswordLabel;
+  document.getElementById('wifiHint').textContent = s.wifiHint;
+  document.getElementById('wifiCopyBtn').textContent = s.wifiCopyBtn;
   if(currentBill) renderBill();
 }
 
@@ -690,6 +745,8 @@ function connectLive(){
     if(msg.type === "state"){
       if(msg.menu){ MENU = { food: msg.menu.kitchen || [], bar: msg.menu.bar || [] }; }
       unavailable = msg.unavailable || {};
+      wifiInfo = msg.wifi || null;
+      document.getElementById('wifiBtn').style.display = wifiInfo ? 'flex' : 'none';
       renderChips();
       renderMain();
       onSearch();

@@ -155,6 +155,12 @@
   .confirm-brand{ font-family:'Fraunces',serif; color:var(--gold); font-size:12px; font-weight:700; margin-bottom:12px; letter-spacing:.06em; text-transform:uppercase; }
   .confirm-question{ font-size:16px; font-weight:700; color:var(--cream); margin-bottom:6px; }
   .confirm-sub{ font-size:12.5px; color:var(--muted); margin-bottom:20px; line-height:1.4; display:none; }
+  .confirm-input{
+    width:100%; box-sizing:border-box; padding:11px 12px; margin-bottom:20px;
+    border-radius:10px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream);
+    font-size:14px; font-family:inherit;
+  }
+  .confirm-input:focus{ outline:none; border-color:var(--gold); }
   .confirm-actions{ display:flex; gap:10px; }
   .confirm-actions button{ flex:1; padding:11px; border-radius:10px; font-weight:700; font-size:13.5px; border:none; }
   .confirm-cancel{ background:var(--bg-deep); color:var(--cream); border:1px solid var(--line); }
@@ -368,6 +374,17 @@
     </div>
 
     <div id="configView" style="display:none">
+      <h2>Wi-Fi для гостей</h2>
+      <div style="background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:18px;">
+        <label style="display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; margin-bottom:14px; cursor:pointer;">
+          <input type="checkbox" id="wifiEnabledCheck" style="width:18px; height:18px;">
+          Показывать кнопку "Подключиться к Wi-Fi" в меню
+        </label>
+        <input type="text" id="wifiSsidInput" placeholder="Название сети (SSID)" style="width:100%; box-sizing:border-box; padding:11px 12px; margin-bottom:10px; border-radius:10px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:14px;">
+        <input type="text" id="wifiPasswordInput" placeholder="Пароль сети" style="width:100%; box-sizing:border-box; padding:11px 12px; margin-bottom:12px; border-radius:10px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:14px;">
+        <button style="width:100%; padding:12px; border-radius:12px; border:none; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:14px;" onclick="saveWifiSettings()">Сохранить</button>
+      </div>
+
       <h2>Залы и столы</h2>
       <div id="roomsList"></div>
       <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="addRoom()">+ Добавить зал</button>
@@ -449,8 +466,9 @@
     <div class="confirm-brand">GO pub</div>
     <div class="confirm-question" id="confirmQuestion"></div>
     <div class="confirm-sub" id="confirmSub"></div>
+    <input type="text" class="confirm-input" id="confirmInput" style="display:none;">
     <div class="confirm-actions">
-      <button class="confirm-cancel" onclick="confirmNo()">Отмена</button>
+      <button class="confirm-cancel" id="confirmCancelBtn" onclick="confirmNo()">Отмена</button>
       <button class="confirm-ok" id="confirmOkBtn" onclick="confirmYes()">Да</button>
     </div>
   </div>
@@ -2802,6 +2820,7 @@ let menuDest = 'kitchen';
 let vapidPublicKey = null;
 let pushSetupDone = false;
 let mgrMode = 'overview';
+let wifi = { enabled: false, ssid: '', password: '' };
 let qrStream = null;
 let qrScanRAF = null;
 let staffName = "";
@@ -2911,12 +2930,13 @@ function updateStaffNameTag(){
 }
 
 function openPinPrompt(){
-  const p1 = prompt("Новый PIN (4-6 цифр) — понадобится после каждого выхода:");
-  if(p1 === null) return;
-  const clean = p1.trim();
-  if(!/^\d{4,6}$/.test(clean)){ alert("PIN должен состоять из 4-6 цифр"); return; }
-  socket.send(JSON.stringify({type:"set_staff_pin", staffId, newPin: clean}));
-  setStaffPin(clean);
+  showPrompt("Новый PIN (4-6 цифр) — понадобится после каждого выхода:", "", (p1) => {
+    if(p1 === null) return;
+    const clean = p1.trim();
+    if(!/^\d{4,6}$/.test(clean)){ showAlert("PIN должен состоять из 4-6 цифр"); return; }
+    socket.send(JSON.stringify({type:"set_staff_pin", staffId, newPin: clean}));
+    setStaffPin(clean);
+  });
 }
 
 function connect(){
@@ -2961,8 +2981,8 @@ function connect(){
         showUnlockScreen("Неверный PIN");
       }
     }
-    if(msg.type === "staff_pin_changed"){ alert("PIN обновлён. Запомните новый PIN — он понадобится при следующем входе."); }
-    if(msg.type === "staff_pin_change_error"){ alert("Не удалось изменить PIN — используйте 4-6 цифр."); }
+    if(msg.type === "staff_pin_changed"){ showAlert("PIN обновлён. Запомните новый PIN — он понадобится при следующем входе."); }
+    if(msg.type === "staff_pin_change_error"){ showAlert("Не удалось изменить PIN — используйте 4-6 цифр."); }
     if(msg.type === "table_closed"){ showReceiptFromData(msg.receipt); }
     if(msg.type === "qr_generated"){
       const url = location.origin + '/index.html?qr=' + msg.qrId;
@@ -2979,7 +2999,7 @@ function connect(){
       }).catch(() => { dl.style.display = 'none'; });
     }
     if(msg.type === "qr_assign_error" && msg.reason === "not_ours"){
-      alert("Этот QR-код не был выпущен нашей системой — его нельзя привязать к столу.");
+      showAlert("Этот QR-код не был выпущен нашей системой — его нельзя привязать к столу.");
     }
     if(msg.type === "notify" && msg.kind === "cancel_request"){
       if(navigator.vibrate) navigator.vibrate([200,80,200,80,200]);
@@ -3000,8 +3020,8 @@ function connect(){
       }
     }
     if(msg.type === "close_error"){
-      if(msg.reason === "pending_items") alert("У стола ещё есть неподанные позиции — сначала их нужно выдать гостю.");
-      else alert("Не удалось закрыть стол.");
+      if(msg.reason === "pending_items") showAlert("У стола ещё есть неподанные позиции — сначала их нужно выдать гостю.");
+      else showAlert("Не удалось закрыть стол.");
     }
     if(msg.type === "state"){
       allOrders = msg.orders; allHistory = msg.history || []; openTables = msg.openTables || {};
@@ -3009,6 +3029,7 @@ function connect(){
       const me = staff.find(s => s.id === staffId);
       if(me){ staffName = me.name || ""; myIsMaster = !!me.isMaster; updateStaffNameTag(); }
       unavailable = msg.unavailable || {};
+      wifi = msg.wifi || wifi;
       inventory = msg.inventory || {kitchen:{}, bar:{}};
       actionLog = msg.actionLog || [];
       menu = msg.menu || menu;
@@ -3164,20 +3185,41 @@ function setReportsSub(sub){
 let menuUnlockedThisSession = false;
 function setSettingsSub(sub){
   if(sub === 'menu' && !menuUnlockedThisSession){
-    const entered = prompt("Редактирование меню защищено — введите PIN директора:");
-    if(entered === null) return; // stay on the current tab
-    if(entered.trim() !== getStaffPin()){
-      alert("Неверный PIN.");
-      return;
-    }
-    menuUnlockedThisSession = true;
+    showPrompt("Редактирование меню защищено — введите PIN директора:", "", (entered) => {
+      if(entered === null) return; // stay on the current tab
+      if(entered.trim() !== getStaffPin()){
+        showAlert("Неверный PIN.");
+        return;
+      }
+      menuUnlockedThisSession = true;
+      _applySettingsSub(sub);
+    });
+    return;
   }
+  _applySettingsSub(sub);
+}
+function _applySettingsSub(sub){
   settingsSub = sub;
   document.querySelectorAll('#settingsSubTabs button').forEach((b,i) => b.classList.toggle('active', ['staff','config','menu'][i]===sub));
   document.getElementById('configView').style.display = sub==='config' ? '' : 'none';
   document.getElementById('staffView').style.display = sub==='staff' ? '' : 'none';
   document.getElementById('menuView').style.display = sub==='menu' ? '' : 'none';
   if(sub==='menu') renderMenuEditor();
+  if(sub==='config') populateWifiFields();
+}
+
+function populateWifiFields(){
+  document.getElementById('wifiEnabledCheck').checked = !!wifi.enabled;
+  document.getElementById('wifiSsidInput').value = wifi.ssid || '';
+  document.getElementById('wifiPasswordInput').value = wifi.password || '';
+}
+function saveWifiSettings(){
+  const enabled = document.getElementById('wifiEnabledCheck').checked;
+  const ssid = document.getElementById('wifiSsidInput').value.trim();
+  const password = document.getElementById('wifiPasswordInput').value.trim();
+  if(enabled && !ssid){ showAlert('Укажите название сети (SSID), чтобы включить кнопку Wi-Fi.'); return; }
+  socket.send(JSON.stringify({type:"set_wifi", enabled, ssid, password}));
+  showAlert('Настройки Wi-Fi сохранены.');
 }
 
 let granularity = 'day';
@@ -3563,14 +3605,16 @@ function renderMenuEditor(){
 }
 
 function addMenuCategory(){
-  const title = prompt("Название раздела (например: Салаты):");
-  if(!title || !title.trim()) return;
-  socket.send(JSON.stringify({type:"add_menu_category", dest:menuDest, title:title.trim()}));
+  showPrompt("Название раздела (например: Салаты):", "", (title) => {
+    if(!title || !title.trim()) return;
+    socket.send(JSON.stringify({type:"add_menu_category", dest:menuDest, title:title.trim()}));
+  });
 }
 function renameMenuCategoryPrompt(categoryId, current){
-  const title = prompt("Новое название раздела:", current);
-  if(title===null || !title.trim()) return;
-  socket.send(JSON.stringify({type:"rename_menu_category", dest:menuDest, categoryId, title:title.trim()}));
+  showPrompt("Новое название раздела:", current, (title) => {
+    if(title===null || !title.trim()) return;
+    socket.send(JSON.stringify({type:"rename_menu_category", dest:menuDest, categoryId, title:title.trim()}));
+  });
 }
 function deleteMenuCategoryPrompt(categoryId, title){
   showConfirm(`Удалить раздел «${title}»?`, "Все позиции внутри тоже удалятся.", () => {
@@ -3578,35 +3622,53 @@ function deleteMenuCategoryPrompt(categoryId, title){
   }, true);
 }
 function addMenuItemPrompt(categoryId){
-  const name = prompt("Название позиции:");
-  if(!name || !name.trim()) return;
-  const price = prompt("Цена (тг):");
-  if(price===null || !price.trim()) return;
-  const price2 = prompt("Вторая цена — для другого объёма/размера (тг). Оставьте пустым, если вариант только один:", "");
-  if(price2===null) return;
-  let price3 = "";
-  if(price2.trim()){
-    price3 = prompt("Третья цена (тг). Оставьте пустым, если вариантов только два:", "");
-    if(price3===null) return;
-  }
-  const desc = prompt("Состав/описание (можно оставить пустым):", "");
-  socket.send(JSON.stringify({type:"add_menu_item", dest:menuDest, categoryId, name:name.trim(), price:price.trim(), price2:price2.trim(), price3:price3.trim(), desc:(desc||'').trim()}));
+  showPrompt("Название позиции:", "", (name) => {
+    if(!name || !name.trim()) return;
+    showPrompt("Цена (тг):", "", (price) => {
+      if(price===null || !price.trim()) return;
+      showPrompt("Вторая цена — для другого объёма/размера (тг). Оставьте пустым, если вариант только один:", "", (price2) => {
+        if(price2===null) return;
+        const proceed = (price3) => {
+          showPrompt("Состав/описание (можно оставить пустым):", "", (desc) => {
+            socket.send(JSON.stringify({type:"add_menu_item", dest:menuDest, categoryId, name:name.trim(), price:price.trim(), price2:price2.trim(), price3:(price3||"").trim(), desc:(desc||'').trim()}));
+          });
+        };
+        if(price2.trim()){
+          showPrompt("Третья цена (тг). Оставьте пустым, если вариантов только два:", "", (price3) => {
+            if(price3===null) return;
+            proceed(price3);
+          });
+        } else {
+          proceed("");
+        }
+      });
+    });
+  });
 }
 function editMenuItemPrompt(categoryId, itemId, currentName, currentPrice, currentDesc, currentPrice2, currentPrice3){
-  const name = prompt("Название:", currentName);
-  if(name===null || !name.trim()) return;
-  const price = prompt("Цена (тг):", currentPrice);
-  if(price===null || !price.trim()) return;
-  const price2 = prompt("Вторая цена — для другого объёма/размера (тг). Оставьте пустым, если вариант только один:", currentPrice2||"");
-  if(price2===null) return;
-  let price3 = "";
-  if(price2.trim()){
-    price3 = prompt("Третья цена (тг). Оставьте пустым, если вариантов только два:", currentPrice3||"");
-    if(price3===null) return;
-  }
-  const desc = prompt("Состав/описание (можно оставить пустым):", currentDesc||"");
-  if(desc===null) return;
-  socket.send(JSON.stringify({type:"update_menu_item", dest:menuDest, categoryId, itemId, name:name.trim(), price:price.trim(), price2:price2.trim(), price3:price3.trim(), desc:desc.trim()}));
+  showPrompt("Название:", currentName, (name) => {
+    if(name===null || !name.trim()) return;
+    showPrompt("Цена (тг):", currentPrice, (price) => {
+      if(price===null || !price.trim()) return;
+      showPrompt("Вторая цена — для другого объёма/размера (тг). Оставьте пустым, если вариант только один:", currentPrice2||"", (price2) => {
+        if(price2===null) return;
+        const proceed = (price3) => {
+          showPrompt("Состав/описание (можно оставить пустым):", currentDesc||"", (desc) => {
+            if(desc===null) return;
+            socket.send(JSON.stringify({type:"update_menu_item", dest:menuDest, categoryId, itemId, name:name.trim(), price:price.trim(), price2:price2.trim(), price3:(price3||"").trim(), desc:desc.trim()}));
+          });
+        };
+        if(price2.trim()){
+          showPrompt("Третья цена (тг). Оставьте пустым, если вариантов только два:", currentPrice3||"", (price3) => {
+            if(price3===null) return;
+            proceed(price3);
+          });
+        } else {
+          proceed("");
+        }
+      });
+    });
+  });
 }
 function deleteMenuItemPrompt(categoryId, itemId, name){
   showConfirm(`Удалить «${name}»?`, "Уберётся из меню совсем.", () => {
@@ -3712,24 +3774,62 @@ function openQrAssign(qrId){
   document.getElementById('qrAssignOverlay').classList.add('open');
 }
 let pendingConfirmCallback = null;
+let pendingPromptCallback = null;
 function showConfirm(question, sub, onYes, danger){
   document.getElementById('confirmQuestion').textContent = question;
   const subEl = document.getElementById('confirmSub');
   if(sub){ subEl.textContent = sub; subEl.style.display = 'block'; }
   else { subEl.style.display = 'none'; }
+  document.getElementById('confirmInput').style.display = 'none';
+  document.getElementById('confirmCancelBtn').style.display = 'inline-block';
+  document.getElementById('confirmOkBtn').textContent = 'Да';
   document.getElementById('confirmOkBtn').className = 'confirm-ok' + (danger ? ' danger' : '');
   pendingConfirmCallback = onYes;
+  pendingPromptCallback = null;
   document.getElementById('confirmOverlay').classList.add('open');
 }
+function showAlert(message){
+  document.getElementById('confirmQuestion').textContent = message;
+  document.getElementById('confirmSub').style.display = 'none';
+  document.getElementById('confirmInput').style.display = 'none';
+  document.getElementById('confirmCancelBtn').style.display = 'none';
+  document.getElementById('confirmOkBtn').textContent = 'Понятно';
+  document.getElementById('confirmOkBtn').className = 'confirm-ok';
+  pendingConfirmCallback = null;
+  pendingPromptCallback = null;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function showPrompt(question, defaultValue, onSubmit){
+  document.getElementById('confirmQuestion').textContent = question;
+  document.getElementById('confirmSub').style.display = 'none';
+  const input = document.getElementById('confirmInput');
+  input.style.display = 'block';
+  input.value = defaultValue || '';
+  document.getElementById('confirmCancelBtn').style.display = 'inline-block';
+  document.getElementById('confirmOkBtn').textContent = 'ОК';
+  document.getElementById('confirmOkBtn').className = 'confirm-ok';
+  pendingConfirmCallback = null;
+  pendingPromptCallback = onSubmit;
+  document.getElementById('confirmOverlay').classList.add('open');
+  setTimeout(() => { input.focus(); input.select(); }, 50);
+}
 function confirmYes(){
+  const input = document.getElementById('confirmInput');
+  const value = input.value;
   document.getElementById('confirmOverlay').classList.remove('open');
   const cb = pendingConfirmCallback;
+  const pcb = pendingPromptCallback;
   pendingConfirmCallback = null;
-  if(cb) cb();
+  pendingPromptCallback = null;
+  if(pcb) pcb(value);
+  else if(cb) cb();
 }
 function confirmNo(){
   document.getElementById('confirmOverlay').classList.remove('open');
+  const pcb = pendingPromptCallback;
   pendingConfirmCallback = null;
+  pendingPromptCallback = null;
+  if(pcb) pcb(null);
 }
 
 function closeQrAssign(){
@@ -3740,7 +3840,7 @@ function confirmAssignQr(){
   const roomId = document.getElementById('qrAssignRoom').value;
   const local = parseInt(document.getElementById('qrAssignLocal').value, 10);
   const room = rooms.find(r => r.id === roomId);
-  if(!room || !local || local < 1 || local > room.tableCount){ alert('Укажите корректный номер стола для этого зала.'); return; }
+  if(!room || !local || local < 1 || local > room.tableCount){ showAlert('Укажите корректный номер стола для этого зала.'); return; }
   let offset = 0;
   for(const r of rooms){ if(r.id === roomId) break; offset += r.tableCount; }
   const globalTable = offset + local;
@@ -3837,9 +3937,10 @@ function renameRoom(roomId, name){
   socket.send(JSON.stringify({type:"update_room", roomId, name}));
 }
 function addRoom(){
-  const name = prompt("Название зала:", "Новый зал");
-  if(name === null || !name.trim()) return;
-  socket.send(JSON.stringify({type:"create_room", name: name.trim()}));
+  showPrompt("Название зала:", "Новый зал", (name) => {
+    if(name === null || !name.trim()) return;
+    socket.send(JSON.stringify({type:"create_room", name: name.trim()}));
+  });
 }
 function removeRoom(roomId){
   const room = rooms.find(r => r.id === roomId);
@@ -3959,9 +4060,9 @@ function copyStaffLink(url, btn){
     setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = original; }, 1500);
   };
   if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(url).then(done).catch(() => { prompt("Скопируйте ссылку:", url); });
+    navigator.clipboard.writeText(url).then(done).catch(() => { showPrompt("Скопируйте ссылку:", url, () => {}); });
   } else {
-    prompt("Скопируйте ссылку:", url);
+    showPrompt("Скопируйте ссылку:", url, () => {});
   }
 }
 
@@ -4164,14 +4265,14 @@ window.addEventListener('beforeinstallprompt', (e) => {
 function isIos(){ return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream; }
 function isStandalone(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
 function installApp(){
-  if(isStandalone()){ alert("Приложение уже установлено на экран."); return; }
+  if(isStandalone()){ showAlert("Приложение уже установлено на экран."); return; }
   if(deferredInstallPrompt){
     deferredInstallPrompt.prompt();
     deferredInstallPrompt.userChoice.finally(() => { deferredInstallPrompt = null; });
   } else if(isIos()){
     document.getElementById('iosLock').style.display = 'flex';
   } else {
-    alert("Откройте меню браузера и выберите «Добавить на главный экран» / «Установить приложение».");
+    showAlert("Откройте меню браузера и выберите «Добавить на главный экран» / «Установить приложение».");
   }
 }
 
@@ -4202,7 +4303,7 @@ async function setupPush(){
   }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
 }
 
-const APP_VERSION = "19";
+const APP_VERSION = "20";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
