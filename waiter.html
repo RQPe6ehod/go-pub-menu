@@ -240,6 +240,12 @@
   .confirm-brand{ font-family:'Fraunces',serif; color:var(--gold); font-size:12px; font-weight:700; margin-bottom:12px; letter-spacing:.06em; text-transform:uppercase; }
   .confirm-question{ font-size:16px; font-weight:700; color:var(--cream); margin-bottom:6px; }
   .confirm-sub{ font-size:12.5px; color:var(--muted); margin-bottom:20px; line-height:1.4; display:none; }
+  .confirm-input{
+    width:100%; box-sizing:border-box; padding:11px 12px; margin-bottom:20px;
+    border-radius:10px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream);
+    font-size:14px; font-family:inherit;
+  }
+  .confirm-input:focus{ outline:none; border-color:var(--gold); }
   .confirm-actions{ display:flex; gap:10px; }
   .confirm-actions button{ flex:1; padding:11px; border-radius:10px; font-weight:700; font-size:13.5px; border:none; }
   .confirm-cancel{ background:var(--bg-deep); color:var(--cream); border:1px solid var(--line); }
@@ -395,8 +401,9 @@
     <div class="confirm-brand">GO pub</div>
     <div class="confirm-question" id="confirmQuestion"></div>
     <div class="confirm-sub" id="confirmSub"></div>
+    <input type="text" class="confirm-input" id="confirmInput" style="display:none;">
     <div class="confirm-actions">
-      <button class="confirm-cancel" onclick="confirmNo()">Отмена</button>
+      <button class="confirm-cancel" id="confirmCancelBtn" onclick="confirmNo()">Отмена</button>
       <button class="confirm-ok" id="confirmOkBtn" onclick="confirmYes()">Да</button>
     </div>
   </div>
@@ -539,12 +546,13 @@ function updateStaffNameTag(){
 }
 
 function openStaffPinPrompt(){
-  const p1 = prompt("Новый PIN (4-6 цифр) — понадобится после каждого выхода:");
-  if(p1 === null) return;
-  const clean = p1.trim();
-  if(!/^\d{4,6}$/.test(clean)){ alert("PIN должен состоять из 4-6 цифр"); return; }
-  socket.send(JSON.stringify({type:"set_staff_pin", staffId, newPin: clean}));
-  setStaffPin(clean);
+  showPrompt("Новый PIN (4-6 цифр) — понадобится после каждого выхода:", "", (p1) => {
+    if(p1 === null) return;
+    const clean = p1.trim();
+    if(!/^\d{4,6}$/.test(clean)){ showAlert("PIN должен состоять из 4-6 цифр"); return; }
+    socket.send(JSON.stringify({type:"set_staff_pin", staffId, newPin: clean}));
+    setStaffPin(clean);
+  });
 }
 
 function connect(){
@@ -598,8 +606,8 @@ function connect(){
         showLock();
       }
     }
-    if(msg.type === "staff_pin_changed"){ alert("PIN обновлён."); }
-    if(msg.type === "staff_pin_change_error"){ alert("Не удалось сменить PIN — используйте 4-6 цифр."); }
+    if(msg.type === "staff_pin_changed"){ showAlert("PIN обновлён."); }
+    if(msg.type === "staff_pin_change_error"){ showAlert("Не удалось сменить PIN — используйте 4-6 цифр."); }
     if(msg.type === "state"){
       allOrders = msg.orders;
       allHistory = msg.history || [];
@@ -631,14 +639,14 @@ function connect(){
       if(mode === 'history') renderHistory();
     }
     if(msg.type === "items_removed"){
-      alert("Эти позиции только что стали недоступны и не попали в заказ: " + msg.names.join(", "));
+      showAlert("Эти позиции только что стали недоступны и не попали в заказ: " + msg.names.join(", "));
     }
     if(msg.type === "notify"){ alertReady(msg); }
     if(msg.type === "table_closed"){ showReceipt(msg.receipt); }
     if(msg.type === "guest_history_result" && msg.table === currentTable){ renderGuestHistoryBanner(msg.history); }
     if(msg.type === "close_error"){
-      if(msg.reason === "pending_items") alert("У стола ещё есть неподанные позиции — сначала выдайте их гостю.");
-      else alert("Не удалось закрыть стол.");
+      if(msg.reason === "pending_items") showAlert("У стола ещё есть неподанные позиции — сначала выдайте их гостю.");
+      else showAlert("Не удалось закрыть стол.");
     }
   };
 }
@@ -651,7 +659,7 @@ function alertReady(msg){
     if("Notification" in window && Notification.permission === "granted"){
       new Notification(text);
     } else {
-      alert(text);
+      showAlert(text);
     }
     setMode('board');
     return;
@@ -662,7 +670,7 @@ function alertReady(msg){
     if("Notification" in window && Notification.permission === "granted"){
       new Notification(text);
     } else {
-      alert(text);
+      showAlert(text);
     }
     setMode('board');
     return;
@@ -673,7 +681,7 @@ function alertReady(msg){
     if("Notification" in window && Notification.permission === "granted"){
       new Notification(text);
     } else {
-      alert(text);
+      showAlert(text);
     }
     setMode('board');
     return;
@@ -684,7 +692,7 @@ function alertReady(msg){
     if("Notification" in window && Notification.permission === "granted"){
       new Notification(text);
     } else {
-      alert(text);
+      showAlert(text);
     }
     setMode('board');
     return;
@@ -695,7 +703,7 @@ function alertReady(msg){
     if("Notification" in window && Notification.permission === "granted"){
       new Notification(text);
     } else {
-      alert(text);
+      showAlert(text);
     }
     setMode('board');
     return;
@@ -709,7 +717,7 @@ function alertReady(msg){
     if("Notification" in window && Notification.permission === "granted"){
       new Notification(text);
     } else {
-      alert(text);
+      showAlert(text);
     }
     setMode('board');
     return;
@@ -926,17 +934,18 @@ function changeQty(dest, name, delta, price, variantKey){
 }
 
 function showUnavailReason(name, comment){
-  alert(name + " временно недоступно" + (comment ? ":\n" + comment : "."));
+  showAlert(name + " временно недоступно" + (comment ? ":\n" + comment : "."));
 }
 
 function editNote(dest, name, price, variantKey){
   const key = dest+"|"+name+(variantKey?"|"+variantKey:"");
-  if(!cart[key]){ alert("Сначала добавьте позицию (нажмите +), потом можно оставить комментарий."); return; }
+  if(!cart[key]){ showAlert("Сначала добавьте позицию (нажмите +), потом можно оставить комментарий."); return; }
   const current = cart[key].note || "";
-  const note = prompt("Комментарий к позиции «" + name + "» (например: без перца, без молока):", current);
-  if(note === null) return;
-  cart[key].note = note.trim();
-  renderMenu();
+  showPrompt("Комментарий к позиции «" + name + "» (например: без перца, без молока):", current, (note) => {
+    if(note === null) return;
+    cart[key].note = note.trim();
+    renderMenu();
+  });
 }
 
 function updateCartBar(){
@@ -949,7 +958,7 @@ function updateCartBar(){
 }
 
 function openReview(){
-  if(!currentTable){ alert("Сначала выберите стол"); return; }
+  if(!currentTable){ showAlert("Сначала выберите стол"); return; }
   document.getElementById('reviewTable').textContent = tableLabel(currentTable);
   const body = document.getElementById('reviewBody');
   let html = "";
@@ -967,7 +976,7 @@ function closeReview(){
 }
 
 function submitOrder(){
-  if(!currentTable){ alert("Сначала выберите стол"); return; }
+  if(!currentTable){ showAlert("Сначала выберите стол"); return; }
   const kitchenItems = Object.values(cart).filter(i=>i.dest==='kitchen').map(i=>({name:i.name, qty:i.qty, price:i.price, note:i.note||''}));
   const barItems = Object.values(cart).filter(i=>i.dest==='bar').map(i=>({name:i.name, qty:i.qty, price:i.price, note:i.note||''}));
   if(kitchenItems.length===0 && barItems.length===0) return;
@@ -1203,14 +1212,14 @@ window.addEventListener('beforeinstallprompt', (e) => {
 function isIos(){ return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream; }
 function isStandalone(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
 function installApp(){
-  if(isStandalone()){ alert("Приложение уже установлено на экран."); return; }
+  if(isStandalone()){ showAlert("Приложение уже установлено на экран."); return; }
   if(deferredInstallPrompt){
     deferredInstallPrompt.prompt();
     deferredInstallPrompt.userChoice.finally(() => { deferredInstallPrompt = null; });
   } else if(isIos()){
     document.getElementById('iosLock').style.display = 'flex';
   } else {
-    alert("Откройте меню браузера и выберите «Добавить на главный экран» / «Установить приложение».");
+    showAlert("Откройте меню браузера и выберите «Добавить на главный экран» / «Установить приложение».");
   }
 }
 
@@ -1271,24 +1280,64 @@ function renderGuestHistoryBanner(history){
 }
 
 let pendingConfirmCallback = null;
+let pendingPromptCallback = null;
 function showConfirm(question, sub, onYes, danger){
   document.getElementById('confirmQuestion').textContent = question;
   const subEl = document.getElementById('confirmSub');
   if(sub){ subEl.textContent = sub; subEl.style.display = 'block'; }
   else { subEl.style.display = 'none'; }
+  document.getElementById('confirmInput').style.display = 'none';
+  document.getElementById('confirmCancelBtn').style.display = 'inline-block';
+  document.getElementById('confirmOkBtn').textContent = 'Да';
   document.getElementById('confirmOkBtn').className = 'confirm-ok' + (danger ? ' danger' : '');
   pendingConfirmCallback = onYes;
+  pendingPromptCallback = null;
   document.getElementById('confirmOverlay').classList.add('open');
 }
+// Styled stand-in for the browser's alert() — one button, just acknowledges.
+function showAlert(message){
+  document.getElementById('confirmQuestion').textContent = message;
+  document.getElementById('confirmSub').style.display = 'none';
+  document.getElementById('confirmInput').style.display = 'none';
+  document.getElementById('confirmCancelBtn').style.display = 'none';
+  document.getElementById('confirmOkBtn').textContent = 'Понятно';
+  document.getElementById('confirmOkBtn').className = 'confirm-ok';
+  pendingConfirmCallback = null;
+  pendingPromptCallback = null;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+// Styled stand-in for the browser's prompt() — text field, OK/Cancel.
+function showPrompt(question, defaultValue, onSubmit){
+  document.getElementById('confirmQuestion').textContent = question;
+  document.getElementById('confirmSub').style.display = 'none';
+  const input = document.getElementById('confirmInput');
+  input.style.display = 'block';
+  input.value = defaultValue || '';
+  document.getElementById('confirmCancelBtn').style.display = 'inline-block';
+  document.getElementById('confirmOkBtn').textContent = 'ОК';
+  document.getElementById('confirmOkBtn').className = 'confirm-ok';
+  pendingConfirmCallback = null;
+  pendingPromptCallback = onSubmit;
+  document.getElementById('confirmOverlay').classList.add('open');
+  setTimeout(() => { input.focus(); input.select(); }, 50);
+}
 function confirmYes(){
+  const input = document.getElementById('confirmInput');
+  const value = input.value;
   document.getElementById('confirmOverlay').classList.remove('open');
   const cb = pendingConfirmCallback;
+  const pcb = pendingPromptCallback;
   pendingConfirmCallback = null;
-  if(cb) cb();
+  pendingPromptCallback = null;
+  if(pcb) pcb(value);
+  else if(cb) cb();
 }
 function confirmNo(){
   document.getElementById('confirmOverlay').classList.remove('open');
+  const pcb = pendingPromptCallback;
   pendingConfirmCallback = null;
+  pendingPromptCallback = null;
+  if(pcb) pcb(null); // matches native prompt()'s "cancelled" signal
 }
 
 function urlBase64ToUint8Array(base64String){
@@ -1351,7 +1400,7 @@ function requestNotifPermission(){
 }
 if("Notification" in window && Notification.permission==="default") Notification.requestPermission().then(updateNotifPermBanner);
 updateNotifPermBanner();
-const APP_VERSION = "22";
+const APP_VERSION = "23";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
