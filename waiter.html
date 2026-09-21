@@ -22,6 +22,7 @@
 <meta name="theme-color" content="#C79A46">
 <link rel="apple-touch-icon" href="/icons/icon-waiter-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GO Официант">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -620,7 +621,7 @@ function connect(){
       rooms = msg.rooms || rooms;
       cancelRequests = msg.cancelRequests || [];
       vapidPublicKey = msg.vapidPublicKey || vapidPublicKey;
-      if(vapidPublicKey && !pushSetupDone){ pushSetupDone = true; setupPush(); }
+      if(vapidPublicKey) setupPush();
       unavailable = msg.unavailable || {};
       if(msg.menu) MENU = msg.menu;
       if(staffId){
@@ -642,6 +643,10 @@ function connect(){
       showAlert("Эти позиции только что стали недоступны и не попали в заказ: " + msg.names.join(", "));
     }
     if(msg.type === "notify"){ alertReady(msg); }
+    if(msg.type === "push_registered"){
+      const c = document.getElementById('conn');
+      if(c) c.textContent = "в сети · push OK (" + msg.total + ")";
+    }
     if(msg.type === "table_closed"){ showReceipt(msg.receipt); }
     if(msg.type === "guest_history_result" && msg.table === currentTable){ renderGuestHistoryBanner(msg.history); }
     if(msg.type === "close_error"){
@@ -1350,19 +1355,36 @@ function urlBase64ToUint8Array(base64String){
 }
 
 let swRegistration = null;
+let pushSetupInFlight = false;
 async function registerServiceWorker(){
   if(!('serviceWorker' in navigator)) return;
-  try{ swRegistration = await navigator.serviceWorker.register('/sw.js'); }catch(e){ /* not fatal — installability may be degraded, but the app still works */ }
+  try{
+    swRegistration = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+    await navigator.serviceWorker.ready;
+    tellSwAppUrl();
+  }catch(e){ /* not fatal — installability may be degraded, but the app still works */ }
 }
 registerServiceWorker();
+
+function tellSwAppUrl(){
+  const url = location.pathname + location.search;
+  const send = (sw) => { try{ sw.postMessage({ type:'app_url', url }); }catch(e){} };
+  if(navigator.serviceWorker.controller) send(navigator.serviceWorker.controller);
+  if(swRegistration && swRegistration.active) send(swRegistration.active);
+}
 
 async function setupPush(){
   if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
   if(!vapidPublicKey) return;
+  if(!("Notification" in window) || Notification.permission !== 'granted') return;
+  if(!socket || socket.readyState !== WebSocket.OPEN) return;
+  if(pushSetupInFlight) return;
+  pushSetupInFlight = true;
   try{
-    const reg = swRegistration || await navigator.serviceWorker.register('/sw.js');
-    if(Notification.permission === 'default') await Notification.requestPermission();
-    if(Notification.permission !== 'granted') return;
+    const reg = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+    await navigator.serviceWorker.ready;
+    swRegistration = reg;
+    tellSwAppUrl();
     let sub = await reg.pushManager.getSubscription();
     if(!sub){
       sub = await reg.pushManager.subscribe({
@@ -1373,34 +1395,52 @@ async function setupPush(){
     let pushId = localStorage.getItem('gopub_push_id_'+ROLE);
     if(!pushId){ pushId = (crypto.randomUUID ? crypto.randomUUID() : (Date.now()+'-'+Math.random())); localStorage.setItem('gopub_push_id_'+ROLE, pushId); }
     socket.send(JSON.stringify({type:'register_push', pushId, subscription: sub.toJSON()}));
-  }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
+    pushSetupDone = true;
+  }catch(e){
+    pushSetupDone = false;
+  }finally{
+    pushSetupInFlight = false;
+  }
 }
 
 function updateNotifPermBanner(){
   const banner = document.getElementById('notifPermBanner');
   if(!banner) return;
-  if(!("Notification" in window) || Notification.permission === "granted"){
+  if(!("Notification" in window)){
     banner.style.display = 'none';
     return;
   }
+  const standalone = isStandalone();
   const textEl = banner.querySelector('span');
   const btnEl = banner.querySelector('button');
+  if(Notification.permission === "granted"){
+    banner.style.display = 'none';
+    return;
+  }
+  if(isIos() && !standalone){
+    textEl.textContent = "На iPhone уведомления при выключенном экране работают только из иконки на «Домой». Откройте приложение с иконки и нажмите «Включить».";
+    btnEl.style.display = 'none';
+    banner.style.display = 'flex';
+    return;
+  }
   if(Notification.permission === "denied"){
-    textEl.textContent = "Уведомления заблокированы — включите вручную в настройках сайта в браузере";
+    textEl.textContent = "Уведомления заблокированы — включите вручную: Настройки → Safari/приложение → Уведомления";
     btnEl.style.display = 'none';
   } else {
-    textEl.textContent = "Уведомления выключены — вы можете пропустить заказ";
+    textEl.textContent = "Уведомления выключены — без них заказы при выключенном экране не придут";
     btnEl.style.display = 'inline-block';
   }
   banner.style.display = 'flex';
 }
 function requestNotifPermission(){
   if(!("Notification" in window)) return;
-  Notification.requestPermission().then(updateNotifPermBanner);
+  Notification.requestPermission().then((perm) => {
+    updateNotifPermBanner();
+    if(perm === 'granted') setupPush();
+  });
 }
-if("Notification" in window && Notification.permission==="default") Notification.requestPermission().then(updateNotifPermBanner);
 updateNotifPermBanner();
-const APP_VERSION = "23";
+const APP_VERSION = "24";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
@@ -1415,7 +1455,9 @@ function checkForUpdate(){
     .catch(() => {});
 }
 function applyUpdate(){
-  location.href = location.pathname + '?_r=' + Date.now();
+  const url = new URL(location.href);
+  url.searchParams.set('_r', String(Date.now()));
+  location.href = url.pathname + url.search;
 }
 function dismissUpdateBanner(){
   updateDismissed = true;
@@ -1423,7 +1465,12 @@ function dismissUpdateBanner(){
 }
 setTimeout(checkForUpdate, 5000);
 setInterval(checkForUpdate, 5 * 60 * 1000);
-document.addEventListener('visibilitychange', () => { if(!document.hidden) checkForUpdate(); });
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden) return;
+  checkForUpdate();
+  updateNotifPermBanner();
+  setupPush();
+});
 
 function updateChangeRoleLink(){
   const roles = ['waiter','cook','bartender'];
