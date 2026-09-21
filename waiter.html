@@ -624,6 +624,17 @@ function connect(){
       if(vapidPublicKey) setupPush();
       unavailable = msg.unavailable || {};
       if(msg.menu) MENU = msg.menu;
+      if(targetTable !== null && mode === 'order' && currentTable === null){
+        currentTable = targetTable;
+        targetTable = null;
+        requestGuestHistory(currentTable);
+        if(callingTables[currentTable] || billRequestedTables[currentTable] || returningGuestTables[currentTable]){
+          delete callingTables[currentTable];
+          delete billRequestedTables[currentTable];
+          delete returningGuestTables[currentTable];
+          socket.send(JSON.stringify({type:"acknowledge_table", table: currentTable}));
+        }
+      }
       if(staffId){
         const me = (msg.staff || []).find(s => s.id === staffId);
         if(me){
@@ -1440,7 +1451,7 @@ function requestNotifPermission(){
   });
 }
 updateNotifPermBanner();
-const APP_VERSION = "24";
+const APP_VERSION = "25";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
