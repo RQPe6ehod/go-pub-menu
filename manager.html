@@ -257,6 +257,11 @@
   </div>
 </div>
 
+<div id="notifPermBanner" style="display:none; position:sticky; top:0; z-index:149; background:var(--red); color:#fff; padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; font-weight:700; animation: popIn .3s cubic-bezier(.2,1,.3,1);">
+  <span>Уведомления выключены — вы можете пропустить заказ</span>
+  <button onclick="requestNotifPermission()" style="background:#fff; color:var(--red); border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:12px;">Включить</button>
+</div>
+
 <div id="updateBanner" style="display:none; position:sticky; top:0; z-index:150; background:var(--gold); color:var(--bg-deep); padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; font-weight:700; animation: popIn .3s cubic-bezier(.2,1,.3,1);">
   <span>Доступна новая версия приложения</span>
   <div style="display:flex; gap:8px; align-items:center;">
@@ -3038,7 +3043,7 @@ function connect(){
       renderCancelRequests();
       if(mgrMode === 'settings' && settingsSub === 'menu') renderMenuEditor();
       vapidPublicKey = msg.vapidPublicKey || vapidPublicKey;
-      if(vapidPublicKey && !pushSetupDone){ pushSetupDone = true; setupPush(); }
+      if(vapidPublicKey) setupPush();
       renderRooms();
       renderQrList();
       render();
@@ -4279,17 +4284,22 @@ function installApp(){
 let swRegistration = null;
 async function registerServiceWorker(){
   if(!('serviceWorker' in navigator)) return;
-  try{ swRegistration = await navigator.serviceWorker.register('/sw.js'); }catch(e){ /* not fatal — installability may be degraded, but the app still works */ }
+  try{ swRegistration = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }); }catch(e){ /* not fatal — installability may be degraded, but the app still works */ }
 }
 registerServiceWorker();
 
+let pushSetupInFlight = false;
 async function setupPush(){
   if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
   if(!vapidPublicKey) return;
+  if(!("Notification" in window) || Notification.permission !== 'granted') return;
+  if(!socket || socket.readyState !== WebSocket.OPEN) return;
+  if(pushSetupInFlight) return;
+  pushSetupInFlight = true;
   try{
-    const reg = swRegistration || await navigator.serviceWorker.register('/sw.js');
-    if(Notification.permission === 'default') await Notification.requestPermission();
-    if(Notification.permission !== 'granted') return;
+    const reg = swRegistration || await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+    await navigator.serviceWorker.ready;
+    swRegistration = reg;
     let sub = await reg.pushManager.getSubscription();
     if(!sub){
       sub = await reg.pushManager.subscribe({
@@ -4300,10 +4310,53 @@ async function setupPush(){
     let pushId = localStorage.getItem('gopub_push_id_'+ROLE);
     if(!pushId){ pushId = (crypto.randomUUID ? crypto.randomUUID() : (Date.now()+'-'+Math.random())); localStorage.setItem('gopub_push_id_'+ROLE, pushId); }
     socket.send(JSON.stringify({type:'register_push', pushId, subscription: sub.toJSON()}));
-  }catch(e){ /* push unavailable/denied — in-app alerts still work while the page is open */ }
+    pushSetupDone = true;
+  }catch(e){
+    pushSetupDone = false;
+  }finally{
+    pushSetupInFlight = false;
+  }
 }
 
-const APP_VERSION = "20";
+function updateNotifPermBanner(){
+  const banner = document.getElementById('notifPermBanner');
+  if(!banner) return;
+  if(!("Notification" in window)){
+    banner.style.display = 'none';
+    return;
+  }
+  const standalone = isStandalone();
+  const textEl = banner.querySelector('span');
+  const btnEl = banner.querySelector('button');
+  if(Notification.permission === "granted"){
+    banner.style.display = 'none';
+    return;
+  }
+  if(isIos() && !standalone){
+    textEl.textContent = "На iPhone уведомления при выключенном экране работают только из иконки на «Домой». Откройте приложение с иконки и нажмите «Включить».";
+    btnEl.style.display = 'none';
+    banner.style.display = 'flex';
+    return;
+  }
+  if(Notification.permission === "denied"){
+    textEl.textContent = "Уведомления заблокированы — включите вручную: Настройки → Safari/приложение → Уведомления";
+    btnEl.style.display = 'none';
+  } else {
+    textEl.textContent = "Уведомления выключены — вы можете пропустить заказ";
+    btnEl.style.display = 'inline-block';
+  }
+  banner.style.display = 'flex';
+}
+function requestNotifPermission(){
+  if(!("Notification" in window)) return;
+  Notification.requestPermission().then((perm) => {
+    updateNotifPermBanner();
+    if(perm === 'granted') setupPush();
+  });
+}
+updateNotifPermBanner();
+
+const APP_VERSION = "21";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
@@ -4318,7 +4371,9 @@ function checkForUpdate(){
     .catch(() => {});
 }
 function applyUpdate(){
-  location.href = location.pathname + '?_r=' + Date.now();
+  const url = new URL(location.href);
+  url.searchParams.set('_r', String(Date.now()));
+  location.href = url.pathname + url.search;
 }
 function dismissUpdateBanner(){
   updateDismissed = true;
@@ -4326,7 +4381,12 @@ function dismissUpdateBanner(){
 }
 setTimeout(checkForUpdate, 5000);
 setInterval(checkForUpdate, 5 * 60 * 1000);
-document.addEventListener('visibilitychange', () => { if(!document.hidden) checkForUpdate(); });
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden) return;
+  checkForUpdate();
+  updateNotifPermBanner();
+  setupPush();
+});
 </script>
 </body>
 </html>
