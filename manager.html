@@ -374,6 +374,16 @@
     </div>
 
     <div id="configView" style="display:none">
+      <h2>Залы и столы</h2>
+      <div id="roomsList"></div>
+      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="addRoom()">+ Добавить зал</button>
+
+      <h2>QR-коды столов</h2>
+      <p style="font-size:12px;color:var(--muted);margin:-6px 0 12px;">Напечатанные QR ничего не знают о номере стола сами по себе — отсканируйте каждый здесь и привяжите к залу и номеру. Позже можно переназначить.</p>
+      <div id="qrList"></div>
+      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:10px;" onclick="openQrScanner()">+ Сканировать QR</button>
+      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--gold); background:transparent; color:var(--gold); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="generateNewTableQr()">+ Создать новый QR для стола</button>
+
       <h2>Wi-Fi для гостей</h2>
       <div style="background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:18px;">
         <label style="display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; margin-bottom:14px; cursor:pointer;">
@@ -384,16 +394,6 @@
         <input type="text" id="wifiPasswordInput" placeholder="Пароль сети" style="width:100%; box-sizing:border-box; padding:11px 12px; margin-bottom:12px; border-radius:10px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:14px;">
         <button style="width:100%; padding:12px; border-radius:12px; border:none; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:14px;" onclick="saveWifiSettings()">Сохранить</button>
       </div>
-
-      <h2>Залы и столы</h2>
-      <div id="roomsList"></div>
-      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="addRoom()">+ Добавить зал</button>
-
-      <h2>QR-коды столов</h2>
-      <p style="font-size:12px;color:var(--muted);margin:-6px 0 12px;">Напечатанные QR ничего не знают о номере стола сами по себе — отсканируйте каждый здесь и привяжите к залу и номеру. Позже можно переназначить.</p>
-      <div id="qrList"></div>
-      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:10px;" onclick="openQrScanner()">+ Сканировать QR</button>
-      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--gold); background:transparent; color:var(--gold); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="generateNewTableQr()">+ Создать новый QR для стола</button>
     </div>
 
     <div id="staffView" style="display:none">
