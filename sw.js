@@ -1,44 +1,48 @@
-// GO pub — shared service worker for all four staff interfaces.
-// Handles Web Push events (works even when the app isn't open) and
-// focuses/opens the app when a notification is tapped.
+// GO pub — shared service worker for all staff interfaces.
+// Handles Web Push when the screen is off / the app is closed.
+
+let lastAppUrl = '/';
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 
-// No offline caching — and deliberately NOT calling event.respondWith()
-// here. Some browsers (notably Samsung Internet) require *a* fetch
-// listener to be registered before they'll offer a real "Add to Home
-// Screen" install, but actually intercepting every request and re-fetching
-// it ourselves adds a real point of failure (a single flaky network blip
-// during install can surface as "Download failed"). Leaving respondWith()
-// uncalled means every request just falls through to the browser's normal
-// handling, unaffected — the listener's mere presence is what satisfies
-// the installability check.
+self.addEventListener('message', (event) => {
+  const data = event.data || {};
+  if(data.type === 'app_url' && typeof data.url === 'string' && data.url){
+    lastAppUrl = data.url;
+  }
+});
+
 self.addEventListener('fetch', () => {});
 
 self.addEventListener('push', (event) => {
-  let data = { title: 'GO pub', body: 'Новое уведомление', url: '/' };
+  let data = { title: 'GO pub', body: 'Новое уведомление', url: lastAppUrl };
   try { if (event.data) data = event.data.json(); } catch (e) {}
 
+  const url = data.url || lastAppUrl || '/';
   const options = {
-    body: data.body || '',
-    tag: 'gopub-notify-' + Date.now(),
+    body: data.body || 'Новое уведомление',
+    tag: data.tag || ('gopub-notify-' + Date.now()),
+    renotify: true,
     vibrate: [200, 100, 200],
     requireInteraction: false,
-    data: { url: data.url || '/' },
+    icon: '/icons/icon-waiter-192.png',
+    badge: '/icons/icon-waiter-192.png',
+    data: { url },
   };
   event.waitUntil(self.registration.showNotification(data.title || 'GO pub', options));
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = new URL((event.notification.data && event.notification.data.url) || '/', self.location.origin).href;
+  const raw = (event.notification.data && event.notification.data.url) || lastAppUrl || '/';
+  const targetUrl = new URL(raw, self.location.origin).href;
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       for (const client of windowClients) {
         if ('focus' in client) {
           if ('navigate' in client) {
-            try { client.navigate(targetUrl); } catch (e) { /* some browsers restrict cross-page navigate — fall through to focus anyway */ }
+            try { client.navigate(targetUrl); } catch (e) {}
           }
           return client.focus();
         }
@@ -46,4 +50,13 @@ self.addEventListener('notificationclick', (event) => {
       if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
     })
   );
+});
+
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil((async () => {
+    const clientsList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of clientsList) {
+      client.postMessage({ type: 'push_subscription_changed' });
+    }
+  })());
 });
