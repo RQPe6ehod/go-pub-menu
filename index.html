@@ -371,7 +371,7 @@
   <div class="ga-panel">
     <div id="gaMainView">
       <h2 id="gaTitle">Чем помочь?</h2>
-      <button class="ga-repeat-row" onclick="openRepeatView()">
+      <button class="ga-repeat-row" id="gaRepeatRow" onclick="openRepeatView()" style="display:none;">
         <span class="ga-icon">🔁</span><span id="gaRepeatLabel">Повторить из заказанного</span>
       </button>
       <div class="ga-quick-row">
@@ -763,6 +763,7 @@ function connectLive(){
     if(msg.type === "table_bill" && String(msg.table) === String(TABLE)){
       currentBill = msg;
       document.getElementById('callBillBtn').style.display = msg.hasOrders ? 'flex' : 'none';
+      document.getElementById('gaRepeatRow').style.display = msg.hasOrders ? 'flex' : 'none';
       if(document.getElementById('billOverlay').classList.contains('open')) renderBill();
       if(repeatViewOpen) renderRepeatList(msg.hasOrders ? msg.items : []);
     }
