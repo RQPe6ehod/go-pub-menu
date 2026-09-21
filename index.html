@@ -375,11 +375,11 @@
         <span class="ga-icon">🔁</span><span id="gaRepeatLabel">Повторить из заказанного</span>
       </button>
       <div class="ga-quick-row">
-        <button class="ga-quick-btn" onclick="confirmQuickRequest('cutlery')"><span class="ga-qicon">🍴</span><span id="gaCutlery">Приборы</span></button>
+        <button class="ga-quick-btn" id="gaCutleryBtn" onclick="confirmQuickRequest('cutlery')"><span class="ga-qicon">🍴</span><span id="gaCutlery">Приборы</span></button>
         <button class="ga-quick-btn" onclick="confirmQuickRequest('napkins')"><span class="ga-qicon">🧻</span><span id="gaNapkins">Салфетки</span></button>
-        <button class="ga-quick-btn" onclick="confirmQuickRequest('toothpicks')"><span class="ga-qicon">🦷</span><span id="gaToothpicks">Зубочистки</span></button>
+        <button class="ga-quick-btn" id="gaToothpicksBtn" onclick="confirmQuickRequest('toothpicks')"><span class="ga-qicon">🦷</span><span id="gaToothpicks">Зубочистки</span></button>
       </div>
-      <button class="ga-more-toggle" onclick="toggleGaMore()"><span id="gaMoreLabel">Ещё</span> <span id="gaMoreArrow">▾</span></button>
+      <button class="ga-more-toggle" id="gaMoreToggle" onclick="toggleGaMore()"><span id="gaMoreLabel">Ещё</span> <span id="gaMoreArrow">▾</span></button>
       <div class="ga-quick-row" id="gaMoreRow" style="display:none;">
         <button class="ga-quick-btn" onclick="confirmQuickRequest('salt_pepper')"><span class="ga-qicon">🧂</span><span id="gaSaltPepper">Соль/перец</span></button>
         <button class="ga-quick-btn" onclick="confirmQuickRequest('order_problem')"><span class="ga-qicon">⚠️</span><span id="gaProblem">Проблема с заказом</span></button>
@@ -814,6 +814,11 @@ let repeatViewOpen = false;
 
 function openGuestActions(){
   if(!TABLE || sessionExpired) return;
+  const hasOrders = !!(currentBill && currentBill.hasOrders);
+  if(!hasOrders){
+    confirmPlainCall();
+    return;
+  }
   document.getElementById('gaMainView').style.display = 'block';
   document.getElementById('gaRepeatView').style.display = 'none';
   document.getElementById('gaMoreRow').style.display = 'none';
