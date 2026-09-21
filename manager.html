@@ -4118,7 +4118,7 @@ async function generateBrandedQrCard(url){
   qr.make();
   const count = qr.getModuleCount();
 
-  const panelSize = 560, panelPad = 28, outerSize = panelSize + panelPad*2;
+  const panelSize = 620, panelPad = 28, outerSize = panelSize + panelPad*2;
   const px = (SIZE - outerSize) / 2, py = (SIZE - outerSize) / 2;
   ctx.fillStyle = "#fff";
   roundRectPath(ctx, px, py, outerSize, outerSize, 28);
@@ -4151,8 +4151,8 @@ async function generateBrandedQrCard(url){
   // panel, so font differences across devices only affect looks, never
   // scanability.
   const labels = { bottom: "MENU", top: "МӘЗІР", left: "МЕНЮ", right: "MENU" };
-  const edgeOffset = 90;
-  ctx.font = 'bold 46px Georgia, "PT Serif", "Times New Roman", serif';
+  const edgeOffset = 72;
+  ctx.font = 'bold 40px Georgia, "PT Serif", "Times New Roman", serif';
   ctx.fillStyle = GOLD;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
