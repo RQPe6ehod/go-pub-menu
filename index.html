@@ -548,8 +548,8 @@ let liveSocket = null;
 let callCooldown = false;
 let currentBill = null;
 let tableUIActive = false;
-const HARD_EXPIRE_MS = 12 * 60 * 60 * 1000;
-const sessionStartedAt = Date.now();
+const HARD_EXPIRE_MS = 10 * 60 * 60 * 1000;
+let sessionStartedAt = Date.now();
 let sessionExpired = false;
 let pendingConfirmCallback = null;
 const APP_VERSION = "17";
@@ -792,10 +792,14 @@ function activateTableUI(){
   }
 }
 
-// --- if this tab stays open for 12 hours straight, the call button
-// disappears for good — a fresh QR scan is needed to bring it back.
-// This is what stops a long-abandoned tab from paging a waiter to an
-// empty table. ---
+// --- if this tab stays open and in the foreground for 10 hours
+// straight, the call button disappears — this stops a long-abandoned
+// tab from paging a waiter to an empty table. But the moment a human
+// actually brings this tab back into view again — whether that's a
+// fresh QR re-scan that happened to reuse the old tab instead of
+// opening a new one, or just switching back to it — that itself means
+// someone's here now, so we give the session a clean restart instead
+// of leaving it dead forever. ---
 
 function expireCallBar(){
   if(sessionExpired) return;
@@ -803,10 +807,23 @@ function expireCallBar(){
   document.getElementById('callBar').style.display = 'none';
   document.body.style.paddingBottom = '';
 }
+
+function unexpireCallBar(){
+  if(!sessionExpired) return;
+  sessionExpired = false;
+  sessionStartedAt = Date.now();
+  if(tableUIActive){
+    document.getElementById('callBar').style.display = 'flex';
+    document.body.style.paddingBottom = '128px';
+  }
+}
+
 setTimeout(expireCallBar, HARD_EXPIRE_MS);
 
 document.addEventListener('visibilitychange', () => {
-  if(!document.hidden && Date.now() - sessionStartedAt >= HARD_EXPIRE_MS) expireCallBar();
+  if(document.hidden) return;
+  if(sessionExpired){ unexpireCallBar(); return; }
+  if(Date.now() - sessionStartedAt >= HARD_EXPIRE_MS) expireCallBar();
 });
 
 let repeatCart = {};
