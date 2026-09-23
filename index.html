@@ -451,7 +451,7 @@ let unavailable = {};
 
 const STR = {
   ru: { tagline:"ЦИФРОВОЕ МЕНЮ", svc:"Обслуживание 10%. Цены указаны в тенге.", kitchen:"Кухня", bar:"Бар", search:"Найти блюдо или напиток…", enjoy:"Приятного аппетита!", scanNote:"Отсканируйте QR‑код у столика, чтобы вернуться к меню в любой момент.", currency:" тг.", soldOut:"нет в наличии",
-    callWaiterBtn:"Хочу сделать заказ", callWaiterWaiting:"Официант уже идёт…",
+    callWaiterBtn:"Хочу сделать заказ", callWaiterWaiting:"Зовём официанта…", callWaiterComing:"Официант идёт!",
     billBtn:"Статус заказа", billTitle:"Статус заказа", billNotFiscal:"Не является фискальным чеком", billEmpty:"Пока нет заказанных позиций",
     statusPreparing:"Готовится", statusReady:"Готово — официант уже идёт", statusServed:"Подано",
     billSum:"Сумма", billService:"Обслуживание (10%)", billTotal:"Итого", tableWord:"Стол",
@@ -472,7 +472,7 @@ const STR = {
     wifiHint:"Откройте настройки Wi-Fi на телефоне и выберите эту сеть", wifiCopyBtn:"Копировать", wifiCopied:"Скопировано!",
     updateBannerText:"Доступна новая версия меню", updateBannerBtn:"Обновить" },
   en: { tagline:"DIGITAL MENU", svc:"10% service charge included. Prices in KZT.", kitchen:"Kitchen", bar:"Bar", search:"Search dish or drink…", enjoy:"Enjoy your meal!", scanNote:"Scan the QR code at your table to return to the menu anytime.", currency:" KZT", soldOut:"sold out",
-    callWaiterBtn:"I'd like to order", callWaiterWaiting:"Waiter is on the way…",
+    callWaiterBtn:"I'd like to order", callWaiterWaiting:"Calling a waiter…", callWaiterComing:"Waiter is on the way!",
     billBtn:"Order status", billTitle:"Order status", billNotFiscal:"Not a fiscal receipt", billEmpty:"No items ordered yet",
     statusPreparing:"Being prepared", statusReady:"Ready — waiter is on the way", statusServed:"Served",
     billSum:"Subtotal", billService:"Service (10%)", billTotal:"Total", tableWord:"Table",
@@ -493,7 +493,7 @@ const STR = {
     wifiHint:"Open Wi-Fi settings on your phone and select this network", wifiCopyBtn:"Copy", wifiCopied:"Copied!",
     updateBannerText:"A new menu version is available", updateBannerBtn:"Update" },
   kk: { tagline:"ЦИФРЛЫҚ МӘЗІР", svc:"Қызмет көрсету ақысы 10%. Бағалар теңгемен.", kitchen:"Ас үй", bar:"Бар", search:"Тағам немесе сусын іздеу…", enjoy:"Ас болсын!", scanNote:"Кез келген уақытта мәзірге оралу үшін үстелдегі QR-кодты сканерлеңіз.", currency:" тг.", soldOut:"қазір жоқ",
-    callWaiterBtn:"Тапсырыс бергім келеді", callWaiterWaiting:"Даяшы жолда…",
+    callWaiterBtn:"Тапсырыс бергім келеді", callWaiterWaiting:"Даяшыны шақырып жатырмыз…", callWaiterComing:"Даяшы жолда!",
     billBtn:"Тапсырыс мәртебесі", billTitle:"Тапсырыс мәртебесі", billNotFiscal:"Фискалдық чек емес", billEmpty:"Әзірге тапсырыс берілген тағам жоқ",
     statusPreparing:"Дайындалуда", statusReady:"Дайын — даяшы жолда", statusServed:"Берілді",
     billSum:"Сома", billService:"Қызмет көрсету (10%)", billTotal:"Барлығы", tableWord:"Үстел",
@@ -764,6 +764,12 @@ function connectLive(){
       currentBill = msg;
       document.getElementById('callBillBtn').style.display = msg.hasOrders ? 'flex' : 'none';
       document.getElementById('gaRepeatRow').style.display = msg.hasOrders ? 'flex' : 'none';
+      if(waitingAck && msg.calling === false){
+        waitingAck = false;
+        clearInterval(ackPollTimer);
+        const label = document.getElementById('callWaiterLabel');
+        if(label) label.textContent = STR[LANG].callWaiterComing;
+      }
       if(document.getElementById('billOverlay').classList.contains('open')) renderBill();
       if(repeatViewOpen) renderRepeatList(msg.hasOrders ? msg.items : []);
     }
@@ -932,6 +938,15 @@ function sendRepeatRequest(){
   alert(STR[LANG].gaRepeatSentAlert);
 }
 
+let waitingAck = false;
+let ackPollTimer = null;
+
+function pollAckSoon(){
+  if(liveSocket && liveSocket.readyState === WebSocket.OPEN && TABLE){
+    liveSocket.send(JSON.stringify({type:"get_table_bill", table: TABLE}));
+  }
+}
+
 function callWaiter(){
   if(callCooldown || !TABLE || sessionExpired) return;
   showConfirm(STR[LANG].confirmCallQuestion, null, () => {
@@ -939,6 +954,7 @@ function callWaiter(){
       liveSocket.send(JSON.stringify({type:"call_waiter", table: TABLE, deviceId: consentedDeviceId()}));
     }
     callCooldown = true;
+    waitingAck = true;
     const btn = document.getElementById('callWaiterBtn');
     const label = document.getElementById('callWaiterLabel');
     btn.disabled = true;
@@ -949,10 +965,15 @@ function callWaiter(){
       if(seconds <= 0){
         clearInterval(tick);
         callCooldown = false;
+        waitingAck = false;
+        clearInterval(ackPollTimer);
         btn.disabled = false;
         label.textContent = STR[LANG].callWaiterBtn;
       }
     }, 1000);
+    pollAckSoon();
+    clearInterval(ackPollTimer);
+    ackPollTimer = setInterval(pollAckSoon, 3000);
   });
 }
 
