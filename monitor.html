@@ -484,7 +484,9 @@ function updateNotifPermBanner(){
     return;
   }
   if(Notification.permission === "denied"){
-    textEl.textContent = "Уведомления заблокированы — включите вручную: Настройки → Safari/приложение → Уведомления";
+    textEl.textContent = isIos()
+      ? "Уведомления заблокированы — включите вручную: Настройки → Safari/приложение → Уведомления"
+      : "Уведомления заблокированы браузером — откройте значок 🔒 рядом с адресом сайта → Разрешения → Уведомления → Разрешить";
     btnEl.style.display = 'none';
   } else {
     textEl.textContent = "Уведомления выключены — вы можете пропустить событие";
