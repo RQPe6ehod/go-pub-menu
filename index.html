@@ -454,6 +454,8 @@ const STR = {
     callWaiterBtn:"Хочу сделать заказ", callWaiterWaiting:"Зовём официанта…", callWaiterComing:"Официант идёт!",
     billBtn:"Статус заказа", billTitle:"Статус заказа", billNotFiscal:"Не является фискальным чеком", billEmpty:"Пока нет заказанных позиций",
     statusPreparing:"Готовится", statusReady:"Готово — официант уже идёт", statusServed:"Подано",
+    stationKitchen:"Кухня", stationBar:"Бар",
+    stagePending:"В очереди", stageAccepted:"Готовится", stageReady:"Готово",
     billSum:"Сумма", billService:"Обслуживание (10%)", billTotal:"Итого", tableWord:"Стол",
     billRequestBtn:"Попросить расчёт", billRequestWaiting:"Официант уже несёт счёт…",
     consentQuestion:"Нам запомнить ваши предпочтения?", consentYes:"Да, запомнить", consentNo:"Нет, спасибо",
@@ -475,6 +477,8 @@ const STR = {
     callWaiterBtn:"I'd like to order", callWaiterWaiting:"Calling a waiter…", callWaiterComing:"Waiter is on the way!",
     billBtn:"Order status", billTitle:"Order status", billNotFiscal:"Not a fiscal receipt", billEmpty:"No items ordered yet",
     statusPreparing:"Being prepared", statusReady:"Ready — waiter is on the way", statusServed:"Served",
+    stationKitchen:"Kitchen", stationBar:"Bar",
+    stagePending:"Queued", stageAccepted:"Preparing", stageReady:"Ready",
     billSum:"Subtotal", billService:"Service (10%)", billTotal:"Total", tableWord:"Table",
     billRequestBtn:"Request the bill", billRequestWaiting:"Waiter is bringing the bill…",
     consentQuestion:"Should we remember your preferences?", consentYes:"Yes, remember", consentNo:"No, thanks",
@@ -496,6 +500,8 @@ const STR = {
     callWaiterBtn:"Тапсырыс бергім келеді", callWaiterWaiting:"Даяшыны шақырып жатырмыз…", callWaiterComing:"Даяшы жолда!",
     billBtn:"Тапсырыс мәртебесі", billTitle:"Тапсырыс мәртебесі", billNotFiscal:"Фискалдық чек емес", billEmpty:"Әзірге тапсырыс берілген тағам жоқ",
     statusPreparing:"Дайындалуда", statusReady:"Дайын — даяшы жолда", statusServed:"Берілді",
+    stationKitchen:"Ас үй", stationBar:"Бар",
+    stagePending:"Кезекте", stageAccepted:"Дайындалуда", stageReady:"Дайын",
     billSum:"Сома", billService:"Қызмет көрсету (10%)", billTotal:"Барлығы", tableWord:"Үстел",
     billRequestBtn:"Есеп сұрау", billRequestWaiting:"Даяшы есепті әкеле жатыр…",
     consentQuestion:"Сіздің қалауыңызды есте сақтайық па?", consentYes:"Иә, есте сақтау", consentNo:"Жоқ, рахмет",
@@ -997,7 +1003,16 @@ function renderBill(){
   }
   const statusLabel = { preparing: s.statusPreparing, ready: s.statusReady, served: s.statusServed }[currentBill.status] || '';
   const statusClass = { preparing: 'preparing', ready: 'ready', served: 'served' }[currentBill.status] || '';
+  const stageLabel = { pending: s.stagePending, accepted: s.stageAccepted, ready: s.stageReady };
+  let stationsHtml = '';
+  if(currentBill.status === 'preparing' && currentBill.stations){
+    const rows = [];
+    if(currentBill.stations.kitchen) rows.push(`<div class="bill-line"><span class="n">${s.stationKitchen}</span><span>${stageLabel[currentBill.stations.kitchen] || ''}</span></div>`);
+    if(currentBill.stations.bar) rows.push(`<div class="bill-line"><span class="n">${s.stationBar}</span><span>${stageLabel[currentBill.stations.bar] || ''}</span></div>`);
+    if(rows.length) stationsHtml = rows.join('');
+  }
   let html = `<div class="status-badge ${statusClass}">${statusLabel}</div>
+    ${stationsHtml}
     <div class="sub">GO pub · ${s.tableWord} ${TABLE}</div>`;
   currentBill.items.forEach(i => {
     const price = parseInt(String(i.price).replace(/[^\d]/g,''),10) || 0;
