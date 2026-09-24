@@ -21,7 +21,7 @@
   body{ background:var(--bg); color:var(--cream); font-family:'Inter',sans-serif; }
   header{ position:sticky; top:0; z-index:20; background:var(--bg-deep); border-bottom:1px solid var(--line); padding:16px 18px; }
   header h1{ font-family:'Fraunces',serif; font-size:20px; margin:0 0 2px; }
-  header .conn{ font-size:11px; color:var(--muted); }
+  header .conn{ font-size:13px; color:var(--muted); }
   header .conn.on{ color:var(--green); }
   header .conn.off{ color:var(--red); }
 
@@ -31,87 +31,87 @@
   .stats.small{ grid-template-columns:repeat(3,1fr); }
   .stat{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px 8px; text-align:center; }
   .stat .num{ font-family:'Fraunces',serif; font-weight:700; font-size:26px; color:var(--gold); }
-  .stat .lbl{ font-size:11px; color:var(--muted); margin-top:2px; }
+  .stat .lbl{ font-size:13px; color:var(--muted); margin-top:2px; }
 
-  h2{ font-family:'Fraunces',serif; font-size:17px; color:var(--gold); margin:22px 0 10px; }
+  h2{ font-family:'Fraunces',serif; font-size:18px; color:var(--gold); margin:22px 0 10px; }
   .mgr-tabs{ display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
-  .mgr-tabs button{ flex:1 1 auto; min-width:120px; padding:9px 0; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-weight:600; font-size:13px; }
+  .mgr-tabs button{ flex:1 1 auto; min-width:120px; padding:9px 0; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-weight:600; font-size:15px; }
   .mgr-tabs button.active{ background:var(--gold); border-color:var(--gold); color:var(--bg-deep); }
   #mainTabs{ gap:8px; margin-bottom:20px; }
-  #mainTabs button{ min-width:100px; padding:13px 6px; font-size:13.5px; }
+  #mainTabs button{ min-width:100px; padding:13px 6px; font-size:15.5px; }
   .header-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
   .install-btn{
     flex-shrink:0; display:flex; align-items:center; gap:6px;
     border:1px solid var(--gold); color:var(--gold); background:transparent;
-    padding:7px 12px; border-radius:999px; font-size:11.5px; font-weight:700;
+    padding:7px 12px; border-radius:999px; font-size:13.5px; font-weight:700;
     white-space:nowrap;
   }
   .install-btn:active{ background:var(--gold); color:var(--bg-deep); }
   .settings-links{ margin-top:8px; display:flex; gap:6px; }
   .settings-links a{
-    font-size:10.5px; color:var(--muted); text-decoration:none;
+    font-size:12.5px; color:var(--muted); text-decoration:none;
     border:1px solid var(--line); border-radius:999px; padding:4px 10px;
     background:var(--panel);
   }
   .settings-links a:active{ background:var(--gold); color:var(--bg-deep); border-color:var(--gold); }
-  .day-header{ font-family:'Fraunces',serif; color:var(--gold); font-size:16px; margin:22px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--line); }
+  .day-header{ font-family:'Fraunces',serif; color:var(--gold); font-size:17.5px; margin:22px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--line); }
   .day-header:first-child{ margin-top:0; }
   .staff-day-group{ margin-bottom:6px; }
-  .staff-day-group h3{ font-family:'Fraunces',serif; font-size:14px; color:var(--cream); margin:14px 0 8px; }
-  .staff-stat-row{ display:flex; justify-content:space-between; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:8px; font-size:13.5px; }
+  .staff-day-group h3{ font-family:'Fraunces',serif; font-size:15.5px; color:var(--cream); margin:14px 0 8px; }
+  .staff-stat-row{ display:flex; justify-content:space-between; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:8px; font-size:15.5px; }
   .cancel-req-card{ background:var(--panel); border:1px solid var(--red); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
   .cancel-req-card .top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-  .cancel-req-card .table{ font-family:'Fraunces',serif; font-weight:700; font-size:15px; color:var(--red); }
-  .cancel-req-card .meta{ font-size:11.5px; color:var(--muted); }
+  .cancel-req-card .table{ font-family:'Fraunces',serif; font-weight:700; font-size:16.5px; color:var(--red); }
+  .cancel-req-card .meta{ font-size:13.5px; color:var(--muted); }
   .cancel-req-card .actions{ display:flex; gap:8px; }
-  .cancel-req-card .actions button{ flex:1; padding:10px; border-radius:10px; border:none; font-weight:700; font-size:13px; }
+  .cancel-req-card .actions button{ flex:1; padding:10px; border-radius:10px; border:none; font-weight:700; font-size:15px; }
   .cancel-req-card .approve-btn{ background:var(--gold); color:var(--bg-deep); }
   .cancel-req-card .reject-btn{ background:transparent; border:1px solid var(--red); color:var(--red); }
   .staff-stat-row .n{ font-weight:600; }
   .staff-stat-row .v{ color:var(--gold); font-family:'Fraunces',serif; font-weight:700; }
   .an-row{ display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:8px; }
-  .an-row .label{ font-size:13.5px; }
-  .an-row .sub{ font-size:11px; color:var(--muted); margin-top:1px; }
+  .an-row .label{ font-size:15.5px; }
+  .an-row .sub{ font-size:13px; color:var(--muted); margin-top:1px; }
   .an-row .value{ text-align:right; }
-  .an-row .value .rev{ font-family:'Fraunces',serif; color:var(--gold); font-weight:700; font-size:14.5px; }
-  .an-row .value .count{ font-size:11px; color:var(--muted); }
+  .an-row .value .rev{ font-family:'Fraunces',serif; color:var(--gold); font-weight:700; font-size:16px; }
+  .an-row .value .count{ font-size:13px; color:var(--muted); }
   .an-bar{ height:4px; background:var(--line); border-radius:99px; margin-top:6px; overflow:hidden; }
   .an-bar-fill{ height:100%; background:var(--gold); border-radius:99px; }
-  .badge-count{ background:var(--red); color:#fff; font-size:10px; font-weight:700; border-radius:999px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 4px; }
+  .badge-count{ background:var(--red); color:#fff; font-size:12px; font-weight:700; border-radius:999px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 4px; }
 
   .unavail-row{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
-  .unavail-row .name{ font-weight:600; font-size:14.5px; margin-bottom:2px; }
-  .unavail-row .meta{ font-size:11.5px; color:var(--muted); }
-  .unavail-row .comment{ font-size:12.5px; color:var(--gold); margin-top:4px; }
+  .unavail-row .name{ font-weight:600; font-size:16px; margin-bottom:2px; }
+  .unavail-row .meta{ font-size:13.5px; color:var(--muted); }
+  .unavail-row .comment{ font-size:14.5px; color:var(--gold); margin-top:4px; }
 
   .settings-row{ display:flex; align-items:center; justify-content:space-between; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:18px; }
-  .close-table-btn{ margin-top:10px; width:100%; padding:11px; border:none; border-radius:10px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:13px; }
-  .receipts-toggle-btn{ margin-top:8px; padding:6px 12px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--gold); font-size:11.5px; font-weight:600; }
+  .close-table-btn{ margin-top:10px; width:100%; padding:11px; border:none; border-radius:10px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; }
+  .receipts-toggle-btn{ margin-top:8px; padding:6px 12px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--gold); font-size:13.5px; font-weight:600; }
   .receipts-list{ margin-top:8px; }
   .room-card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
   .room-card .row1{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-  .room-card input[type="text"]{ flex:1; padding:9px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:14px; font-family:'Fraunces',serif; font-weight:600; }
+  .room-card input[type="text"]{ flex:1; padding:9px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:15.5px; font-family:'Fraunces',serif; font-weight:600; }
   .room-card .row2{ display:flex; align-items:center; justify-content:space-between; }
   .room-card .stepper{ display:flex; align-items:center; gap:10px; }
-  .room-card .stepper button{ width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:16px; }
-  .room-card .stepper span{ min-width:26px; text-align:center; font-weight:700; font-family:'Fraunces',serif; font-size:16px; }
-  .room-card .del-btn{ padding:7px 10px; border-radius:8px; border:1px solid var(--red); background:transparent; color:var(--red); font-size:12px; }
+  .room-card .stepper button{ width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:17.5px; }
+  .room-card .stepper span{ min-width:26px; text-align:center; font-weight:700; font-family:'Fraunces',serif; font-size:17.5px; }
+  .room-card .del-btn{ padding:7px 10px; border-radius:8px; border:1px solid var(--red); background:transparent; color:var(--red); font-size:14px; }
   .menu-cat-card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:12px; }
   .menu-cat-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
-  .menu-cat-head h3{ font-family:'Fraunces',serif; color:var(--gold); font-size:15px; margin:0; cursor:pointer; }
-  .menu-cat-head .del-btn{ padding:5px 9px; border-radius:8px; border:1px solid var(--red); background:transparent; color:var(--red); font-size:11px; }
-  .menu-item-row{ display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--line); font-size:13.5px; }
+  .menu-cat-head h3{ font-family:'Fraunces',serif; color:var(--gold); font-size:16.5px; margin:0; cursor:pointer; }
+  .menu-cat-head .del-btn{ padding:5px 9px; border-radius:8px; border:1px solid var(--red); background:transparent; color:var(--red); font-size:13px; }
+  .menu-item-row{ display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--line); font-size:15.5px; }
   .menu-item-row:last-of-type{ border-bottom:none; }
   .menu-item-row .mi-name{ flex:1; }
-  .menu-item-row .mi-price{ color:var(--muted); margin-right:10px; font-size:12.5px; }
+  .menu-item-row .mi-price{ color:var(--muted); margin-right:10px; font-size:14.5px; }
   .menu-item-row .mi-actions{ display:flex; gap:6px; }
-  .menu-item-row .mi-actions button{ padding:5px 8px; border-radius:7px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:11px; }
+  .menu-item-row .mi-actions button{ padding:5px 8px; border-radius:7px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:13px; }
   .menu-item-row .mi-actions button.del{ border-color:var(--red); color:var(--red); }
-  .add-item-btn{ width:100%; margin-top:8px; padding:8px 0; border-radius:8px; border:1px dashed var(--line); background:transparent; color:var(--muted); font-size:12px; }
-  .settings-row .label{ font-size:13.5px; }
+  .add-item-btn{ width:100%; margin-top:8px; padding:8px 0; border-radius:8px; border:1px dashed var(--line); background:transparent; color:var(--muted); font-size:14px; }
+  .settings-row .label{ font-size:15.5px; }
   .settings-row .stepper{ display:flex; align-items:center; gap:10px; }
-  .settings-row .stepper button{ width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:16px; }
-  .settings-row .stepper span{ min-width:26px; text-align:center; font-weight:700; font-family:'Fraunces',serif; font-size:16px; }
+  .settings-row .stepper button{ width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:17.5px; }
+  .settings-row .stepper span{ min-width:26px; text-align:center; font-weight:700; font-family:'Fraunces',serif; font-size:17.5px; }
   .confirm-check{
     width:30px; height:30px; border-radius:8px; border:1px solid var(--line);
     background:var(--bg-deep); color:var(--muted); display:flex; align-items:center; justify-content:center;
@@ -121,16 +121,16 @@
   .confirm-check:not(:disabled){ background:var(--gold); border-color:var(--gold); color:var(--bg-deep); opacity:1; }
 
   .role-buttons{ display:flex; gap:8px; margin-bottom:16px; }
-  .role-buttons button{ flex:1; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; }
+  .role-buttons button{ flex:1; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:15px; }
   .role-buttons button:active{ background:var(--gold); color:var(--bg-deep); }
 
   .staff-row{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
   .staff-row .info{ display:flex; flex-direction:column; }
-  .staff-row .name{ font-weight:600; font-size:14.5px; }
+  .staff-row .name{ font-weight:600; font-size:16px; }
   .staff-row .name.pending{ color:var(--muted); font-weight:400; font-style:italic; }
-  .staff-row .role-tag{ font-size:11px; color:var(--muted); }
+  .staff-row .role-tag{ font-size:13px; color:var(--muted); }
   .staff-row .actions{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-  .staff-row .actions button{ padding:9px 14px; border-radius:9px; font-size:13px; font-weight:600; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); }
+  .staff-row .actions button{ padding:9px 14px; border-radius:9px; font-size:15px; font-weight:600; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); }
   .staff-row .actions button.danger{ border-color:var(--red); color:var(--red); }
   .icon-btn{
     width:40px; height:40px; border-radius:9px; border:1px solid var(--line); background:var(--bg-deep);
@@ -145,24 +145,24 @@
   .qr-overlay.open{ display:flex; animation: fadeIn .2s ease; }
   .qr-box{ background:#fff; border-radius:16px; padding:24px; text-align:center; max-width:320px; width:100%; animation: popIn .25s cubic-bezier(.2,1,.3,1); }
   .qr-box img{ width:220px; height:220px; margin-bottom:14px; }
-  .qr-box .role{ font-family:'Fraunces',serif; color:#1b1b1b; font-size:16px; margin-bottom:4px; }
-  .qr-box .link{ font-size:11px; color:#777; word-break:break-all; margin-bottom:16px; }
+  .qr-box .role{ font-family:'Fraunces',serif; color:#1b1b1b; font-size:17.5px; margin-bottom:4px; }
+  .qr-box .link{ font-size:13px; color:#777; word-break:break-all; margin-bottom:16px; }
   .qr-box button{ width:100%; padding:12px; border:none; border-radius:10px; background:var(--gold); color:#1b1b1b; font-weight:700; }
 
   .confirm-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:210; display:none; align-items:center; justify-content:center; padding:24px; }
   .confirm-overlay.open{ display:flex; animation: fadeIn .2s ease; }
   .confirm-box{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px 22px; max-width:300px; width:100%; text-align:center; animation: popIn .25s cubic-bezier(.2,1,.3,1); }
-  .confirm-brand{ font-family:'Fraunces',serif; color:var(--gold); font-size:12px; font-weight:700; margin-bottom:12px; letter-spacing:.06em; text-transform:uppercase; }
-  .confirm-question{ font-size:16px; font-weight:700; color:var(--cream); margin-bottom:6px; }
-  .confirm-sub{ font-size:12.5px; color:var(--muted); margin-bottom:20px; line-height:1.4; display:none; }
+  .confirm-brand{ font-family:'Fraunces',serif; color:var(--gold); font-size:14px; font-weight:700; margin-bottom:12px; letter-spacing:.06em; text-transform:uppercase; }
+  .confirm-question{ font-size:17.5px; font-weight:700; color:var(--cream); margin-bottom:6px; }
+  .confirm-sub{ font-size:14.5px; color:var(--muted); margin-bottom:20px; line-height:1.4; display:none; }
   .confirm-input{
     width:100%; box-sizing:border-box; padding:11px 12px; margin-bottom:20px;
     border-radius:10px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream);
-    font-size:14px; font-family:inherit;
+    font-size:15.5px; font-family:inherit;
   }
   .confirm-input:focus{ outline:none; border-color:var(--gold); }
   .confirm-actions{ display:flex; gap:10px; }
-  .confirm-actions button{ flex:1; padding:11px; border-radius:10px; font-weight:700; font-size:13.5px; border:none; }
+  .confirm-actions button{ flex:1; padding:11px; border-radius:10px; font-weight:700; font-size:15.5px; border:none; }
   .confirm-cancel{ background:var(--bg-deep); color:var(--cream); border:1px solid var(--line); }
   .confirm-ok{ background:var(--gold); color:var(--bg-deep); }
   .confirm-ok.danger{ background:var(--red); color:#fff; }
@@ -172,19 +172,19 @@
   .receipt-overlay .receipt-panel{ width:100%; max-width:400px; background:#fff; color:#111; border-radius:16px; max-height:85vh; display:flex; flex-direction:column; font-family:'Inter',monospace; overflow-y:auto; animation: popIn .28s cubic-bezier(.2,1,.3,1); }
   .receipt-overlay .receipt-body{ padding:22px 24px 6px; }
   .receipt-overlay .receipt-body h2{ text-align:center; font-family:'Fraunces',serif; font-size:22px; margin:0 0 4px; }
-  .receipt-overlay .sub{ text-align:center; font-size:12px; color:#666; margin-bottom:16px; }
-  .receipt-overlay .receipt-row{ display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px; color:#333; }
+  .receipt-overlay .sub{ text-align:center; font-size:14px; color:#666; margin-bottom:16px; }
+  .receipt-overlay .receipt-row{ display:flex; justify-content:space-between; font-size:14.5px; margin-bottom:4px; color:#333; }
   .receipt-overlay .receipt-hr{ border-top:1px dashed #bbb; margin:10px 0; }
-  .receipt-overlay .receipt-item{ display:flex; justify-content:space-between; font-size:13.5px; padding:4px 0; color:#111; }
+  .receipt-overlay .receipt-item{ display:flex; justify-content:space-between; font-size:15.5px; padding:4px 0; color:#111; }
   .receipt-overlay .receipt-item .rn{ flex:1; padding-right:8px; }
-  .receipt-overlay .receipt-total{ display:flex; justify-content:space-between; font-family:'Fraunces',serif; font-weight:700; font-size:18px; margin-top:10px; color:#111; }
+  .receipt-overlay .receipt-total{ display:flex; justify-content:space-between; font-family:'Fraunces',serif; font-weight:700; font-size:19px; margin-top:10px; color:#111; }
   .receipt-overlay .receipt-actions{ display:flex; gap:8px; padding:16px 24px 8px; border-top:1px solid #ddd; }
-  .receipt-overlay .receipt-actions button{ flex:1; padding:12px 6px; border-radius:12px; border:none; font-weight:700; font-size:12.5px; }
+  .receipt-overlay .receipt-actions button{ flex:1; padding:12px 6px; border-radius:12px; border:none; font-weight:700; font-size:14.5px; }
   .receipt-overlay .btn-close{ background:#eee; color:#333; }
   .receipt-overlay .btn-download{ background:#e7e2d6; color:#1b1b1b; }
   .receipt-overlay .btn-print{ background:var(--gold); color:#1b1b1b; }
   .receipt-overlay .receipt-share{ display:flex; gap:8px; padding:0 24px 20px; }
-  .receipt-overlay .receipt-share .share-btn{ flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:11px 6px; border-radius:12px; font-weight:700; font-size:12.5px; text-decoration:none; border:none; cursor:pointer; font-family:inherit; }
+  .receipt-overlay .receipt-share .share-btn{ flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:11px 6px; border-radius:12px; font-weight:700; font-size:14.5px; text-decoration:none; border:none; cursor:pointer; font-family:inherit; }
   .receipt-overlay .wa{ background:#eafaf0; color:#1b7a45; }
   .receipt-overlay .tg{ background:#eaf6fd; color:#1478b0; }
   .qr-popup{ position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:200; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .25s ease; }
@@ -192,7 +192,7 @@
   .qr-popup-card{ background:#fff; border-radius:20px; padding:28px; text-align:center; max-width:340px; width:88%; transform:scale(.8); transition:transform .25s ease; }
   .qr-popup.open .qr-popup-card{ transform:scale(1); }
   .qr-popup-card img{ width:140px; height:140px; border-radius:10px; margin-bottom:16px; }
-  .qr-popup-card .qr-note{ font-size:13px; color:#666; line-height:1.4; margin-bottom:18px; }
+  .qr-popup-card .qr-note{ font-size:15px; color:#666; line-height:1.4; margin-bottom:18px; }
   .qr-popup-card button{ width:100%; padding:12px; border:none; border-radius:10px; background:var(--gold); color:#1b1b1b; font-weight:700; }
   @media print{
     body *{ visibility:hidden; }
@@ -204,25 +204,25 @@
   .ticket{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
   .ticket .top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
   .table-badge{ font-family:'Fraunces',serif; font-weight:700; color:var(--gold); }
-  .time{ font-size:11px; color:var(--muted); }
+  .time{ font-size:13px; color:var(--muted); }
   .badges{ display:flex; gap:6px; margin-bottom:6px; }
-  .badge{ font-size:11px; padding:3px 9px; border-radius:999px; font-weight:600; }
+  .badge{ font-size:13px; padding:3px 9px; border-radius:999px; font-weight:600; }
   .badge.pending{ background:rgba(199,154,70,.18); color:var(--gold); }
   .badge.ready{ background:rgba(76,175,125,.18); color:var(--green); }
-  .line{ font-size:13px; color:var(--cream); margin-bottom:2px; }
+  .line{ font-size:15px; color:var(--cream); margin-bottom:2px; }
   .line small{ color:var(--muted); }
-  .empty{ color:var(--muted); text-align:center; padding:30px 0; font-size:14px; }
-  .hist-row{ display:flex; justify-content:space-between; font-size:13px; padding:8px 0; border-bottom:1px solid var(--line); cursor:pointer; }
+  .empty{ color:var(--muted); text-align:center; padding:30px 0; font-size:15.5px; }
+  .hist-row{ display:flex; justify-content:space-between; font-size:15px; padding:8px 0; border-bottom:1px solid var(--line); cursor:pointer; }
   .hist-row .t{ color:var(--muted); }
   .hist-row .p{ font-family:'Fraunces',serif; color:var(--gold); font-weight:600; }
 
   .lock{ position:fixed; inset:0; background:var(--bg-deep); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px; animation: fadeIn .25s ease; }
   .lock-box{ width:100%; max-width:300px; text-align:center; animation: popIn .3s cubic-bezier(.2,1,.3,1); }
   .lock-box h2{ font-family:'Fraunces',serif; color:var(--cream); margin-bottom:6px; }
-  .lock-box p{ color:var(--muted); font-size:13px; margin-bottom:18px; }
+  .lock-box p{ color:var(--muted); font-size:15px; margin-bottom:18px; }
   .lock-box input{ width:100%; text-align:center; font-size:24px; letter-spacing:8px; padding:14px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); margin-bottom:12px; }
-  .lock-box button{ width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; }
-  .lock-box .err{ color:var(--red); font-size:12.5px; margin-top:10px; min-height:16px; }
+  .lock-box button{ width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:16.5px; }
+  .lock-box .err{ color:var(--red); font-size:14.5px; margin-top:10px; min-height:16px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 </head>
@@ -233,9 +233,9 @@
     <h2>GO pub · Менеджер</h2>
     <p id="lockMsg">Загрузка…</p>
     <input id="unlockPinInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••" style="display:none; margin-top:14px;">
-    <button id="unlockBtn" onclick="submitUnlockPin()" style="display:none; width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; margin-top:10px;">Войти</button>
-    <a href="https://restorun.kuatov.kz" id="restorunBtn" style="display:none; width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; text-align:center; text-decoration:none; box-sizing:border-box; margin-top:10px;">Открыть RestoRUN</a>
-    <button id="backToStaffBtn" onclick="location.href='/staff.html'" style="display:none; width:100%; padding:13px; border:1px solid var(--line); border-radius:12px; background:transparent; color:var(--cream); font-weight:600; font-size:14px; margin-top:10px;">Вернуться к выбору</button>
+    <button id="unlockBtn" onclick="submitUnlockPin()" style="display:none; width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:16.5px; margin-top:10px;">Войти</button>
+    <a href="https://restorun.kuatov.kz" id="restorunBtn" style="display:none; width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:16.5px; text-align:center; text-decoration:none; box-sizing:border-box; margin-top:10px;">Открыть RestoRUN</a>
+    <button id="backToStaffBtn" onclick="location.href='/staff.html'" style="display:none; width:100%; padding:13px; border:1px solid var(--line); border-radius:12px; background:transparent; color:var(--cream); font-weight:600; font-size:15.5px; margin-top:10px;">Вернуться к выбору</button>
     <div class="err" id="pinErr"></div>
   </div>
 </div>
@@ -244,7 +244,7 @@
   <div class="lock-box">
     <h2>Как вас зовут?</h2>
     <p>Ваше имя будет отображаться в интерфейсе</p>
-    <input id="nameInput" type="text" maxlength="30" placeholder="Иван" style="letter-spacing:normal; font-size:18px; text-align:left; padding:14px 16px;">
+    <input id="nameInput" type="text" maxlength="30" placeholder="Иван" style="letter-spacing:normal; font-size:19px; text-align:left; padding:14px 16px;">
     <button onclick="submitName()">Сохранить</button>
   </div>
 </div>
@@ -257,16 +257,16 @@
   </div>
 </div>
 
-<div id="notifPermBanner" style="display:none; position:sticky; top:0; z-index:149; background:var(--red); color:#fff; padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; font-weight:700; animation: popIn .3s cubic-bezier(.2,1,.3,1);">
-  <span>Уведомления выключены — вы можете пропустить заказ</span>
-  <button onclick="requestNotifPermission()" style="background:#fff; color:var(--red); border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:12px;">Включить</button>
+<div id="notifPermBanner" style="display:none; position:sticky; top:0; z-index:149; background:var(--red); color:#fff; padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:14.5px; font-weight:700; animation: popIn .3s cubic-bezier(.2,1,.3,1); flex-wrap:wrap;">
+  <span style="min-width:0; word-break:break-word; flex:1 1 auto;">Уведомления выключены — вы можете пропустить заказ</span>
+  <button onclick="requestNotifPermission()" style="background:#fff; color:var(--red); border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:14px; flex-shrink:0;">Включить</button>
 </div>
 
-<div id="updateBanner" style="display:none; position:sticky; top:0; z-index:150; background:var(--gold); color:var(--bg-deep); padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; font-weight:700; animation: popIn .3s cubic-bezier(.2,1,.3,1);">
+<div id="updateBanner" style="display:none; position:sticky; top:0; z-index:150; background:var(--gold); color:var(--bg-deep); padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:14.5px; font-weight:700; animation: popIn .3s cubic-bezier(.2,1,.3,1);">
   <span>Доступна новая версия приложения</span>
   <div style="display:flex; gap:8px; align-items:center;">
-    <button onclick="applyUpdate()" style="background:var(--bg-deep); color:var(--gold); border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:12px;">Обновить</button>
-    <button onclick="dismissUpdateBanner()" style="background:transparent; border:none; color:var(--bg-deep); font-size:16px; font-weight:700; padding:0 4px;">×</button>
+    <button onclick="applyUpdate()" style="background:var(--bg-deep); color:var(--gold); border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:14px;">Обновить</button>
+    <button onclick="dismissUpdateBanner()" style="background:transparent; border:none; color:var(--bg-deep); font-size:17.5px; font-weight:700; padding:0 4px;">×</button>
   </div>
 </div>
 
@@ -381,23 +381,23 @@
     <div id="configView" style="display:none">
       <h2>Залы и столы</h2>
       <div id="roomsList"></div>
-      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="addRoom()">+ Добавить зал</button>
+      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:15px; margin-bottom:18px;" onclick="addRoom()">+ Добавить зал</button>
 
       <h2>QR-коды столов</h2>
-      <p style="font-size:12px;color:var(--muted);margin:-6px 0 12px;">Напечатанные QR ничего не знают о номере стола сами по себе — отсканируйте каждый здесь и привяжите к залу и номеру. Позже можно переназначить.</p>
+      <p style="font-size:14px;color:var(--muted);margin:-6px 0 12px;">Напечатанные QR ничего не знают о номере стола сами по себе — отсканируйте каждый здесь и привяжите к залу и номеру. Позже можно переназначить.</p>
       <div id="qrList"></div>
-      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:10px;" onclick="openQrScanner()">+ Сканировать QR</button>
-      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--gold); background:transparent; color:var(--gold); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="generateNewTableQr()">+ Создать новый QR для стола</button>
+      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:15px; margin-bottom:10px;" onclick="openQrScanner()">+ Сканировать QR</button>
+      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--gold); background:transparent; color:var(--gold); font-weight:600; font-size:15px; margin-bottom:18px;" onclick="generateNewTableQr()">+ Создать новый QR для стола</button>
 
       <h2>Wi-Fi для гостей</h2>
       <div style="background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:18px;">
-        <label style="display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; margin-bottom:14px; cursor:pointer;">
+        <label style="display:flex; align-items:center; gap:10px; font-size:15.5px; font-weight:600; margin-bottom:14px; cursor:pointer;">
           <input type="checkbox" id="wifiEnabledCheck" style="width:18px; height:18px;">
           Показывать кнопку "Подключиться к Wi-Fi" в меню
         </label>
-        <input type="text" id="wifiSsidInput" placeholder="Название сети (SSID)" style="width:100%; box-sizing:border-box; padding:11px 12px; margin-bottom:10px; border-radius:10px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:14px;">
-        <input type="text" id="wifiPasswordInput" placeholder="Пароль сети" style="width:100%; box-sizing:border-box; padding:11px 12px; margin-bottom:12px; border-radius:10px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:14px;">
-        <button style="width:100%; padding:12px; border-radius:12px; border:none; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:14px;" onclick="saveWifiSettings()">Сохранить</button>
+        <input type="text" id="wifiSsidInput" placeholder="Название сети (SSID)" style="width:100%; box-sizing:border-box; padding:11px 12px; margin-bottom:10px; border-radius:10px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:15.5px;">
+        <input type="text" id="wifiPasswordInput" placeholder="Пароль сети" style="width:100%; box-sizing:border-box; padding:11px 12px; margin-bottom:12px; border-radius:10px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:15.5px;">
+        <button style="width:100%; padding:12px; border-radius:12px; border:none; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15.5px;" onclick="saveWifiSettings()">Сохранить</button>
       </div>
     </div>
 
@@ -426,7 +426,7 @@
         <button onclick="setMenuDest('bar')">Бар</button>
       </div>
       <div id="menuCatsList"></div>
-      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; margin-bottom:18px;" onclick="addMenuCategory()">+ Добавить раздел</button>
+      <button style="width:100%; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:15px; margin-bottom:18px;" onclick="addMenuCategory()">+ Добавить раздел</button>
     </div>
   </div>
 </main>
@@ -436,7 +436,7 @@
     <div class="role" id="qrRole"></div>
     <img id="qrImg" src="">
     <div class="link" id="qrLink"></div>
-    <a id="qrDownload" href="#" download="qr.png" style="display:none; margin:10px 0; color:var(--gold); font-weight:700; font-size:13px;">⬇ Скачать картинку</a>
+    <a id="qrDownload" href="#" download="qr.png" style="display:none; margin:10px 0; color:var(--gold); font-weight:700; font-size:15px;">⬇ Скачать картинку</a>
     <button onclick="closeQr()">Закрыть</button>
   </div>
 </div>
@@ -454,12 +454,12 @@
   <div class="qr-box" style="max-width:360px; text-align:left;">
     <div class="role" style="text-align:center; margin-bottom:14px;">QR найден — привяжите к столу</div>
     <div style="margin-bottom:12px;">
-      <label style="font-size:12px; color:#777; display:block; margin-bottom:5px;">Зал</label>
-      <select id="qrAssignRoom" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:14px;"></select>
+      <label style="font-size:14px; color:#777; display:block; margin-bottom:5px;">Зал</label>
+      <select id="qrAssignRoom" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:15.5px;"></select>
     </div>
     <div style="margin-bottom:16px;">
-      <label style="font-size:12px; color:#777; display:block; margin-bottom:5px;">Номер стола в зале</label>
-      <input type="number" min="1" id="qrAssignLocal" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:14px;">
+      <label style="font-size:14px; color:#777; display:block; margin-bottom:5px;">Номер стола в зале</label>
+      <input type="number" min="1" id="qrAssignLocal" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:15.5px;">
     </div>
     <button onclick="confirmAssignQr()" style="margin-bottom:8px;">Привязать</button>
     <button onclick="closeQrAssign()" style="background:#eee; color:#333;">Отмена</button>
@@ -3126,18 +3126,18 @@ function render(){
       if(o.kitchenItems.length) html += `<span class="badge ${o.kitchenStatus==='ready'?'ready':'pending'}">Кухня: ${o.kitchenStatus==='ready'?'готово':(o.kitchenStatus==='accepted'?'готовит':'в очереди')}</span>`;
       if(o.barItems.length) html += `<span class="badge ${o.barStatus==='ready'?'ready':'pending'}">Бар: ${o.barStatus==='ready'?'готово':(o.barStatus==='accepted'?'готовит':'в очереди')}</span>`;
       html += `</div>`;
-      if(o.waiterName) html += `<div class="line" style="color:var(--muted);font-size:11.5px;">Официант: ${o.waiterName}</div>`;
+      if(o.waiterName) html += `<div class="line" style="color:var(--muted);font-size:13.5px;">Официант: ${o.waiterName}</div>`;
       o.kitchenItems.forEach(i => html += `<div class="line">${i.name} <small>× ${i.qty}</small></div>`);
       if(o.kitchenItems.length){
         html += timingLine("Реакция кухни", o.kitchenStatus, o.createdAt, o.kitchenAcceptedAt);
         html += timingLine("Готовка", o.kitchenStatus, o.kitchenAcceptedAt, o.kitchenReadyAt);
-        if(o.cookName) html += `<div class="line" style="color:var(--muted);font-size:11.5px;">Повар: ${o.cookName}</div>`;
+        if(o.cookName) html += `<div class="line" style="color:var(--muted);font-size:13.5px;">Повар: ${o.cookName}</div>`;
       }
       o.barItems.forEach(i => html += `<div class="line">${i.name} <small>× ${i.qty}</small></div>`);
       if(o.barItems.length){
         html += timingLine("Реакция бара", o.barStatus, o.createdAt, o.barAcceptedAt);
         html += timingLine("Готовка", o.barStatus, o.barAcceptedAt, o.barReadyAt);
-        if(o.bartenderName) html += `<div class="line" style="color:var(--muted);font-size:11.5px;">Бармен: ${o.bartenderName}</div>`;
+        if(o.bartenderName) html += `<div class="line" style="color:var(--muted);font-size:13.5px;">Бармен: ${o.bartenderName}</div>`;
       }
       html += `</div>`;
     });
@@ -3559,8 +3559,8 @@ function renderActionLog(){
     const day = dayLabel(e.ts);
     if(day !== lastDay){ html += `<div class="day-header">${day}</div>`; lastDay = day; }
     html += `<div class="staff-stat-row" style="display:block;">
-      <div style="font-size:13px;">${actionText(e)}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:3px;">${new Date(e.ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})} · ${ROLE_LABELS_LOG[e.role]||e.role||''}</div>
+      <div style="font-size:15px;">${actionText(e)}</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:3px;">${new Date(e.ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})} · ${ROLE_LABELS_LOG[e.role]||e.role||''}</div>
     </div>`;
   });
   el.innerHTML = html;
@@ -3873,7 +3873,7 @@ function renderCancelRequests(){
       </div>`;
     if(order){
       order.kitchenItems.concat(order.barItems).forEach(i => {
-        html += `<div class="line" style="font-size:12.5px;color:var(--muted);">${i.qty} × ${i.name}</div>`;
+        html += `<div class="line" style="font-size:14.5px;color:var(--muted);">${i.qty} × ${i.name}</div>`;
       });
     }
     html += `<div class="actions" style="margin-top:10px;">
@@ -3908,7 +3908,7 @@ function renderRooms(){
         ${rooms.length > 1 ? `<button class="del-btn" onclick="removeRoom('${room.id}')">Удалить</button>` : ''}
       </div>
       <div class="row2">
-        <span class="label" style="font-size:12px;color:var(--muted);">Столов в зале</span>
+        <span class="label" style="font-size:14px;color:var(--muted);">Столов в зале</span>
         <div class="stepper">
           <button onclick="changeRoomCount('${room.id}',-1)">−</button>
           <span id="roomCount-${room.id}">${shown}</span>
@@ -4007,7 +4007,7 @@ function renderManagerGroup(managers){
         <button class="icon-btn" onclick="copyStaffLink('${url}', this)" title="Скопировать ссылку">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
         </button>
-        <button onclick="showQr('manager','${s.id}')" style="font-size:14px;">QR</button>
+        <button onclick="showQr('manager','${s.id}')" style="font-size:15.5px;">QR</button>
         ${canManage ? `<button onclick="promoteMaster('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')" title="Сделать мастер-менеджером">👑</button>` : ''}
         ${canManage ? `<button onclick="reassignStaff('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')" title="Переназначить устройство">📱↺</button>` : ''}
         ${canManage ? `<button class="danger" onclick="deleteStaff('${s.id}')">Удалить</button>` : ''}
@@ -4048,7 +4048,7 @@ function renderStaffGroup(role, elId, headId, label){
         <button class="icon-btn" onclick="copyStaffLink('${url}', this)" title="Скопировать ссылку">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
         </button>
-        <button onclick="showQr('${role}','${s.id}')" style="font-size:14px;">QR</button>
+        <button onclick="showQr('${role}','${s.id}')" style="font-size:15.5px;">QR</button>
         <button onclick="reassignStaff('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')" title="Переназначить устройство">📱↺</button>
         <button class="danger" onclick="deleteStaff('${s.id}')">Удалить</button>
       </div>
@@ -4339,7 +4339,9 @@ function updateNotifPermBanner(){
     return;
   }
   if(Notification.permission === "denied"){
-    textEl.textContent = "Уведомления заблокированы — включите вручную: Настройки → Safari/приложение → Уведомления";
+    textEl.textContent = isIos()
+      ? "Уведомления заблокированы — включите вручную: Настройки → Safari/приложение → Уведомления"
+      : "Уведомления заблокированы браузером — откройте значок 🔒 рядом с адресом сайта → Разрешения → Уведомления → Разрешить";
     btnEl.style.display = 'none';
   } else {
     textEl.textContent = "Уведомления выключены — вы можете пропустить заказ";
@@ -4356,7 +4358,7 @@ function requestNotifPermission(){
 }
 updateNotifPermBanner();
 
-const APP_VERSION = "21";
+const APP_VERSION = "22";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;

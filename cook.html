@@ -35,7 +35,7 @@
   body{ background:var(--bg); color:var(--cream); font-family:'Inter',sans-serif; min-height:100vh; }
   header{ position:sticky; top:0; z-index:20; background:var(--bg-deep); border-bottom:1px solid var(--line); padding:16px 18px; }
   header h1{ font-family:'Fraunces',serif; font-size:20px; margin:0 0 2px; }
-  header .conn{ font-size:11px; color:var(--muted); }
+  header .conn{ font-size:13px; color:var(--muted); }
   header .conn.on{ color:var(--green); }
   header .conn.off{ color:var(--red); }
 
@@ -49,70 +49,70 @@
   @keyframes slideUpIn{ from{ opacity:0; transform:translateY(24px); } to{ opacity:1; transform:translateY(0); } }
   .ticket .top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
   .table-badge{ font-family:'Fraunces',serif; font-weight:700; font-size:22px; color:var(--gold); }
-  .time{ font-size:11px; color:var(--muted); }
-  .line{ font-size:16px; padding:6px 0; border-bottom:1px dashed var(--line); }
+  .time{ font-size:13px; color:var(--muted); }
+  .line{ font-size:17.5px; padding:6px 0; border-bottom:1px dashed var(--line); }
   .item-note{
     display:flex; align-items:flex-start; gap:7px;
     background:rgba(224,149,74,.18); border:1.5px solid var(--gold); border-radius:9px;
-    padding:7px 10px; margin:2px 0 8px; font-size:14.5px; font-weight:700; color:var(--gold);
+    padding:7px 10px; margin:2px 0 8px; font-size:16px; font-weight:700; color:var(--gold);
     animation:noteFlash 1.4s ease-in-out 2;
   }
-  .item-note .ico{ flex-shrink:0; font-size:15px; line-height:1.3; }
+  .item-note .ico{ flex-shrink:0; font-size:16.5px; line-height:1.3; }
   @keyframes noteFlash{
     0%,100%{ background:rgba(224,149,74,.18); }
     50%{ background:rgba(224,149,74,.42); }
   }
   .line:last-of-type{ border-bottom:none; }
   .line b{ color:var(--gold); }
-  .done-btn{ margin-top:14px; width:100%; padding:14px; border:none; border-radius:12px; background:var(--green); color:#0E1D17; font-weight:700; font-size:15px; }
-  .accept-btn{ margin-top:14px; width:100%; padding:14px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; }
+  .done-btn{ margin-top:14px; width:100%; padding:14px; border:none; border-radius:12px; background:var(--green); color:#0E1D17; font-weight:700; font-size:16.5px; }
+  .accept-btn{ margin-top:14px; width:100%; padding:14px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:16.5px; }
   .header-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
   .install-btn{
     flex-shrink:0; display:flex; align-items:center; gap:6px;
     border:1px solid var(--gold); color:var(--gold); background:transparent;
-    padding:7px 12px; border-radius:999px; font-size:11.5px; font-weight:700;
+    padding:7px 12px; border-radius:999px; font-size:13.5px; font-weight:700;
     white-space:nowrap;
   }
   .install-btn:active{ background:var(--gold); color:var(--bg-deep); }
   .settings-links{ margin-top:8px; display:flex; gap:6px; }
   .settings-links a{
-    font-size:10.5px; color:var(--muted); text-decoration:none;
+    font-size:12.5px; color:var(--muted); text-decoration:none;
     border:1px solid var(--line); border-radius:999px; padding:4px 10px;
     background:var(--panel);
   }
   .settings-links a:active{ background:var(--gold); color:var(--bg-deep); border-color:var(--gold); }
   .status-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
-  .status-new{ font-size:11px; padding:3px 9px; border-radius:999px; font-weight:700; background:rgba(224,149,74,.2); color:var(--gold); }
-  .timer{ font-family:'Fraunces',serif; font-weight:700; font-size:18px; color:var(--green); }
-  .empty{ color:var(--muted); text-align:center; padding:60px 20px; font-size:15px; }
+  .status-new{ font-size:13px; padding:3px 9px; border-radius:999px; font-weight:700; background:rgba(224,149,74,.2); color:var(--gold); }
+  .timer{ font-family:'Fraunces',serif; font-weight:700; font-size:19px; color:var(--green); }
+  .empty{ color:var(--muted); text-align:center; padding:60px 20px; font-size:16.5px; }
 
   .nav-row{ display:flex; gap:8px; margin-bottom:16px; }
-  .nav-row button{ flex:1; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:13px; position:relative; }
-  .nav-row button .badge-count{ position:absolute; top:-6px; right:-6px; background:var(--red); color:#fff; font-size:10px; font-weight:700; border-radius:999px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 4px; }
+  .nav-row button{ flex:1; padding:11px 0; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); font-weight:600; font-size:15px; position:relative; }
+  .nav-row button .badge-count{ position:absolute; top:-6px; right:-6px; background:var(--red); color:#fff; font-size:12px; font-weight:700; border-radius:999px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 4px; }
 
   .tabs{ display:flex; gap:6px; margin-bottom:16px; }
-  .tabs button{ flex:1; padding:9px 0; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-weight:600; font-size:13px; }
+  .tabs button{ flex:1; padding:9px 0; border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-weight:600; font-size:15px; }
   .tabs button.active{ background:var(--gold); border-color:var(--gold); color:var(--bg-deep); }
 
-  .day-header{ font-family:'Fraunces',serif; color:var(--gold); font-size:15px; margin:18px 0 8px; padding-bottom:6px; border-bottom:1px solid var(--line); }
+  .day-header{ font-family:'Fraunces',serif; color:var(--gold); font-size:16.5px; margin:18px 0 8px; padding-bottom:6px; border-bottom:1px solid var(--line); }
   .day-header:first-child{ margin-top:0; }
 
   .sheet{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:90; display:none; align-items:flex-end; justify-content:center; }
   .sheet.open{ display:flex; animation: fadeIn .22s ease; }
   .sheet-panel{ width:100%; max-width:520px; background:var(--bg); border-radius:20px 20px 0 0; max-height:85vh; display:flex; flex-direction:column; animation: slideUpIn .28s cubic-bezier(.2,1,.3,1); }
   .sheet-head{ padding:18px 20px 10px; border-bottom:1px solid var(--line); }
-  .sheet-head h2{ font-family:'Fraunces',serif; font-size:18px; margin:0 0 4px; }
-  .sheet-head p{ font-size:12px; color:var(--muted); margin:0; }
+  .sheet-head h2{ font-family:'Fraunces',serif; font-size:19px; margin:0 0 4px; }
+  .sheet-head p{ font-size:14px; color:var(--muted); margin:0; }
   .sheet-body{ overflow-y:auto; padding:10px 20px; flex:1; }
-  .sheet-cat{ font-family:'Fraunces',serif; color:var(--gold); font-size:14px; margin:14px 0 6px; }
+  .sheet-cat{ font-family:'Fraunces',serif; color:var(--gold); font-size:15.5px; margin:14px 0 6px; }
   .pick-item{ padding:10px 0; border-bottom:1px solid var(--line); }
   .pick-row{ display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
-  .pick-row .name{ font-size:14px; }
+  .pick-row .name{ font-size:15.5px; }
   .pick-row .check{ width:20px; height:20px; border-radius:6px; border:1.5px solid var(--line); flex-shrink:0; }
   .pick-item.selected .check{ background:var(--gold); border-color:var(--gold); }
-  .pick-comment{ display:none; margin-top:8px; width:100%; padding:9px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:13px; }
+  .pick-comment{ display:none; margin-top:8px; width:100%; padding:9px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream); font-size:15px; }
   .pick-item.selected .pick-comment{ display:block; }
-  .pick-existing{ font-size:11.5px; color:var(--muted); margin-top:3px; }
+  .pick-existing{ font-size:13.5px; color:var(--muted); margin-top:3px; }
   .sheet-actions{ display:flex; gap:10px; padding:16px 20px; border-top:1px solid var(--line); }
   .sheet-actions button{ flex:1; padding:13px; border-radius:12px; font-weight:700; border:none; }
   .sheet-actions .cancel{ background:transparent; border:1px solid var(--line); color:var(--cream); }
@@ -121,28 +121,28 @@
   .lock{ position:fixed; inset:0; background:var(--bg-deep); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px; animation: fadeIn .25s ease; }
   .lock-box{ width:100%; max-width:300px; text-align:center; animation: popIn .3s cubic-bezier(.2,1,.3,1); }
   .lock-box h2{ font-family:'Fraunces',serif; color:var(--cream); margin-bottom:6px; }
-  .lock-box p{ color:var(--muted); font-size:13px; margin-bottom:18px; }
+  .lock-box p{ color:var(--muted); font-size:15px; margin-bottom:18px; }
   .lock-box input{ width:100%; text-align:center; font-size:24px; letter-spacing:8px; padding:14px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--cream); margin-bottom:12px; }
-  .lock-box button{ width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:15px; }
+  .lock-box button{ width:100%; padding:13px; border:none; border-radius:12px; background:var(--gold); color:var(--bg-deep); font-weight:700; font-size:16.5px; }
 
   .confirm-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:210; display:none; align-items:center; justify-content:center; padding:24px; }
   .confirm-overlay.open{ display:flex; animation: fadeIn .2s ease; }
   .confirm-box{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px 22px; max-width:300px; width:100%; text-align:center; animation: popIn .25s cubic-bezier(.2,1,.3,1); }
-  .confirm-brand{ font-family:'Fraunces',serif; color:var(--gold); font-size:12px; font-weight:700; margin-bottom:12px; letter-spacing:.06em; text-transform:uppercase; }
-  .confirm-question{ font-size:16px; font-weight:700; color:var(--cream); margin-bottom:6px; }
-  .confirm-sub{ font-size:12.5px; color:var(--muted); margin-bottom:20px; line-height:1.4; display:none; }
+  .confirm-brand{ font-family:'Fraunces',serif; color:var(--gold); font-size:14px; font-weight:700; margin-bottom:12px; letter-spacing:.06em; text-transform:uppercase; }
+  .confirm-question{ font-size:17.5px; font-weight:700; color:var(--cream); margin-bottom:6px; }
+  .confirm-sub{ font-size:14.5px; color:var(--muted); margin-bottom:20px; line-height:1.4; display:none; }
   .confirm-input{
     width:100%; box-sizing:border-box; padding:11px 12px; margin-bottom:20px;
     border-radius:10px; border:1px solid var(--line); background:var(--bg-deep); color:var(--cream);
-    font-size:14px; font-family:inherit;
+    font-size:15.5px; font-family:inherit;
   }
   .confirm-input:focus{ outline:none; border-color:var(--gold); }
   .confirm-actions{ display:flex; gap:10px; }
-  .confirm-actions button{ flex:1; padding:11px; border-radius:10px; font-weight:700; font-size:13.5px; border:none; }
+  .confirm-actions button{ flex:1; padding:11px; border-radius:10px; font-weight:700; font-size:15.5px; border:none; }
   .confirm-cancel{ background:var(--bg-deep); color:var(--cream); border:1px solid var(--line); }
   .confirm-ok{ background:var(--gold); color:var(--bg-deep); }
   .confirm-ok.danger{ background:var(--red); color:#fff; }
-  .lock-box .err{ color:var(--red); font-size:12.5px; margin-top:10px; min-height:16px; }
+  .lock-box .err{ color:var(--red); font-size:14.5px; margin-top:10px; min-height:16px; }
 </style>
 </head>
 <body>
@@ -175,7 +175,7 @@
   <div class="lock-box">
     <h2>Как вас зовут?</h2>
     <p>Ваше имя увидят официант и менеджер</p>
-    <input id="nameInput" type="text" maxlength="30" placeholder="Иван" style="letter-spacing:normal; font-size:18px; text-align:left; padding:14px 16px;">
+    <input id="nameInput" type="text" maxlength="30" placeholder="Иван" style="letter-spacing:normal; font-size:19px; text-align:left; padding:14px 16px;">
     <button onclick="submitName()">Сохранить</button>
   </div>
 </div>
@@ -188,16 +188,16 @@
   </div>
 </div>
 
-<div id="notifPermBanner" style="display:none; position:sticky; top:0; z-index:149; background:var(--red); color:#fff; padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; font-weight:700; animation: popIn .3s cubic-bezier(.2,1,.3,1);">
-  <span>Уведомления выключены — вы можете пропустить заказ</span>
-  <button onclick="requestNotifPermission()" style="background:#fff; color:var(--red); border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:12px;">Включить</button>
+<div id="notifPermBanner" style="display:none; position:sticky; top:0; z-index:149; background:var(--red); color:#fff; padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:14.5px; font-weight:700; animation: popIn .3s cubic-bezier(.2,1,.3,1); flex-wrap:wrap;">
+  <span style="min-width:0; word-break:break-word; flex:1 1 auto;">Уведомления выключены — вы можете пропустить заказ</span>
+  <button onclick="requestNotifPermission()" style="background:#fff; color:var(--red); border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:14px; flex-shrink:0;">Включить</button>
 </div>
 
-<div id="updateBanner" style="display:none; position:sticky; top:0; z-index:150; background:var(--gold); color:var(--bg-deep); padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; font-weight:700; animation: popIn .3s cubic-bezier(.2,1,.3,1);">
+<div id="updateBanner" style="display:none; position:sticky; top:0; z-index:150; background:var(--gold); color:var(--bg-deep); padding:9px 14px; align-items:center; justify-content:space-between; gap:10px; font-size:14.5px; font-weight:700; animation: popIn .3s cubic-bezier(.2,1,.3,1);">
   <span>Доступна новая версия приложения</span>
   <div style="display:flex; gap:8px; align-items:center;">
-    <button onclick="applyUpdate()" style="background:var(--bg-deep); color:var(--gold); border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:12px;">Обновить</button>
-    <button onclick="dismissUpdateBanner()" style="background:transparent; border:none; color:var(--bg-deep); font-size:16px; font-weight:700; padding:0 4px;">×</button>
+    <button onclick="applyUpdate()" style="background:var(--bg-deep); color:var(--gold); border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:14px;">Обновить</button>
+    <button onclick="dismissUpdateBanner()" style="background:transparent; border:none; color:var(--bg-deep); font-size:17.5px; font-weight:700; padding:0 4px;">×</button>
   </div>
 </div>
 
@@ -486,7 +486,7 @@ function render(){
     const isNew = newIds.has(o.id);
     html += `<div class="ticket ${isNew?'new':''}">
       <div class="top"><span class="table-badge">Стол ${tableLabel(o.table)}</span><span class="time">${timeAgo(o.createdAt)}</span></div>`;
-    if(o.waiterName) html += `<div class="line" style="font-size:12px;color:var(--muted);border-bottom:none;padding:0 0 6px;">Официант: ${o.waiterName}</div>`;
+    if(o.waiterName) html += `<div class="line" style="font-size:14px;color:var(--muted);border-bottom:none;padding:0 0 6px;">Официант: ${o.waiterName}</div>`;
     o.kitchenItems.forEach(i => {
       html += `<div class="line"><b>${i.qty}×</b> ${i.name}</div>`;
       if(i.note) html += `<div class="item-note"><span class="ico">💬</span><span>${i.note}</span></div>`;
@@ -846,7 +846,9 @@ function updateNotifPermBanner(){
     return;
   }
   if(Notification.permission === "denied"){
-    textEl.textContent = "Уведомления заблокированы — включите вручную: Настройки → Safari/приложение → Уведомления";
+    textEl.textContent = isIos()
+      ? "Уведомления заблокированы — включите вручную: Настройки → Safari/приложение → Уведомления"
+      : "Уведомления заблокированы браузером — откройте значок 🔒 рядом с адресом сайта → Разрешения → Уведомления → Разрешить";
     btnEl.style.display = 'none';
   } else {
     textEl.textContent = "Уведомления выключены — вы можете пропустить заказ";
@@ -862,7 +864,7 @@ function requestNotifPermission(){
   });
 }
 updateNotifPermBanner();
-const APP_VERSION = "16";
+const APP_VERSION = "17";
 let updateDismissed = false;
 function checkForUpdate(){
   if(updateDismissed) return;
