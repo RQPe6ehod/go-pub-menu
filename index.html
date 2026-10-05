@@ -3,28 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>Garage Music Bar — Меню</title>
-<meta name="theme-color" content="#182D34">
+<title>GO pub — Меню</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #182D34;
-    --bg-deep: #0F1F25;
-    --panel: #22393F;
-    --line: #364B52;
-    --gold: #FDBB00;
-    --gold-soft: #A67C06;
-    --cream: #F3F4F5;
-    --cream-dim: #C3CCCF;
-    --muted: #8D9CA2;
+    --bg: #142720;
+    --bg-deep: #0E1D17;
+    --panel: #1C3628;
+    --line: #2C4A3A;
+    --gold: #C79A46;
+    --gold-soft: #8E7538;
+    --cream: #F3EEDF;
+    --cream-dim: #C9CFC1;
+    --muted: #8FA08D;
     --shadow: rgba(0,0,0,.35);
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
   html,body{margin:0;padding:0;}
   body{
     background: var(--bg);
+    background-image: radial-gradient(circle at 15% 0%, rgba(199,154,70,0.07), transparent 45%),
+                       radial-gradient(circle at 100% 30%, rgba(199,154,70,0.05), transparent 40%);
     color: var(--cream);
     font-family: 'Inter', sans-serif;
     min-height: 100vh;
@@ -50,7 +51,7 @@
     display:flex; align-items:center; gap:6px;
     background: var(--gold); color: var(--bg-deep);
     padding: 6px 14px; border-radius: 999px; font-size: 12.5px; font-weight:700; cursor:pointer;
-    text-decoration:none; box-shadow: 0 3px 10px rgba(253,187,0,.35);
+    text-decoration:none; box-shadow: 0 3px 10px rgba(199,154,70,.35);
   }
   .lang-menu{
     display:none; position:absolute; top: 36px; z-index:40;
@@ -63,7 +64,7 @@
     display:block; width:100%; text-align:left; padding: 10px 16px;
     background:transparent; border:none; color: var(--cream); font-size: 13.5px; cursor:pointer;
   }
-  .lang-menu button:hover, .lang-menu button.active{ background: rgba(253,187,0,0.15); color: var(--gold); }
+  .lang-menu button:hover, .lang-menu button.active{ background: rgba(199,154,70,0.15); color: var(--gold); }
   .lang-menu button + button{ border-top: 1px solid var(--line); }
 
   .credit-link{
@@ -82,14 +83,14 @@
     display:flex; align-items:center; gap:10px;
   }
   .brand-mark{
-    width:40px; height:40px; border-radius:9px 9px 3px 3px;
+    width:40px; height:40px; border-radius:50%;
     border: 1.5px solid var(--gold);
-    background: repeating-linear-gradient(180deg, transparent 0 6px, rgba(253,187,0,.16) 6px 7px);
     display:flex; align-items:center; justify-content:center;
-    font-family:'Unbounded', 'Inter', sans-serif; font-weight:700; font-size:17px; color: var(--gold);
+    font-family:'Fraunces', serif; font-weight:700; font-size:15px; color: var(--gold);
+    letter-spacing: 0.5px;
   }
   .brand-text{ line-height:1.05; }
-  .brand-text .name{ font-family:'Unbounded', 'Inter', sans-serif; font-weight:700; font-size: 16px; letter-spacing:-0.01em; color: var(--cream); }
+  .brand-text .name{ font-family:'Fraunces', serif; font-weight:600; font-size: 20px; color: var(--cream); }
   .brand-text .sub{ font-size: 11px; color: var(--muted); letter-spacing: .06em; }
   .svc-note{ font-size: 10.5px; color: var(--muted); text-align:right; line-height:1.3; max-width: 130px; }
 
@@ -99,7 +100,7 @@
   }
   .mode-switch button{
     flex:1; border:none; background:transparent; color: var(--muted);
-    font-family:'Unbounded', 'Inter', sans-serif; font-size: 15px; font-weight: 600;
+    font-family:'Fraunces', serif; font-size: 15px; font-weight: 600;
     padding: 9px 0; border-radius: 999px; cursor:pointer;
     transition: background .25s ease, color .25s ease;
   }
@@ -133,7 +134,7 @@
   section.category{ margin-bottom: 34px; scroll-margin-top: 208px; }
   .cat-head{ display:flex; align-items:baseline; gap:10px; margin-bottom: 4px; }
   .cat-head h2{
-    font-family:'Unbounded', 'Inter', sans-serif; font-weight:600; font-size: 19px; letter-spacing:-0.01em; margin:0;
+    font-family:'Fraunces', serif; font-weight:600; font-size: 23px; margin:0;
     color: var(--gold);
   }
   .cat-head .rule{ flex:1; height:1px; background: var(--line); }
@@ -145,28 +146,12 @@
   .item-num{ color: var(--gold-soft); font-size: 12px; font-weight:600; min-width: 15px; flex-shrink:0; }
   .item-name{ font-size: 15.5px; font-weight:500; color: var(--cream); }
   .dots{ flex:1; border-bottom: 1.5px dotted var(--line); transform: translateY(-3px); min-width: 14px; }
-  .item-price{ font-family:'Unbounded', 'Inter', sans-serif; font-weight:500; font-size: 13px; color: var(--cream); white-space:nowrap; flex-shrink:0; }
+  .item-price{ font-family:'Fraunces', serif; font-weight:600; font-size: 15px; color: var(--cream); white-space:nowrap; flex-shrink:0; }
   .item-price small{ font-size:11px; font-weight:400; color: var(--muted); }
   .item.disabled{ opacity:.5; }
   .item.disabled .item-name{ text-decoration: line-through; }
-  .unavail-tag{ white-space:nowrap; font-size: 10px; color: var(--gold); border:1px solid var(--gold); border-radius:999px; padding: 1px 7px; margin-left: 8px; vertical-align: middle; }
+  .unavail-tag{ font-size: 10px; color: var(--gold); border:1px solid var(--gold); border-radius:999px; padding: 1px 7px; margin-left: 8px; vertical-align: middle; }
   .item-desc{ font-size: 12.5px; color: var(--muted); margin-top: 3px; padding-left: 23px; line-height:1.4; }
-  .item.has-photo{ display:flex; gap:12px; align-items:flex-start; }
-  .item.has-photo .item-body{ flex:1; min-width:0; }
-  .item.has-photo .item-desc{ padding-left:0; }
-  .item-photo{ width:78px; height:78px; flex-shrink:0; object-fit:cover; border-radius:10px; background: var(--panel); border:1px solid var(--line); cursor: zoom-in; }
-  .item.disabled .item-photo{ filter: grayscale(1); }
-  .photo-lb{ position:fixed; inset:0; z-index:200; display:none; align-items:center; justify-content:center; padding: 20px; padding-top: max(20px, env(safe-area-inset-top)); padding-bottom: max(20px, env(safe-area-inset-bottom)); background: rgba(0,0,0,.86); }
-  .photo-lb.open{ display:flex; animation: lbIn .18s ease-out; }
-  @keyframes lbIn{ from{ opacity:0; } to{ opacity:1; } }
-  .photo-lb figure{ margin:0; width:100%; max-width:560px; max-height:100%; display:flex; flex-direction:column; background: var(--bg-deep); border:1px solid var(--line); border-radius:16px; overflow:hidden; }
-  .photo-lb img{ width:100%; max-height:62vh; object-fit:contain; background:#000; display:block; }
-  .photo-lb figcaption{ padding: 14px 16px 16px; overflow:auto; }
-  .photo-lb .lb-top{ display:flex; justify-content:space-between; gap:12px; align-items:baseline; }
-  .photo-lb .lb-name{ font-size:17px; font-weight:600; color: var(--cream); }
-  .photo-lb .lb-price{ color: var(--gold); font-weight:600; white-space:nowrap; }
-  .photo-lb .lb-desc{ margin-top:6px; font-size:13.5px; line-height:1.45; color: var(--cream-dim); }
-  .photo-lb .lb-close{ position:absolute; top: max(12px, env(safe-area-inset-top)); right:12px; width:40px; height:40px; border-radius:50%; border:none; background: rgba(255,255,255,.14); color:#fff; font-size:24px; line-height:1; cursor:pointer; }
 
   .empty-state{ text-align:center; color: var(--muted); font-size: 14px; padding: 60px 20px; }
 
@@ -174,7 +159,7 @@
     text-align:center; color: var(--muted); font-size: 12px; margin-top: 30px; padding: 0 20px;
     line-height: 1.6;
   }
-  footer.foot .gold{ color: var(--gold); font-family:'Unbounded', 'Inter', sans-serif; font-size:15px; }
+  footer.foot .gold{ color: var(--gold); font-family:'Fraunces', serif; font-size:15px; }
 
   @keyframes slideUpIn{ from{ opacity:0; transform:translateY(16px); } to{ opacity:1; transform:translateY(0); } }
   .call-bar{
@@ -185,9 +170,9 @@
   }
   .call-waiter-btn{
     flex:1; display:flex; align-items:center; justify-content:center; gap:8px;
-    background: #FDBB00; color:#1C1500; border:none; border-radius: 999px;
+    background: #E0B84C; color:#241a05; border:none; border-radius: 999px;
     padding: 14px 16px; font-family:'Inter', sans-serif; font-weight:700; font-size: 14.5px;
-    box-shadow: 0 10px 30px rgba(253,187,0,.35);
+    box-shadow: 0 10px 30px rgba(224,184,76,.35);
   }
   .call-waiter-btn:disabled{ opacity:.6; }
   @keyframes popIn{ from{ opacity:0; transform:scale(.94) translateY(4px); } to{ opacity:1; transform:scale(1) translateY(0); } }
@@ -213,11 +198,11 @@
     transform: translateY(30px); transition: transform .25s ease;
   }
   .ga-overlay.open .ga-panel{ transform: translateY(0); }
-  .ga-panel h2{ font-family:'Unbounded', 'Inter', sans-serif; font-size:19px; margin:0 0 16px; text-align:center; }
+  .ga-panel h2{ font-family:'Fraunces', serif; font-size:19px; margin:0 0 16px; text-align:center; }
   .ga-close{ position:absolute; top:14px; right:16px; background:none; border:none; font-size:18px; color:#999; padding:4px; }
   .ga-repeat-row{
     width:100%; display:flex; align-items:center; gap:10px; padding:14px 16px;
-    background: var(--gold); color:#1C1500; border:none; border-radius:14px;
+    background: var(--gold); color:#1b1206; border:none; border-radius:14px;
     font-weight:700; font-size:15px; margin-bottom:14px;
   }
   .ga-icon{ font-size:19px; }
@@ -234,7 +219,7 @@
   }
   .ga-call-btn{
     width:100%; display:flex; align-items:center; justify-content:center; gap:8px;
-    padding:13px; background:#1C1500; color:#fff; border:none; border-radius:14px;
+    padding:13px; background:#1b1206; color:#fff; border:none; border-radius:14px;
     font-weight:700; font-size:14px; margin-top:8px;
   }
   .ga-back{ background:none; border:none; font-size:20px; color:#888; padding:4px 8px 4px 0; }
@@ -251,7 +236,7 @@
   }
   .ga-repeat-qty span{ min-width:16px; text-align:center; font-weight:700; }
   .ga-send-btn{
-    width:100%; padding:14px; background:var(--gold); color:#1C1500; border:none; border-radius:14px;
+    width:100%; padding:14px; background:var(--gold); color:#1b1206; border:none; border-radius:14px;
     font-weight:700; font-size:15px;
   }
   .ga-empty{ text-align:center; color:#999; font-size:14px; padding:20px 0; }
@@ -269,9 +254,9 @@
   }
   .bill-overlay.open .bill-panel{ transform: translateY(0); }
   .bill-body{ padding: 24px 24px 8px; }
-  .bill-body h2{ font-family:'Unbounded', 'Inter', sans-serif; font-size:22px; margin:0 0 4px; text-align:center; }
+  .bill-body h2{ font-family:'Fraunces', serif; font-size:22px; margin:0 0 4px; text-align:center; }
   .status-badge{
-    text-align:center; font-family:'Unbounded', 'Inter', sans-serif; font-weight:700; font-size:20px;
+    text-align:center; font-family:'Fraunces', serif; font-weight:700; font-size:20px;
     padding:10px 14px; border-radius:12px; margin-bottom:6px;
   }
   .status-badge.preparing{ background:#fff3e0; color:#b06a00; }
@@ -281,17 +266,17 @@
   .bill-line{ display:flex; justify-content:space-between; font-size:14px; padding:6px 0; border-bottom:1px dashed #ddd; }
   .bill-line .n{ flex:1; padding-right:10px; }
   .bill-total-row{ display:flex; justify-content:space-between; font-size:13px; padding:6px 0; color:#555; }
-  .bill-total{ display:flex; justify-content:space-between; font-family:'Unbounded', 'Inter', sans-serif; font-weight:700; font-size:19px; margin-top:8px; }
+  .bill-total{ display:flex; justify-content:space-between; font-family:'Fraunces', serif; font-weight:700; font-size:19px; margin-top:8px; }
   .bill-actions{ display:flex; gap:10px; padding:16px 24px 24px; border-top:1px solid #eee; }
   .bill-actions button{ flex:1; padding:13px; border-radius:12px; border:none; font-weight:700; font-size:13.5px; }
   .bill-close{ background:#eee; color:#333; }
-  .bill-request{ background: var(--gold); color:#1C1500; }
+  .bill-request{ background: var(--gold); color:#1b1206; }
 
   .confirm-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:210; display:flex; align-items:center; justify-content:center; padding:24px; opacity:0; pointer-events:none; transition: opacity .22s ease; }
   .confirm-overlay.open{ opacity:1; pointer-events:auto; }
   .confirm-box{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px 22px; max-width:300px; width:100%; text-align:center; transform:scale(.9); transition: transform .22s cubic-bezier(.2,1,.3,1); }
   .confirm-overlay.open .confirm-box{ transform:scale(1); }
-  .confirm-brand{ font-family:'Unbounded','Inter',sans-serif; color:var(--gold); font-size:12px; font-weight:700; margin-bottom:12px; letter-spacing:.06em; text-transform:uppercase; }
+  .confirm-brand{ font-family:'Fraunces',serif; color:var(--gold); font-size:12px; font-weight:700; margin-bottom:12px; letter-spacing:.06em; text-transform:uppercase; }
   .confirm-question{ font-size:16px; font-weight:700; color:var(--cream); margin-bottom:6px; }
   .confirm-sub{ font-size:12.5px; color:var(--muted); margin-bottom:20px; line-height:1.4; display:none; }
   .confirm-actions{ display:flex; gap:10px; }
@@ -328,7 +313,7 @@
       <button onclick="setLang('en')" data-lang="en">English</button>
       <button onclick="setLang('kk')" data-lang="kk">Қазақша</button>
     </div>
-    <a href="https://2gis.kz/astana/firm/70000001040186914/tab/reviews" target="_blank" rel="noopener" class="review-btn" id="reviewBtn">
+    <a href="https://2gis.kz/astana/firm/70000001101686055/tab/reviews" target="_blank" rel="noopener" class="review-btn" id="reviewBtn">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
       <span id="reviewBtnLabel">Оставить отзыв</span>
     </a>
@@ -341,10 +326,10 @@
   <a href="/contact.html" class="credit-link">by RQ Coding<svg class="credit-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/><path d="M14 4h6v6"/><path d="M10 14L20 4"/></svg></a>
   <div class="brand-row">
     <div class="brand">
-      <div class="brand-mark">G</div>
+      <div class="brand-mark">GO</div>
       <div class="brand-text">
-        <div class="name">Garage Music Bar</div>
-        <div class="sub" id="taglineText">Live music, DJ, квиз, стендап</div>
+        <div class="name">GO pub</div>
+        <div class="sub" id="taglineText">ЦИФРОВОЕ МЕНЮ</div>
       </div>
     </div>
     <div class="svc-note" id="svcNote">Обслуживание 10%. Цены указаны в тенге.</div>
@@ -356,7 +341,7 @@
   </div>
 
   <div class="search-wrap">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8D9CA2" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8FA08D" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input id="search" type="text" placeholder="Найти блюдо или напиток…" oninput="onSearch()">
   </div>
 
@@ -366,7 +351,7 @@
 <main id="main"></main>
 
 <footer class="foot">
-  <div class="gold">Garage Music Bar</div>
+  <div class="gold">GO pub</div>
   <span id="enjoyText">Приятного аппетита!</span><br>
   <span id="scanNoteText">Отсканируйте QR‑код у столика, чтобы вернуться к меню в любой момент.</span>
 </footer>
@@ -413,7 +398,7 @@
 
 <div class="confirm-overlay" id="confirmOverlay">
   <div class="confirm-box">
-    <div class="confirm-brand">Garage Music Bar</div>
+    <div class="confirm-brand">GO pub</div>
     <div class="confirm-question" id="confirmQuestion"></div>
     <div class="confirm-sub" id="confirmSub"></div>
     <div class="confirm-actions">
@@ -451,7 +436,7 @@
       <p id="consentText" style="margin:0 0 10px; font-size:12.5px; color:#555; line-height:1.4;">Нам запомнить ваши предпочтения?</p>
       <div style="display:flex; gap:8px;">
         <button id="consentNoBtn" onclick="answerConsent(false)" style="flex:1; padding:9px; border-radius:9px; border:1px solid #ccc; background:#fff; color:#333; font-weight:700; font-size:12.5px;">Нет, спасибо</button>
-        <button id="consentYesBtn" onclick="answerConsent(true)" style="flex:1; padding:9px; border-radius:9px; border:none; background:var(--gold); color:#1C1500; font-weight:700; font-size:12.5px;">Да, запомнить</button>
+        <button id="consentYesBtn" onclick="answerConsent(true)" style="flex:1; padding:9px; border-radius:9px; border:none; background:var(--gold); color:#1b1206; font-weight:700; font-size:12.5px;">Да, запомнить</button>
       </div>
     </div>
     <div id="forgetMeRow" style="display:none; text-align:center; margin:0 24px 20px; animation: popIn .28s cubic-bezier(.2,1,.3,1);">
@@ -462,48 +447,10 @@
 
 <script>
 let MENU = { food: [], bar: [] }; // populated live from the server's shared menu
-// Imported photos are static files of this site (/menu-img/…); photos the
-// manager uploads later are served by the API worker (<venue>/<uuid>.jpg).
-const IMG_BASE = "https://api.restorun.kuatov.kz/img/";
-const PHOTO_ITEMS = {};
-function imgSrc(key){
-  if(!key) return null;
-  return (key.startsWith('/') || key.startsWith('http')) ? key : IMG_BASE + key;
-}
-function photoUrl(it, full){
-  return imgSrc(full ? (it.imgFull || it.img) : (it.img || it.imgFull));
-}
-// A phone that opened the menu before the photo files were published may
-// still hold the old "not found" answer in its cache — so the first failure
-// retries the same photo with a cache-busting query before giving up.
-function bust(url){ return url + (url.includes('?') ? '&' : '?') + 'r=' + Date.now(); }
-function photoFallback(img){
-  const it = PHOTO_ITEMS[img.dataset.id];
-  if(it && !img.dataset.retried){ img.dataset.retried = "1"; img.src = bust(photoUrl(it, false)); return; }
-  const full = it && photoUrl(it, true);
-  if(full && !img.dataset.triedFull){ img.dataset.triedFull = "1"; img.src = bust(full); return; }
-  const row = img.closest('.item'); if(row) row.classList.remove('has-photo');
-  img.remove();
-}
-function openPhoto(id){
-  const it = PHOTO_ITEMS[id]; if(!it) return;
-  const desc = it.desc ? (it.desc[LANG] || it.desc.ru) : '';
-  document.getElementById('photoLbImg').src = photoUrl(it, true);
-  document.getElementById('photoLbImg').alt = it.name[LANG] || it.name.ru;
-  document.getElementById('photoLbName').textContent = it.name[LANG] || it.name.ru;
-  document.getElementById('photoLbPrice').textContent = fmtPrice(it);
-  document.getElementById('photoLbDesc').textContent = desc;
-  document.getElementById('photoLb').classList.add('open');
-}
-function closePhoto(){
-  document.getElementById('photoLb').classList.remove('open');
-  document.getElementById('photoLbImg').removeAttribute('src');
-}
-document.addEventListener('keydown', e => { if(e.key === 'Escape') closePhoto(); });
 let unavailable = {};
 
 const STR = {
-  ru: { tagline:"Live music, DJ, квиз, стендап", svc:"Обслуживание 10%. Цены указаны в тенге.", kitchen:"Кухня", bar:"Бар", search:"Найти блюдо или напиток…", enjoy:"Приятного аппетита!", scanNote:"Отсканируйте QR‑код у столика, чтобы вернуться к меню в любой момент.", currency:" тг.", soldOut:"нет в наличии",
+  ru: { tagline:"ЦИФРОВОЕ МЕНЮ", svc:"Обслуживание 10%. Цены указаны в тенге.", kitchen:"Кухня", bar:"Бар", search:"Найти блюдо или напиток…", enjoy:"Приятного аппетита!", scanNote:"Отсканируйте QR‑код у столика, чтобы вернуться к меню в любой момент.", currency:" тг.", soldOut:"нет в наличии",
     callWaiterBtn:"Хочу сделать заказ", callWaiterWaiting:"Зовём официанта…", callWaiterComing:"Официант идёт!",
     billBtn:"Статус заказа", billTitle:"Статус заказа", billNotFiscal:"Не является фискальным чеком", billEmpty:"Пока нет заказанных позиций",
     statusPreparing:"Готовится", statusReady:"Готово — официант уже идёт", statusServed:"Подано",
@@ -526,7 +473,7 @@ const STR = {
     wifiModalTitle:"Wi-Fi заведения", wifiSsidLabel:"Сеть", wifiPasswordLabel:"Пароль",
     wifiHint:"Откройте настройки Wi-Fi на телефоне и выберите эту сеть", wifiCopyBtn:"Копировать", wifiCopied:"Скопировано!",
     updateBannerText:"Доступна новая версия меню", updateBannerBtn:"Обновить" },
-  en: { tagline:"Live music, DJs, quiz, stand-up", svc:"10% service charge included. Prices in KZT.", kitchen:"Kitchen", bar:"Bar", search:"Search dish or drink…", enjoy:"Enjoy your meal!", scanNote:"Scan the QR code at your table to return to the menu anytime.", currency:" KZT", soldOut:"sold out",
+  en: { tagline:"DIGITAL MENU", svc:"10% service charge included. Prices in KZT.", kitchen:"Kitchen", bar:"Bar", search:"Search dish or drink…", enjoy:"Enjoy your meal!", scanNote:"Scan the QR code at your table to return to the menu anytime.", currency:" KZT", soldOut:"sold out",
     callWaiterBtn:"I'd like to order", callWaiterWaiting:"Calling a waiter…", callWaiterComing:"Waiter is on the way!",
     billBtn:"Order status", billTitle:"Order status", billNotFiscal:"Not a fiscal receipt", billEmpty:"No items ordered yet",
     statusPreparing:"Being prepared", statusReady:"Ready — waiter is on the way", statusServed:"Served",
@@ -549,7 +496,7 @@ const STR = {
     wifiModalTitle:"Venue Wi-Fi", wifiSsidLabel:"Network", wifiPasswordLabel:"Password",
     wifiHint:"Open Wi-Fi settings on your phone and select this network", wifiCopyBtn:"Copy", wifiCopied:"Copied!",
     updateBannerText:"A new menu version is available", updateBannerBtn:"Update" },
-  kk: { tagline:"Жанды музыка, DJ, квиз, стендап", svc:"Қызмет көрсету ақысы 10%. Бағалар теңгемен.", kitchen:"Ас үй", bar:"Бар", search:"Тағам немесе сусын іздеу…", enjoy:"Ас болсын!", scanNote:"Кез келген уақытта мәзірге оралу үшін үстелдегі QR-кодты сканерлеңіз.", currency:" тг.", soldOut:"қазір жоқ",
+  kk: { tagline:"ЦИФРЛЫҚ МӘЗІР", svc:"Қызмет көрсету ақысы 10%. Бағалар теңгемен.", kitchen:"Ас үй", bar:"Бар", search:"Тағам немесе сусын іздеу…", enjoy:"Ас болсын!", scanNote:"Кез келген уақытта мәзірге оралу үшін үстелдегі QR-кодты сканерлеңіз.", currency:" тг.", soldOut:"қазір жоқ",
     callWaiterBtn:"Тапсырыс бергім келеді", callWaiterWaiting:"Даяшыны шақырып жатырмыз…", callWaiterComing:"Даяшы жолда!",
     billBtn:"Тапсырыс мәртебесі", billTitle:"Тапсырыс мәртебесі", billNotFiscal:"Фискалдық чек емес", billEmpty:"Әзірге тапсырыс берілген тағам жоқ",
     statusPreparing:"Дайындалуда", statusReady:"Дайын — даяшы жолда", statusServed:"Берілді",
@@ -598,9 +545,9 @@ function copyWifiPassword(){
   }
 }
 
-let LANG = localStorage.getItem('garage_lang') || 'ru';
+let LANG = localStorage.getItem('gopub_lang') || 'ru';
 let observer;
-const WS_URL = "wss://api.restorun.kuatov.kz/ws?venue=garage-music-bar";
+const WS_URL = "wss://api.restorun.kuatov.kz/ws";
 const QR_ID = new URLSearchParams(location.search).get('qr');
 let TABLE = null; // only ever set from the server's verified resolve_qr response — never trust a raw ?table= param
 let liveSocket = null;
@@ -624,7 +571,7 @@ document.addEventListener('click', (e) => {
 
 function setLang(lang){
   LANG = lang;
-  localStorage.setItem('garage_lang', lang);
+  localStorage.setItem('gopub_lang', lang);
   document.getElementById('langLabel').textContent = lang.toUpperCase();
   document.getElementById('htmlRoot').lang = lang;
   document.querySelectorAll('.lang-menu button').forEach(b => b.classList.toggle('active', b.dataset.lang===lang));
@@ -717,11 +664,7 @@ function renderMain(){
       const desc = it.desc ? (it.desc[LANG] || it.desc.ru) : null;
       const searchBlob = [it.name.ru, it.name.en, it.name.kk, desc||''].join(' ').toLowerCase();
       const isUnavail = !!unavailable[destKey+'|'+it.name.ru];
-      const thumb = photoUrl(it, false);
-      if(thumb) PHOTO_ITEMS[it.id] = it;
-      html += `<div class="item${isUnavail?' disabled':''}${thumb?' has-photo':''}" data-search="${searchBlob}">
-        ${thumb ? `<img class="item-photo" src="${thumb}" alt="" loading="lazy" decoding="async" data-id="${it.id}" onclick="openPhoto('${it.id}')" onerror="photoFallback(this)">` : ''}
-        ${thumb ? '<div class="item-body">' : ''}
+      html += `<div class="item${isUnavail?' disabled':''}" data-search="${searchBlob}">
         <div class="item-row">
           ${it.n ? `<span class="item-num">${it.n}</span>` : ''}
           <span class="item-name">${name}</span>
@@ -730,7 +673,6 @@ function renderMain(){
           <span class="item-price">${fmtPrice(it)}</span>
         </div>
         ${desc ? `<div class="item-desc">${desc}</div>` : ''}
-        ${thumb ? '</div>' : ''}
       </div>`;
     });
     sec.innerHTML = html;
@@ -857,7 +799,7 @@ function activateTableUI(){
   document.getElementById('callBar').style.display = 'flex';
   document.body.style.paddingBottom = '128px';
   pollBill();
-  if(localStorage.getItem('garage_guest_consent') === 'yes'){
+  if(localStorage.getItem('gopub_guest_consent') === 'yes'){
     document.getElementById('forgetMeRow').style.display = 'block';
   }
 }
@@ -1071,7 +1013,7 @@ function renderBill(){
   }
   let html = `<div class="status-badge ${statusClass}">${statusLabel}</div>
     ${stationsHtml}
-    <div class="sub">Garage · ${s.tableWord} ${TABLE}</div>`;
+    <div class="sub">GO pub · ${s.tableWord} ${TABLE}</div>`;
   currentBill.items.forEach(i => {
     const price = parseInt(String(i.price).replace(/[^\d]/g,''),10) || 0;
     html += `<div class="bill-line"><span class="n">${i.qty} × ${i.name}</span><span>${(price*i.qty).toLocaleString('ru-RU')}</span></div>`;
@@ -1092,7 +1034,7 @@ function requestBillFromModal(){
     btn.textContent = STR[LANG].billRequestWaiting;
     setTimeout(() => { btn.disabled = false; btn.textContent = STR[LANG].billRequestBtn; }, 30000);
 
-    const consent = localStorage.getItem('garage_guest_consent');
+    const consent = localStorage.getItem('gopub_guest_consent');
     if(consent === null){
       document.getElementById('consentAsk').style.display = 'block';
     } else if(consent === 'yes'){
@@ -1102,17 +1044,17 @@ function requestBillFromModal(){
 }
 
 function getOrCreateDeviceId(){
-  let id = localStorage.getItem('garage_device_id');
+  let id = localStorage.getItem('gopub_device_id');
   if(!id){
     id = (crypto.randomUUID ? crypto.randomUUID() : (Date.now()+'-'+Math.random()));
-    localStorage.setItem('garage_device_id', id);
+    localStorage.setItem('gopub_device_id', id);
   }
   return id;
 }
 // Only ever surfaces this device's id to the server when the guest has
 // actively opted in — first-time / opted-out visitors stay fully anonymous.
 function consentedDeviceId(){
-  return localStorage.getItem('garage_guest_consent') === 'yes' ? getOrCreateDeviceId() : null;
+  return localStorage.getItem('gopub_guest_consent') === 'yes' ? getOrCreateDeviceId() : null;
 }
 
 function sendSaveGuestOrder(){
@@ -1122,7 +1064,7 @@ function sendSaveGuestOrder(){
 
 function answerConsent(yes){
   document.getElementById('consentAsk').style.display = 'none';
-  localStorage.setItem('garage_guest_consent', yes ? 'yes' : 'no');
+  localStorage.setItem('gopub_guest_consent', yes ? 'yes' : 'no');
   if(yes){
     sendSaveGuestOrder();
     document.getElementById('forgetMeRow').style.display = 'block';
@@ -1157,8 +1099,8 @@ function forgetMe(){
     if(liveSocket && liveSocket.readyState === WebSocket.OPEN){
       liveSocket.send(JSON.stringify({type:"forget_guest", deviceId}));
     }
-    localStorage.removeItem('garage_guest_consent');
-    localStorage.removeItem('garage_device_id'); // rotate to a fresh, unlinked id
+    localStorage.removeItem('gopub_guest_consent');
+    localStorage.removeItem('gopub_device_id'); // rotate to a fresh, unlinked id
     document.getElementById('forgetMeRow').style.display = 'none';
     alert(STR[LANG].forgottenAlert);
   }, true);
@@ -1187,15 +1129,5 @@ setTimeout(checkForUpdate, 5000);
 setInterval(checkForUpdate, 5 * 60 * 1000);
 document.addEventListener('visibilitychange', () => { if(!document.hidden) checkForUpdate(); });
 </script>
-<div class="photo-lb" id="photoLb" onclick="closePhoto()" role="dialog" aria-modal="true">
-  <figure onclick="event.stopPropagation()">
-    <img id="photoLbImg" alt="">
-    <figcaption>
-      <div class="lb-top"><span class="lb-name" id="photoLbName"></span><span class="lb-price" id="photoLbPrice"></span></div>
-      <div class="lb-desc" id="photoLbDesc"></div>
-    </figcaption>
-  </figure>
-  <button class="lb-close" onclick="closePhoto()" aria-label="Закрыть">×</button>
-</div>
 </body>
 </html>
