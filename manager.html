@@ -4199,7 +4199,6 @@ function showReceiptFromData(r){
     let h = `<h2>GO pub</h2>
       <div class="sub">Отчёт о продажах за ${monthYear}</div>
       <div class="receipt-row"><span>Период</span><span>1–${lastTxt} ${d.getFullYear()}</span></div>
-      <div class="receipt-row"><span>Данные</span><span>внесены вручную</span></div>
       <div class="receipt-hr"></div>`;
     r.items.forEach(i => {
       const sum = (parseInt(String(i.price).replace(/[^\d]/g,''),10)||0) * i.qty;
