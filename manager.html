@@ -3311,10 +3311,12 @@ function renderAnalytics(){
     if(rows.length===0){ bdEl.innerHTML = `<div class="empty">Данных пока нет</div>`; }
     else {
       const maxRev = Math.max(1, ...rows.map(r => r[1].revenue));
+      const manualBy = {}; // dish name -> manual report receipt id
+      closedTables.forEach(c => { if(c.manual) c.items.forEach(i => { manualBy[i.name] = c.id; }); });
       bdEl.innerHTML = rows.map(([name, s]) => `
-        <div class="an-row" style="display:block;">
+        <div class="an-row" style="display:block;${manualBy[name] ? 'cursor:pointer;' : ''}" ${manualBy[name] ? `onclick="openReceiptViewer('${manualBy[name]}')"` : ''}>
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div><div class="label">${name}</div><div class="sub">продано: ${s.qty}</div></div>
+            <div><div class="label">${name}</div><div class="sub">продано: ${s.qty}${manualBy[name] ? ' · отчёт ›' : ''}</div></div>
             <div class="value"><div class="rev">${s.revenue.toLocaleString('ru-RU')} тг</div></div>
           </div>
           <div class="an-bar"><div class="an-bar-fill" style="width:${Math.round(s.revenue/maxRev*100)}%"></div></div>
@@ -4183,6 +4185,34 @@ function openReceiptViewer(id){
 function showReceiptFromData(r){
   currentReceipt = r;
   const body = document.getElementById('receiptBody');
+  const shareEl = document.querySelector('#receiptOverlay .receipt-share');
+  const dlBtn = document.querySelector('#receiptOverlay .btn-download');
+  if(shareEl) shareEl.style.display = r.manual ? 'none' : '';
+  if(dlBtn) dlBtn.style.display = r.manual ? 'none' : '';
+  if(r.manual){
+    // Manually entered period report (e.g. promo sales) — not a table receipt:
+    // shows only its own lines, no table/waiter/service.
+    const d = new Date(r.closedAt);
+    const monthYear = d.toLocaleDateString('ru-RU',{month:'long',year:'numeric'}).replace(/\s*г\.?$/,'');
+    const lastDay = new Date(d.getFullYear(), d.getMonth()+1, 0);
+    const lastTxt = lastDay.toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
+    let h = `<h2>GO pub</h2>
+      <div class="sub">Отчёт о продажах за ${monthYear}</div>
+      <div class="receipt-row"><span>Период</span><span>1–${lastTxt} ${d.getFullYear()}</span></div>
+      <div class="receipt-row"><span>Данные</span><span>внесены вручную</span></div>
+      <div class="receipt-hr"></div>`;
+    r.items.forEach(i => {
+      const sum = (parseInt(String(i.price).replace(/[^\d]/g,''),10)||0) * i.qty;
+      h += `<div class="receipt-item"><span class="rn">${i.name}</span><span></span></div>
+        <div class="receipt-row"><span>Продано</span><span>${i.qty} шт.</span></div>
+        <div class="receipt-row"><span>Цена за акцию</span><span>${(parseInt(String(i.price).replace(/[^\d]/g,''),10)||0).toLocaleString('ru-RU')} тг</span></div>`;
+    });
+    h += `<div class="receipt-hr"></div>
+      <div class="receipt-total"><span>Итого</span><span>${r.total.toLocaleString('ru-RU')} тг</span></div>`;
+    body.innerHTML = h;
+    document.getElementById('receiptOverlay').classList.add('open');
+    return;
+  }
   let html = `<h2>GO pub</h2>
     <div class="sub">Стол ${tableLabel(r.table)}</div>
     <div class="receipt-row"><span>Открыт</span><span>${new Date(r.openedAt).toLocaleString('ru-RU')}</span></div>
